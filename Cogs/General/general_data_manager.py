@@ -6,7 +6,7 @@ from Martin.settings import COGS_DATA_PATH
 class GeneralData:
     def __init__(self, cog_name: str):
         self.cog_name = cog_name
-        self.path = COGS_DATA_PATH / cog_name
+        self.path = COGS_DATA_PATH / f"{cog_name}.db"
 
     async def create_table(self):
         async with aiosqlite.connect(self.path) as db:
