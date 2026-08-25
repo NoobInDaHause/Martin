@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import re
 from datetime import datetime, timezone
@@ -7,6 +8,7 @@ from typing import TYPE_CHECKING, Dict, List, Tuple, cast
 import aiohttp
 import discord
 from discord.ext import commands
+from discord.utils import MISSING
 
 from Utilities.formatting import format_list
 from .help_command import MartinHelpCommand
@@ -38,7 +40,7 @@ class Martin(commands.AutoShardedBot):
         self.default_prefixes = settings.default_prefixes
         self.guild_prefixes = settings.guild_prefixes
         self.blacklisted_user_ids = settings.blacklisted_user_ids
-        self.__version__ = settings.__version__
+        self.__version__ = settings.version()
         self.colour = discord.Colour.from_str(settings.global_hex_colour)
         self.color = self.colour
         self.uptime = datetime.now(timezone.utc)
@@ -219,3 +221,14 @@ class Martin(commands.AutoShardedBot):
         await context.send(
             f"Error in command `'{context.command}'`. {is_this_guy_owner}"
         )
+
+    async def get_context(self, origin, /, *, cls=MISSING) -> "MartinContext":
+        return await super().get_context(origin, cls=cls)
+
+    async def get_or_fetch_user(self, user_id: int) -> discord.User:
+        return self.get_user(user_id) or await self.fetch_user(user_id)
+
+    async def send_to_owners(self, *args, **kwargs):
+        for o_id in self.owner_ids:
+            with contextlib.suppress(discord.errors.Forbidden):
+                await (await self.get_or_fetch_user(o_id)).send(*args, **kwargs)
