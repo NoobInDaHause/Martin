@@ -77,12 +77,12 @@ def pagify(
     return pages
 
 
-def format_time(seconds: int) -> str:
+def format_time(seconds: float) -> str:
     """Convert a number of seconds into human-readable duration text.
 
     Parameters
     ----------
-    seconds : int
+    seconds : float
         The seconds to convert to human-readable text.
 
     Raises
@@ -94,7 +94,7 @@ def format_time(seconds: int) -> str:
     if seconds < 0:
         raise FormatTimeException("seconds cannot be less than 0")
 
-    remaining = int(seconds)
+    remaining = float(seconds)
     units = (
         ("century", "centuries", 100 * 365 * 86400),
         ("year", "years", 365 * 86400),
@@ -106,13 +106,16 @@ def format_time(seconds: int) -> str:
     )
     parts = []
 
-    for singular, plural, unit_length in units:
+    for singular, plural, unit_length in units[:-1]:
         unit_value, remaining = divmod(remaining, unit_length)
         if unit_value:
             unit_name = singular if unit_value == 1 else plural
-            parts.append(f"{unit_value} {unit_name}")
+            parts.append(f"{unit_value:g} {unit_name}")
 
-    return ", ".join(parts) or "0 seconds"
+    if remaining:
+        parts.append(f"{remaining:g} seconds")
+
+    return format_list(parts) or "0 seconds"
 
 
 def format_list(lst: List[str], style: Optional[str] = "and") -> str:

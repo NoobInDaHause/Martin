@@ -1,3 +1,4 @@
+import platform
 from datetime import datetime, timezone
 from time import perf_counter
 
@@ -43,6 +44,7 @@ class General(commands.Cog):
                 f"{format_time(elapsed_seconds)}\nStarted <t:{startup_timestamp}:R>"
             ),
             colour=self.bot.colour,
+            timestamp=discord.utils.utcnow(),
         )
         await ctx.send(embed=embed)
 
@@ -104,3 +106,37 @@ class General(commands.Cog):
             inline=True,
         )
         await initial_message.edit(embed=result_embed)
+
+    @commands.command(name="info", aliases=["botinfo"])
+    async def info(self, ctx: MartinContext) -> None:
+        """Check info about the bot."""
+        async with ctx.typing():
+            app_info = await self.bot.application_info()
+            owner = f"Team {app_info.team.name}" if app_info.team else app_info.owner
+            embed = discord.Embed(
+                title=f"{self.bot.user.name} info",
+                description=f"Instance owned by `{owner}`.",
+                timestamp=datetime.now(timezone.utc),
+                colour=self.bot.colour,
+            )
+            embed.set_thumbnail(url=self.bot.user.display_avatar)
+            embed.add_field(
+                name="Bot Version:", value=self.bot.__version__, inline=True
+            )
+            embed.add_field(
+                name="Discord.py Version:", value=discord.__version__, inline=True
+            )
+            embed.add_field(
+                name="Python Version:", value=platform.python_version(), inline=True
+            )
+            await ctx.send(embed=embed)
+
+    @commands.command(name="invite")
+    async def invite(self, ctx: MartinContext) -> None:
+        """
+        Invite the bot.
+        """
+        await ctx.send(
+            content=f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&"
+            "scope=bot+applications.commands&permissions=1099511627767"
+        )

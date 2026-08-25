@@ -2,7 +2,7 @@ import contextlib
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, cast
+from typing import TYPE_CHECKING, Dict, List, Union, cast
 
 import aiohttp
 import discord
@@ -10,7 +10,7 @@ from discord.ext import commands
 from discord.utils import MISSING
 from packaging.version import Version
 
-from Utilities.formatting import format_list
+from Utilities.formatting import format_list, format_time
 from .help_command import MartinHelpCommand
 from .settings import Settings
 
@@ -121,10 +121,7 @@ class Martin(commands.AutoShardedBot):
         await super().setup_hook()
         app_info = await self.application_info()
         members = app_info.team.members if app_info.team else [app_info.owner]
-        owner_ids = set()
-        for member in members:
-            owner_ids.add(member.id)
-        self.owner_ids = owner_ids
+        self.owner_ids = {member.id for member in members}
 
         cogs_path = Path(__file__).parents[1] / "Cogs"
         for cog_folder in cogs_path.iterdir():
@@ -151,13 +148,17 @@ class Martin(commands.AutoShardedBot):
     async def on_command_error(
         self, context: "MartinContext", error: commands.CommandError
     ) -> None:
-        if isinstance(error, commands.CommandNotFound):
+        if isinstance(
+            error, (commands.CommandNotFound, commands.DisabledCommand)
+        ):
             return
 
         if isinstance(error, commands.CommandOnCooldown):
-            await context.send(
-                f"This command is on cooldown. Try again in {error.retry_after:.1f} seconds."
+            msg = await context.send(
+                f"This command is on cooldown. Try again in **{format_time(error.retry_after)}**."
             )
+            with contextlib.suppress(discord.errors.NotFound):
+                await msg.delete(delay=error.retry_after)
             return
 
         if isinstance(error, commands.MissingRequiredArgument):
@@ -175,15 +176,15 @@ class Martin(commands.AutoShardedBot):
             return
 
         if isinstance(error, commands.NotOwner):
-            await context.send("Only the bot owner can use that command.")
+            self.log.info(
+                "User %s tried to run an owner only command. Command: %s",
+                context.author,
+                context.command.qualified_name,
+            )
             return
 
         if isinstance(error, commands.NoPrivateMessage):
             await context.send("That command cannot be used in private messages.")
-            return
-
-        if isinstance(error, commands.DisabledCommand):
-            await context.send("That command is currently disabled.")
             return
 
         if isinstance(error, commands.MaxConcurrencyReached):
@@ -224,5 +225,16 @@ class Martin(commands.AutoShardedBot):
 
     async def send_to_owners(self, *args, **kwargs):
         for o_id in self.owner_ids:
-            with contextlib.suppress(discord.errors.Forbidden):
+            with contextlib.suppress(
+                discord.errors.Forbidden,
+                discord.errors.NotFound,
+                discord.errors.HTTPException,
+            ):
                 await (await self.get_or_fetch_user(o_id)).send(*args, **kwargs)
+
+    def is_blacklisted(
+        self, user_or_user_id: Union[discord.Member, discord.User, int]
+    ) -> bool:
+        return (
+            getattr(user_or_user_id, "id", user_or_user_id) in self.blacklisted_user_ids
+        )

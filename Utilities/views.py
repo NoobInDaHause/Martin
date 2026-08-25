@@ -41,10 +41,10 @@ class ConfirmationView(discord.ui.View):
         self.reject_button.style = discord.ButtonStyle.grey
         self.reject_button.disabled = True
         button.disabled = True
-        await self.on_timeout()
         await interaction.response.edit_message(
             content=self.confirmed_content, embed=self.confirmed_embed, view=self
         )
+        self.stop()
 
     @discord.ui.button(emoji="✖️", style=discord.ButtonStyle.danger)
     async def reject_button(
@@ -57,7 +57,7 @@ class ConfirmationView(discord.ui.View):
         await interaction.response.edit_message(
             content="Alright not doing that then.", embed=None, view=self
         )
-        await self.on_timeout()
+        self.stop()
 
     async def interaction_check(self, interaction: "MartinInteraction") -> bool:
         if not interaction.user:

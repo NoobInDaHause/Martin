@@ -15,6 +15,5 @@ async def response_or_followup(
 ) -> discord.InteractionMessage:
     if interaction.response.is_done():
         return await interaction.followup.send(*args, **kwargs)
-    else:
-        await interaction.response.send_message(*args, **kwargs)
-        return await interaction.original_response()
+    await interaction.response.send_message(*args, **kwargs)
+    return await interaction.original_response()

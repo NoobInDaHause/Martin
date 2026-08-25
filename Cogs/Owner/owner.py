@@ -1,4 +1,3 @@
-import asyncio
 import contextlib
 from io import BytesIO
 from pathlib import Path
@@ -145,7 +144,7 @@ class Owner(commands.Cog):
         await confirm_view.wait()
 
         if confirm_view.value:
-            await asyncio.sleep(1.0)
+            confirm_view.stop()
             ctx.bot.exit_code = 26
             await ctx.bot.close()
 
@@ -163,7 +162,7 @@ class Owner(commands.Cog):
         await confirm_view.wait()
 
         if confirm_view.value:
-            await asyncio.sleep(1.0)
+            confirm_view.stop()
             ctx.bot.exit_code = 0
             await ctx.bot.close()
 

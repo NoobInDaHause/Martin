@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List
 
+PROJECT_ROOT = Path(__file__).parents[1]
+
 
 @dataclass
 class Settings:
@@ -13,15 +15,11 @@ class Settings:
 
     @classmethod
     def initialize(cls) -> "Settings":
-        project_root = Path(__file__).parents[1]
-        with (project_root / "config.json").open(encoding="utf-8") as config_file:
+        with (PROJECT_ROOT / "config.json").open(encoding="utf-8") as config_file:
             data: dict = json.load(config_file)
-            data.pop(
-                "__version__", None
-            )  # versioning moved from config.json to version.txt [v0.0.3]
+            data.pop("__version__", None)
         return cls(**data)
 
     @staticmethod
     def version() -> str:
-        project_root = Path(__file__).parents[1]
-        return (project_root / "version.txt").read_text(encoding="utf-8").strip()
+        return (PROJECT_ROOT / "version.txt").read_text(encoding="utf-8").strip()
