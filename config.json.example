@@ -1,7 +1,7 @@
 {
     "default_prefixes": [">"],
     "guild_prefixes": {},
-    "global_hex_colour": "#00FF00",
+    "global_hex_colour": "#276a8a",
     "blacklisted_user_ids": [],
-    "__version__": "v0.0.1"
+    "__version__": "v0.0.2"
 }

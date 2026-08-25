@@ -17,11 +17,11 @@ fi
 
 if [ ! -x "$VENV_PYTHON" ] || [ "$REQUIREMENTS_HASH" != "$INSTALLED_HASH" ]; then
     if [ ! -x "$VENV_PYTHON" ]; then
-    printf '%s\n' "Creating virtual environment..."
-    "$PYTHON" -m venv "$SCRIPT_DIR/.venv" || {
-        printf '%s\n' "Failed to create virtual environment." >&2
-        exit 1
-    }
+        printf '%s\n' "Creating virtual environment..."
+        "$PYTHON" -m venv "$SCRIPT_DIR/.venv" || {
+            printf '%s\n' "Failed to create virtual environment." >&2
+            exit 1
+        }
     fi
 
     printf '%s\n' "Installing dependencies..."

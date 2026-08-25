@@ -1,3 +1,5 @@
+import asyncio
+import contextlib
 from io import BytesIO
 from pathlib import Path
 from typing import List, Tuple
@@ -6,6 +8,8 @@ import discord
 from discord.ext import commands
 
 from Martin import Martin, MartinContext
+from Utilities.formatting import format_list
+from Utilities.views import ConfirmationView
 
 
 class Owner(commands.Cog):
@@ -71,11 +75,13 @@ class Owner(commands.Cog):
         verb = f"{action}ed"
         if successful:
             cog_label = "cog" if len(successful) == 1 else "cogs"
-            messages.append(f"{verb.capitalize()} {cog_label}: {', '.join(successful)}")
+            messages.append(
+                f"{verb.capitalize()} {cog_label}: {format_list(successful)}"
+            )
         if failed:
             cog_label = "cog" if len(failed) == 1 else "cogs"
-            failed_details = ", ".join(
-                f"{cog_name} ({reason})" for cog_name, reason in failed
+            failed_details = format_list(
+                [f"{cog_name} ({reason})" for cog_name, reason in failed]
             )
             messages.append(
                 f"The following {cog_label} failed to {action}: {failed_details}"
@@ -84,18 +90,18 @@ class Owner(commands.Cog):
             cog_label = "cog" if len(missing) == 1 else "cogs"
             exist_verb = "does not exist" if len(missing) == 1 else "do not exist"
             messages.append(
-                f"The following {cog_label} {exist_verb}: {', '.join(missing)}"
+                f"The following {cog_label} {exist_verb}: {format_list(missing)}"
             )
         if protected:
             cog_label = "cog" if len(protected) == 1 else "cogs"
             messages.append(
-                f"The following {cog_label} cannot be {verb}: {', '.join(protected)}"
+                f"The following {cog_label} cannot be {verb}: {format_list(protected)}"
             )
         await ctx.send("\n".join(messages))
 
     @commands.is_owner()
-    @commands.command(name="checkforupdates")
     @commands.bot_has_permissions(embed_links=True)
+    @commands.command(name="checkforupdates")
     async def checkforupdates(self, ctx: MartinContext):
         """
         Check whether a newer Bot version is available.
@@ -115,12 +121,15 @@ class Owner(commands.Cog):
                     f"[View release]({update['release_url']})"
                 ),
                 colour=self.bot.colour,
+                timestamp=discord.utils.utcnow(),
             )
         else:
             embed = discord.Embed(
                 title="Bot is up to date",
-                description=f"Current version: `{current_version}`",
+                description=f"Current version: `{current_version}`\n"
+                f"GitHub version: `{latest_version}`",
                 colour=self.bot.colour,
+                timestamp=discord.utils.utcnow(),
             )
         await ctx.send(embed=embed)
 
@@ -128,22 +137,35 @@ class Owner(commands.Cog):
     @commands.command(name="restart")
     async def restart(self, ctx: MartinContext) -> None:
         """Restart the bot process."""
-        await ctx.send("Restarting... :arrows_counterclockwise:")
-        ctx.bot.exit_code = 26
-        await ctx.bot.close()
+        confirm_view = ConfirmationView(ctx, "Restarting... :arrows_counterclockwise:")
+
+        await confirm_view.start(
+            content="Are you sure you want me to restart?", view=confirm_view
+        )
+        await confirm_view.wait()
+
+        if confirm_view.value:
+            await asyncio.sleep(1.0)
+            ctx.bot.exit_code = 26
+            await ctx.bot.close()
 
     @commands.is_owner()
     @commands.command(name="shutdown")
-    async def shutdown(self, ctx: MartinContext, silent: bool = False) -> None:
+    async def shutdown(self, ctx: MartinContext) -> None:
         """
         Shutdown the bot.
-
-        Silently or not.
         """
-        if not silent:
-            await ctx.send("Shutting down. :wave:")
-        ctx.bot.exit_code = 0
-        await ctx.bot.close()
+        confirm_view = ConfirmationView(ctx, "Shutting down. :wave:")
+
+        await confirm_view.start(
+            content="Are you sure you want me to shutdown?", view=confirm_view
+        )
+        await confirm_view.wait()
+
+        if confirm_view.value:
+            await asyncio.sleep(1.0)
+            ctx.bot.exit_code = 0
+            await ctx.bot.close()
 
     @commands.is_owner()
     @commands.group(name="cog", invoke_without_command=True)
@@ -154,8 +176,8 @@ class Owner(commands.Cog):
         return await ctx.send_help(ctx.command)
 
     @commands.is_owner()
-    @_cog.command(name="list")
     @commands.bot_has_permissions(attach_files=True)
+    @_cog.command(name="list")
     async def _cog_list(self, ctx: MartinContext):
         """
         Shows the list of loaded/unloaded cogs.
@@ -218,3 +240,16 @@ class Owner(commands.Cog):
             await ctx.send_help()
             return
         await self._manage_cogs(ctx, "reload", cog_names)
+
+    @commands.is_owner()
+    @commands.command(name="testerror", aliases=["plzerror", "givemeerror"])
+    async def testerror(self, ctx: MartinContext):
+        """
+        Test error command.
+
+        This command throws AssertionError.
+        """
+        msg = await ctx.send(content="Testing error, please hold...")
+        with contextlib.suppress(discord.errors.NotFound):
+            await msg.delete(delay=1.5)
+        assert False

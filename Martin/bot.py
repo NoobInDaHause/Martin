@@ -1,16 +1,16 @@
-from datetime import datetime, timezone
 import logging
-from pathlib import Path
 import re
-from typing import Dict, List, Tuple, cast, TYPE_CHECKING
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import TYPE_CHECKING, Dict, List, Tuple, cast
 
 import aiohttp
 import discord
 from discord.ext import commands
 
+from Utilities.formatting import format_list
 from .help_command import MartinHelpCommand
 from .settings import Settings
-from Utilities.formatting import format_list
 
 GITHUB_REPOSITORY = "NoobInDaHause/Martin"
 
@@ -169,12 +169,12 @@ class Martin(commands.AutoShardedBot):
             return
 
         if isinstance(error, commands.MissingPermissions):
-            permissions = ", ".join(error.missing_permissions)
+            permissions = format_list(error.missing_permissions)
             await context.send(f"You need these permissions: {permissions}.")
             return
 
         if isinstance(error, commands.BotMissingPermissions):
-            permissions = ", ".join(error.missing_permissions)
+            permissions = format_list(error.missing_permissions)
             await context.send(f"I need these permissions: {permissions}.")
             return
 
@@ -198,6 +198,11 @@ class Martin(commands.AutoShardedBot):
             await context.send(content=str(error))
             return
 
+        is_this_guy_owner = (
+            "Check your console or logs for details."
+            if await self.is_owner(context.author)
+            else ""
+        )
         if isinstance(error, commands.CommandInvokeError):
             original = error.original
             self.log.error(
@@ -205,8 +210,12 @@ class Martin(commands.AutoShardedBot):
                 context.command,
                 exc_info=(type(original), original, original.__traceback__),
             )
-            await context.send("An unexpected error occurred while running that command.")
+            await context.send(
+                f"Error in command `'{context.command}'`. {is_this_guy_owner}"
+            )
             return
 
         self.log.error("Unhandled command error in %s: %s", context.command, error)
-        await context.send("An unexpected command error occurred.")
+        await context.send(
+            f"Error in command `'{context.command}'`. {is_this_guy_owner}"
+        )

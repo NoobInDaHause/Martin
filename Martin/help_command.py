@@ -4,11 +4,14 @@ from typing import TYPE_CHECKING, Any, List, Mapping
 import discord
 from discord.ext import commands
 
+from Utilities.formatting import format_list
+
 if TYPE_CHECKING:
     from .context import MartinContext
 
 
 class MartinHelpCommand(commands.HelpCommand):
+    COMMAND_NAME_WIDTH = 20
     context: "MartinContext"
 
     def __init__(self, **options: Any):
@@ -30,9 +33,8 @@ class MartinHelpCommand(commands.HelpCommand):
         return inspect.cleandoc(command.help or "No description provided.")
 
     def format_commands(self, command_list: List[commands.Command]) -> str:
-        command_name_width = max((len(command.name) for command in command_list), default=0)
         return "\n".join(
-            f"`{command.name:<{command_name_width}}` - "
+            f"`{command.name:<{self.COMMAND_NAME_WIDTH}}` - "
             f"{self.command_description(command).splitlines()[0]}"
             for command in command_list
         )
@@ -75,7 +77,10 @@ class MartinHelpCommand(commands.HelpCommand):
         )
         embed.add_field(name="Usage", value=f"`{self.get_command_signature(command)}`")
         if command.aliases:
-            embed.add_field(name="Aliases", value=", ".join(f"`{alias}`" for alias in command.aliases))
+            embed.add_field(
+                name="Aliases",
+                value=format_list([f"`{alias}`" for alias in command.aliases]),
+            )
         await self.get_destination().send(embed=embed)
 
     async def send_group_help(self, group: commands.Group) -> None:
