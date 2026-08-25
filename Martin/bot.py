@@ -1,14 +1,14 @@
 import contextlib
 import logging
-import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Tuple, cast
+from typing import TYPE_CHECKING, Dict, List, cast
 
 import aiohttp
 import discord
 from discord.ext import commands
 from discord.utils import MISSING
+from packaging.version import Version
 
 from Utilities.formatting import format_list
 from .help_command import MartinHelpCommand
@@ -52,11 +52,6 @@ class Martin(commands.AutoShardedBot):
         if message.guild is None:
             return self.default_prefixes
         return self.guild_prefixes.get(str(message.guild.id), self.default_prefixes)
-
-    @staticmethod
-    def _version_tuple(version: str) -> Tuple[int, ...]:
-        numbers = re.findall(r"\d+", version)
-        return tuple(int(number) for number in numbers)
 
     async def get_updates(self) -> Dict[str, str]:
         """Get the latest GitHub version and compare it with the bot version."""
@@ -114,8 +109,7 @@ class Martin(commands.AutoShardedBot):
         return {
             "status": (
                 "update_available"
-                if self._version_tuple(latest_version)
-                > self._version_tuple(current_version)
+                if Version(latest_version) > Version(current_version)
                 else "up_to_date"
             ),
             "current_version": current_version,
