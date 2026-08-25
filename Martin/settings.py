@@ -18,7 +18,7 @@ class Settings:
             data: dict = json.load(config_file)
             data.pop(
                 "__version__", None
-            )  # versioning moved from config.json to version.txt [v0.0.2a]
+            )  # versioning moved from config.json to version.txt [v0.0.3]
         return cls(**data)
 
     @staticmethod
