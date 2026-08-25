@@ -134,12 +134,12 @@ class Martin(commands.AutoShardedBot):
             self.log.info("Loaded cog%s: %s", plural, format_list(cog_names))
 
         self.log.info("Logged in as %s (ID: %s).", self.user, self.user.id)
-        self.log.info("-----------------------------------------------")
+        self.log.info("--------------------------------------------------")
 
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot:
             return
-        if message.author.id in self.blacklisted_user_ids and not await self.is_owner(
+        if self.is_blacklisted(message.author) and not await self.is_owner(
             message.author
         ):
             return
@@ -148,9 +148,7 @@ class Martin(commands.AutoShardedBot):
     async def on_command_error(
         self, context: "MartinContext", error: commands.CommandError
     ) -> None:
-        if isinstance(
-            error, (commands.CommandNotFound, commands.DisabledCommand)
-        ):
+        if isinstance(error, (commands.CommandNotFound, commands.DisabledCommand)):
             return
 
         if isinstance(error, commands.CommandOnCooldown):
@@ -238,3 +236,10 @@ class Martin(commands.AutoShardedBot):
         return (
             getattr(user_or_user_id, "id", user_or_user_id) in self.blacklisted_user_ids
         )
+
+    async def close(self, restart: bool = False):
+        self.log.info(
+            "Cleaning up before %s.", ("shutting down" if not restart else "restarting")
+        )
+        self.exit_code = 26 if restart else 0
+        return await super().close()

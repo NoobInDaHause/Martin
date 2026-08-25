@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, List
 
 PROJECT_ROOT = Path(__file__).parents[1]
+COGS_DATA_PATH = Path(__file__).parents[1] / "cogs_data"
 
 
 @dataclass

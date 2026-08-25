@@ -145,8 +145,7 @@ class Owner(commands.Cog):
 
         if confirm_view.value:
             confirm_view.stop()
-            ctx.bot.exit_code = 26
-            await ctx.bot.close()
+            await ctx.bot.close(True)
 
     @commands.is_owner()
     @commands.command(name="shutdown")
@@ -163,7 +162,6 @@ class Owner(commands.Cog):
 
         if confirm_view.value:
             confirm_view.stop()
-            ctx.bot.exit_code = 0
             await ctx.bot.close()
 
     @commands.is_owner()
