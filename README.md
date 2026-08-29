@@ -79,7 +79,7 @@ cd Martin
 ### 2. Create Environment Variables
 Rename `.env.example` into `.env` and open and replace `<your_bot_token_here>` with your actual bot token.
 ```env
-TOKEN=your_bot_token_here
+TOKEN=<your_bot_token_here>
 ```
 
 **How to get a bot token:**
