@@ -24,6 +24,7 @@ class PaginatorView(discord.ui.View):
         self.message: Optional[Union[discord.Message, discord.WebhookMessage]] = None
         self.current_page = 0
         self.update_button_visibility()
+        self.update_button_states()
 
     async def start(self) -> None:
         content, embed = self.page_to_content(self.pages[self.current_page])
