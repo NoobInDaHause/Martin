@@ -62,7 +62,15 @@ bash start_bot.sh
 
 ## 📦 Installation & Setup
 
-### 1. Clone or Download
+### 1. Download the Bot
+Download the latest release from [GitHub Releases](https://github.com/NoobInDaHause/Martin/releases):
+
+1. Go to the [Releases page](https://github.com/NoobInDaHause/Martin/releases)
+2. Download the latest version (`.zip` file)
+3. Extract the folder to your desired location
+4. Open a terminal/command prompt in the extracted folder
+
+**Alternatively, using Git (for developers):**
 ```bash
 git clone https://github.com/NoobInDaHause/Martin.git
 cd Martin
