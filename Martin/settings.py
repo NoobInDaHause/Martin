@@ -20,7 +20,3 @@ class Settings:
             data: dict = json.load(config_file)
             data.pop("__version__", None)
         return cls(**data)
-
-    @staticmethod
-    def version() -> str:
-        return (PROJECT_ROOT / "version.txt").read_text(encoding="utf-8").strip()

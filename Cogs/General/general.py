@@ -9,7 +9,7 @@ from discord.ext import commands
 from Martin import Martin, MartinContext
 from Utilities.formatting import format_time
 
-from .general_data_manager import GeneralData
+from .general_data_manager import GeneralDB
 
 
 class General(commands.Cog):
@@ -21,9 +21,9 @@ class General(commands.Cog):
 
     def __init__(self, bot: Martin):
         self.bot = bot
-        self.db = GeneralData(self.__class__.__name__)
+        self.db = GeneralDB(self.__class__.__name__)
 
-    async def cog_load(self):
+    async def cog_load(self) -> None:
         await self.db.initialize()
 
     @staticmethod
@@ -37,7 +37,7 @@ class General(commands.Cog):
     @commands.command(name="uptime")
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def uptime(self, ctx: MartinContext):
+    async def uptime(self, ctx: MartinContext) -> None:
         """
         Check how long the bot has been up.
         """
@@ -58,7 +58,7 @@ class General(commands.Cog):
     @commands.command(name="ping")
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def ping(self, ctx: MartinContext):
+    async def ping(self, ctx: MartinContext) -> None:
         """
         Ping.
 
@@ -126,7 +126,7 @@ class General(commands.Cog):
                 timestamp=datetime.now(timezone.utc),
                 colour=self.bot.colour,
             )
-            if c_i := await self.db.get_custom_info():
+            if c_i := await self.db.get_or_delete_custom_info(False):
                 custom_info = f"\n\n{c_i}"
             else:
                 custom_info = ""
@@ -160,17 +160,19 @@ class General(commands.Cog):
 
     @commands.command(name="custominfo")
     @commands.is_owner()
-    async def custominfo(self, ctx: MartinContext, *, custom_info: Optional[str] = None):
+    async def custominfo(
+        self, ctx: MartinContext, *, custom_info: Optional[str] = None
+    ) -> None:
         """
         Add a custom info from the [p]info command.
 
         Leave blank to clear.
         """
         if custom_info is None:
-            await self.db.delete_custom_info()
-        elif await self.db.get_custom_info():
-            await self.db.update_custom_info(custom_info)
+            await self.db.get_or_delete_custom_info(True)
+        elif await self.db.get_or_delete_custom_info(False):
+            await self.db.insert_or_update_custom_info(True, custom_info)
         else:
-            await self.db.insert_custom_info(custom_info)
+            await self.db.insert_or_update_custom_info(False, custom_info)
 
         await ctx.send(content="Done.")

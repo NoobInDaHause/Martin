@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 from Utilities.exceptions import (
     FormatListException,
@@ -9,7 +9,7 @@ from Utilities.exceptions import (
 
 def pagify(
     text: str,
-    delims: Optional[Union[str, List[str]]] = None,
+    delims: Optional[Union[str, Iterable[str]]] = None,
     page_length: Optional[int] = 2000,
 ) -> List[str]:
     """Split text into pages no longer than ``page_length`` characters.

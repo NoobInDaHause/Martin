@@ -101,7 +101,7 @@ class Owner(commands.Cog):
     @commands.is_owner()
     @commands.bot_has_permissions(embed_links=True)
     @commands.command(name="checkforupdates")
-    async def checkforupdates(self, ctx: MartinContext):
+    async def checkforupdates(self, ctx: MartinContext) -> None:
         """
         Check whether a newer Bot version is available.
         """
@@ -166,7 +166,7 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @commands.group(name="cog", invoke_without_command=True)
-    async def _cog(self, ctx: MartinContext):
+    async def _cog(self, ctx: MartinContext) -> None:
         """
         Base commands for managing cogs.
         """
@@ -175,7 +175,7 @@ class Owner(commands.Cog):
     @commands.is_owner()
     @commands.bot_has_permissions(attach_files=True)
     @_cog.command(name="list")
-    async def _cog_list(self, ctx: MartinContext):
+    async def _cog_list(self, ctx: MartinContext) -> None:
         """
         Shows the list of loaded/unloaded cogs.
         """
@@ -240,7 +240,7 @@ class Owner(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="testerror", aliases=["plzerror", "givemeerror"])
-    async def testerror(self, ctx: MartinContext):
+    async def testerror(self, ctx: MartinContext) -> None:
         """
         Test error command.
 

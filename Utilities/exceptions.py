@@ -12,3 +12,7 @@ class FormatListException(FormattingException):
 
 class FormatTimeException(FormattingException):
     pass
+
+
+class DataManagerException(Exception):
+    pass

@@ -1,55 +1,74 @@
-import aiosqlite
+from typing import Optional
 
-from Martin.settings import COGS_DATA_PATH
+from Utilities.data_manager import DataManager
 
 
-class GeneralData:
-    def __init__(self, cog_name: str):
-        self.cog_name = cog_name
-        self.path = COGS_DATA_PATH / f"{cog_name}.db"
+class GeneralDB(DataManager):
+    """Database manager for the General cog."""
 
-    async def create_table(self):
-        async with aiosqlite.connect(self.path) as db:
-            await db.execute(f"""
-                CREATE TABLE IF NOT EXISTS {self.cog_name} (
-                    name TEXT NOT NULL,
-                    value TEXT NOT NULL
-                )
-            """)
-            await db.commit()
+    def __init__(self, cog_name: str) -> None:
+        """Initialize the GeneralDB instance.
 
-    async def initialize(self):
-        if not self.path.exists():
-            await self.create_table()
+        Parameters
+        ----------
+        cog_name : str
+            The name of the cog.
+        """
+        super().__init__(cog_name)
 
-    async def get_custom_info(self):
-        async with aiosqlite.connect(self.path) as db:
-            cursor = await db.execute(
-                f"""SELECT value FROM {self.cog_name} WHERE name = ?""",
-                ("custom_info",),
+    async def initialize(self) -> None:
+        """Create the general_data table if it doesn't exist."""
+        sql = (
+            "CREATE TABLE IF NOT EXISTS general_data ("
+            "    name TEXT NOT NULL PRIMARY KEY,"
+            "    value TEXT NOT NULL"
+            ")"
+        )
+        await self.execute(sql)
+
+    async def insert_or_update_custom_info(
+        self, update: bool, custom_info: Optional[str] = None
+    ) -> None:
+        """Insert or update custom info in the database.
+
+        Parameters
+        ----------
+        update : bool
+            Whether to update (True) or insert (False) the data.
+        custom_info : Optional[str]
+            The custom info to insert or update.
+        """
+        if update:
+            sql_cmd = (
+                "UPDATE general_data SET value = ? WHERE name = ?",
+                (custom_info, "custom_info"),
             )
-            row = await cursor.fetchone()
-            return row[0] if row else row
-
-    async def update_custom_info(self, new_custom_info: str):
-        async with aiosqlite.connect(self.path) as db:
-            await db.execute(
-                f"""UPDATE {self.cog_name} SET value = ? WHERE name = ?""",
-                (new_custom_info, "custom_info"),
-            )
-            await db.commit()
-
-    async def insert_custom_info(self, custom_info: str):
-        async with aiosqlite.connect(self.path) as db:
-            await db.execute(
-                f"""INSERT INTO {self.cog_name} (name, value) VALUES (?, ?)""",
+        else:
+            sql_cmd = (
+                "INSERT INTO general_data (name, value) VALUES (?, ?)",
                 ("custom_info", custom_info),
             )
-            await db.commit()
+        await self.execute(sql_cmd[0], sql_cmd[1])
 
-    async def delete_custom_info(self):
-        async with aiosqlite.connect(self.path) as db:
-            await db.execute(
-                f"""DELETE FROM {self.cog_name} WHERE name = ?""", ("custom_info",)
-            )
-            await db.commit()
+    async def get_or_delete_custom_info(
+        self, delete: bool
+    ) -> Optional[str]:
+        """Get or delete custom info from the database.
+
+        Parameters
+        ----------
+        delete : bool
+            Whether to delete (True) or fetch (False) the data.
+
+        Returns
+        -------
+        Optional[str]
+            The custom info value, or None if not found.
+        """
+        action = "DELETE" if delete else "SELECT value"
+        custom_info = await self.execute(
+            f"{action} FROM general_data WHERE name = ?",
+            ("custom_info",),
+            select=not delete,
+        )
+        return custom_info[0] if custom_info else None

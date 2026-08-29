@@ -26,7 +26,7 @@ class ConfirmationView(discord.ui.View):
         self.confirmed_embed = confirmed_embed
         self.value: Optional[bool] = None
 
-    async def start(self, *args, **kwargs):
+    async def start(self, *args, **kwargs) -> None:
         self.message = (
             await response_or_followup(self.obj, *args, **kwargs)
             if isinstance(self.obj, discord.Interaction)
@@ -36,7 +36,7 @@ class ConfirmationView(discord.ui.View):
     @discord.ui.button(emoji="✔️", style=discord.ButtonStyle.success)
     async def confirm_button(
         self, interaction: "MartinInteraction", button: discord.ui.Button
-    ):
+    ) -> None:
         self.value = True
         self.reject_button.style = discord.ButtonStyle.grey
         self.reject_button.disabled = True
@@ -49,7 +49,7 @@ class ConfirmationView(discord.ui.View):
     @discord.ui.button(emoji="✖️", style=discord.ButtonStyle.danger)
     async def reject_button(
         self, interaction: "MartinInteraction", button: discord.ui.Button
-    ):
+    ) -> None:
         self.value = False
         self.confirm_button.style = discord.ButtonStyle.grey
         self.confirm_button.disabled = True

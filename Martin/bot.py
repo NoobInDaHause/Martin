@@ -12,7 +12,7 @@ from packaging.version import Version
 
 from Utilities.formatting import format_list, format_time
 from .help_command import MartinHelpCommand
-from .settings import Settings
+from .settings import PROJECT_ROOT, Settings
 
 GITHUB_REPOSITORY = "NoobInDaHause/Martin"
 
@@ -40,12 +40,22 @@ class Martin(commands.AutoShardedBot):
         self.default_prefixes = settings.default_prefixes
         self.guild_prefixes = settings.guild_prefixes
         self.blacklisted_user_ids = settings.blacklisted_user_ids
-        self.__version__ = settings.version()
-        self.colour = discord.Colour.from_str(settings.global_hex_colour)
-        self.color = self.colour
+        self.global_hex_colour = settings.global_hex_colour
         self.uptime = datetime.now(timezone.utc)
         self.log = logging.getLogger("Martin")
         self.exit_code = 0
+
+    @property
+    def __version__(self) -> str:
+        return (PROJECT_ROOT / "version.txt").read_text(encoding="utf-8").strip()
+
+    @property
+    def colour(self) -> discord.Colour:
+        return discord.Colour.from_str(self.global_hex_colour)
+
+    @property
+    def color(self) -> discord.Colour:
+        return self.colour
 
     def _get_prefix(self, message: discord.Message) -> List[str]:
         """Get the prefix for a given message."""
@@ -221,7 +231,7 @@ class Martin(commands.AutoShardedBot):
     async def get_or_fetch_user(self, user_id: int) -> discord.User:
         return self.get_user(user_id) or await self.fetch_user(user_id)
 
-    async def send_to_owners(self, *args, **kwargs):
+    async def send_to_owners(self, *args, **kwargs) -> None:
         for o_id in self.owner_ids:
             with contextlib.suppress(
                 discord.errors.Forbidden,
@@ -237,9 +247,11 @@ class Martin(commands.AutoShardedBot):
             getattr(user_or_user_id, "id", user_or_user_id) in self.blacklisted_user_ids
         )
 
-    async def close(self, restart: bool = False):
+    async def close(self, restart: bool = False) -> None:
+        if restart:
+            self.exit_code = 26
+
         self.log.info(
             "Cleaning up before %s.", ("shutting down" if not restart else "restarting")
         )
-        self.exit_code = 26 if restart else 0
         return await super().close()
