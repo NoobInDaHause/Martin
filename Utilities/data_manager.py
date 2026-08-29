@@ -8,8 +8,9 @@ from Utilities.formatting import format_list
 
 
 class DataManager:
-    """Manages database operations for cogs.\n
-    \n    This class handles SQLite database connections and executes SQL commands\n    for storing and retrieving cog-specific data.
+    """Manages database operations for cogs.
+    
+    This class handles SQLite database connections and executes SQL commands for storing and retrieving cog-specific data.
     """
 
     def __init__(self, cog_name: str) -> None:
