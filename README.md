@@ -1,6 +1,6 @@
 # Martin
 An open source discord bot/app written in python.
 
-Project on hold until I get a new PC.
+Project will get less updates often as my PC is almost dying.
 
 Will make a step by step guide in the future.
