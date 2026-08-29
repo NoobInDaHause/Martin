@@ -300,13 +300,7 @@ List of command prefixes that work globally.
 ```
 
 ### guild_prefixes
-Override prefixes for specific guilds (servers).
-```json
-"guild_prefixes": {
-  "123456789": ["prefix!"],
-  "987654321": ["custom!"]
-}
-```
+DO NOT MODIFY
 
 ### global_hex_colour
 Default embed color for the bot's messages (hex format).
@@ -315,10 +309,7 @@ Default embed color for the bot's messages (hex format).
 ```
 
 ### blacklisted_user_ids
-User IDs that cannot use the bot's commands.
-```json
-"blacklisted_user_ids": [123456789, 987654321]
-```
+DO NOT MODIFY
 
 ---
 
