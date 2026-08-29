@@ -126,19 +126,18 @@ class General(commands.Cog):
                 timestamp=datetime.now(timezone.utc),
                 colour=self.bot.colour,
             )
-            if c_i := await self.db.get_or_delete_custom_info(False):
-                custom_info = f"\n\n{c_i}"
-            else:
-                custom_info = ""
-
-            embed.description = (
+            custom_info = (
                 f"Instance owned by `{owner}`.\n\n"
                 "This bot is an instance of [Martin](https://github.com/NoobInDaHause/Martin) an open source discord ~~bot~~ APP "
-                f"written in Python. Make one yourself today.{custom_info}"
+                "written in Python. Make one yourself today."
             )
+            if c_i := await self.db.get_or_delete_custom_info(False):
+                custom_info += f"\n\n{c_i}"
+
+            embed.description = custom_info
             embed.set_thumbnail(url=self.bot.user.display_avatar)
             embed.add_field(
-                name="Bot Version:", value=self.bot.__version__, inline=True
+                name="Martin Version:", value=self.bot.__version__, inline=True
             )
             embed.add_field(
                 name="Discord.py Version:", value=discord.__version__, inline=True

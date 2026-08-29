@@ -59,8 +59,8 @@ class PaginatorView(discord.ui.View):
             self.add_item(self.close_button)
             return
         if len(self.pages) < 3:
-            self.add_item(self.close_button)
             self.add_item(self.previous_button)
+            self.add_item(self.close_button)
             self.add_item(self.next_page_button)
             return
 
