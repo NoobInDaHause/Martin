@@ -18,7 +18,7 @@ def pagify(
     ----------
     text : str
         The text that you want to pagify.
-    delims : Optional[Union[str, List[str]]]
+    delims : Optional[Union[str, Iterable[str]]]
         Can be a string or list of strings that marks where the text splits. (optional)
         Example: '\n' or ['\n', ' ', '.']
         Default: ['\n', ' ']

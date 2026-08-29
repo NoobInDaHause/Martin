@@ -8,7 +8,7 @@ from discord.ext import commands
 
 from Martin import Martin, MartinContext
 from Utilities.formatting import format_list
-from Utilities.views import ConfirmationView
+from Utilities.views import ConfirmationView, PaginatorView
 
 
 class Owner(commands.Cog):
@@ -250,3 +250,19 @@ class Owner(commands.Cog):
         with contextlib.suppress(discord.errors.NotFound):
             await msg.delete(delay=1.5)
         assert False
+
+    @commands.is_owner()
+    @commands.command(name="testpaginator")
+    async def testpaginator(self, ctx: MartinContext, page_length: int = 5, is_embed: bool = False):
+        """
+        Test the paginator.
+        """
+        pages = []
+        for x in range(page_length):
+            desc = f"Page {x + 1}"
+            if is_embed:
+                desc = discord.Embed(description=desc, colour=self.bot.colour)
+
+            pages.append(desc)
+
+        await PaginatorView(ctx, pages).start()
