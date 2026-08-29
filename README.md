@@ -189,7 +189,6 @@ Administrative commands for bot owners only.
 - `[p]cog load <cog_names>` - Load cog(s)
 - `[p]cog unload <cog_names>` - Unload cog(s)
 - `[p]cog reload <cog_names>` - Reload cog(s)
-- `[p]testerror`, `[p]plzerror`, `[p]givemeerror` - Test error handling (development)
 
 ---
 

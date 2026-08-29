@@ -27,7 +27,7 @@ class General(commands.Cog):
         await self.db.initialize()
 
     @staticmethod
-    def _latency_colour(latency_ms: float) -> discord.Colour:
+    def latency_colour(latency_ms: float) -> discord.Colour:
         if latency_ms < 100:
             return discord.Colour.green()
         if latency_ms < 250:
@@ -72,7 +72,7 @@ class General(commands.Cog):
         heartbeat_latency = self.bot.latency * 1000
         measuring_embed = discord.Embed(
             title=":ping_pong: Pong!",
-            colour=self._latency_colour(heartbeat_latency),
+            colour=self.latency_colour(heartbeat_latency),
         )
         measuring_embed.add_field(
             name=f"{self.bot.user} latency",
@@ -95,7 +95,7 @@ class General(commands.Cog):
         heartbeat_latency = self.bot.latency * 1000
         result_embed = discord.Embed(
             title=":ping_pong: Pong!",
-            colour=self._latency_colour(heartbeat_latency),
+            colour=self.latency_colour(heartbeat_latency),
         )
         result_embed.add_field(
             name=f"{self.bot.user} latency",

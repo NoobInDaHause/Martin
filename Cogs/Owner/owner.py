@@ -8,7 +8,7 @@ from discord.ext import commands
 
 from Martin import Martin, MartinContext
 from Utilities.formatting import format_list
-from Utilities.views import ConfirmationView, PaginatorView
+from Utilities.views import ConfirmationView
 
 
 class Owner(commands.Cog):
@@ -21,7 +21,7 @@ class Owner(commands.Cog):
     def __init__(self, bot: Martin):
         self.bot = bot
 
-    async def _manage_cog(self, action: str, cog_name: str) -> Tuple[bool, str]:
+    async def manage_cog(self, action: str, cog_name: str) -> Tuple[bool, str]:
         extension = f"Cogs.{cog_name}"
         try:
             if action == "load":
@@ -42,26 +42,26 @@ class Owner(commands.Cog):
         return True, ""
 
     @staticmethod
-    def _cog_exists(cog_name: str) -> bool:
+    def cog_exists(cog_name: str) -> bool:
         cogs_path = Path(__file__).parents[2] / "Cogs"
         return (cogs_path / cog_name).is_dir() and (
             cogs_path / cog_name / "__init__.py"
         ).is_file()
 
-    async def _manage_cogs(
+    async def manage_cogs(
         self, ctx: MartinContext, action: str, cog_names: List[str]
     ) -> None:
         protected = [
             cog_name for cog_name in cog_names if cog_name.casefold() == "owner"
         ]
-        missing = [cog_name for cog_name in cog_names if not self._cog_exists(cog_name)]
+        missing = [cog_name for cog_name in cog_names if not self.cog_exists(cog_name)]
         existing = [
             cog_name
             for cog_name in cog_names
             if cog_name not in missing and cog_name not in protected
         ]
         results = [
-            (cog_name, await self._manage_cog(action, cog_name))
+            (cog_name, await self.manage_cog(action, cog_name))
             for cog_name in existing
         ]
         successful = [cog_name for cog_name, (succeeded, _) in results if succeeded]
@@ -214,7 +214,7 @@ class Owner(commands.Cog):
         if not cog_names:
             await ctx.send_help()
             return
-        await self._manage_cogs(ctx, "load", cog_names)
+        await self.manage_cogs(ctx, "load", cog_names)
 
     @commands.is_owner()
     @_cog.command(name="unload")
@@ -225,7 +225,7 @@ class Owner(commands.Cog):
         if not cog_names:
             await ctx.send_help()
             return
-        await self._manage_cogs(ctx, "unload", cog_names)
+        await self.manage_cogs(ctx, "unload", cog_names)
 
     @commands.is_owner()
     @_cog.command(name="reload")
@@ -236,33 +236,4 @@ class Owner(commands.Cog):
         if not cog_names:
             await ctx.send_help()
             return
-        await self._manage_cogs(ctx, "reload", cog_names)
-
-    @commands.is_owner()
-    @commands.command(name="testerror", aliases=["plzerror", "givemeerror"])
-    async def testerror(self, ctx: MartinContext) -> None:
-        """
-        Test error command.
-
-        This command throws AssertionError.
-        """
-        msg = await ctx.send(content="Testing error, please hold...")
-        with contextlib.suppress(discord.errors.NotFound):
-            await msg.delete(delay=1.5)
-        assert False
-
-    @commands.is_owner()
-    @commands.command(name="testpaginator")
-    async def testpaginator(self, ctx: MartinContext, page_length: int = 5, is_embed: bool = False):
-        """
-        Test the paginator.
-        """
-        pages = []
-        for x in range(page_length):
-            desc = f"Page {x + 1}"
-            if is_embed:
-                desc = discord.Embed(description=desc, colour=self.bot.colour)
-
-            pages.append(desc)
-
-        await PaginatorView(ctx, pages).start()
+        await self.manage_cogs(ctx, "reload", cog_names)

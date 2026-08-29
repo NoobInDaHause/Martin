@@ -219,3 +219,6 @@ __marimo__/
 
 # test a
 tests/
+
+# test cog
+Cogs/TestCog
