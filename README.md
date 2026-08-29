@@ -223,9 +223,6 @@ class YourCog(commands.Cog):
     async def hello_command(self, ctx: MartinContext) -> None:
         """Say hello!"""
         await ctx.send(f"Hello, {ctx.author.mention}!")
-
-async def setup(bot: Martin) -> None:
-    await bot.add_cog(YourCog(bot))
 ```
 
 ```python
