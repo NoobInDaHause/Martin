@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class MartinHelpCommand(commands.HelpCommand):
-    COMMAND_NAME_WIDTH = 20
+    COMMAND_NAME_WIDTH = 15
     context: "MartinContext"
 
     def __init__(self, **options: Any):
