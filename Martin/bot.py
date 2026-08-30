@@ -36,7 +36,15 @@ if TYPE_CHECKING:
 
 def _prefix_callable(bot: "Martin", message: discord.Message) -> List[str]:
     """A callable that returns the prefix for a given message."""
-    return bot._get_prefix(message)
+    default_prefixes = bot.default_prefixes
+    guild_id = str(message.guild.id) if message.guild else None
+    if guild_id:
+        guild_prefixes = bot.guild_prefixes.get(guild_id, default_prefixes)
+    else:
+        guild_prefixes = default_prefixes
+    prefixes = []
+    prefixes.extend(guild_prefixes)
+    return list(dict.fromkeys(prefixes).keys())
 
 
 class Martin(commands.AutoShardedBot):
@@ -71,11 +79,9 @@ class Martin(commands.AutoShardedBot):
     def color(self) -> discord.Colour:
         return self.colour
 
-    def _get_prefix(self, message: discord.Message) -> List[str]:
+    def _get_guild_prefix(self, guild: discord.Guild) -> List[str]:
         """Get the prefix for a given message."""
-        if message.guild is None:
-            return self.default_prefixes
-        return self.guild_prefixes.get(str(message.guild.id), self.default_prefixes)
+        return self.guild_prefixes.get(str(guild.id), self.default_prefixes)
 
     async def get_updates(self) -> Dict[str, str]:
         """Get the latest GitHub version and compare it with the bot version."""
@@ -190,7 +196,7 @@ class Martin(commands.AutoShardedBot):
                 message.author.id,
                 message.channel,
                 message.channel.id,
-                message.content
+                message.content,
             )
             return
         return await super().process_commands(message)
