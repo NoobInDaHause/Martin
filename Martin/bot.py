@@ -197,8 +197,9 @@ class Martin(commands.AutoShardedBot):
 
         if isinstance(error, commands.NotOwner):
             self.log.info(
-                "User %s tried to run an owner only command. Command: %s",
+                "User %s tried to run an owner only command in %s. Command: %s",
                 context.author,
+                context.channel,
                 context.command.qualified_name,
             )
             return
@@ -223,11 +224,10 @@ class Martin(commands.AutoShardedBot):
             else ""
         )
         if isinstance(error, commands.CommandInvokeError):
-            original = error.original
             self.log.error(
                 "Command %s failed.",
                 context.command,
-                exc_info=(type(original), original, original.__traceback__),
+                exc_info=(type(error), error, error.__traceback__),
             )
             await context.send(
                 f"Error in command `'{context.command}'`. {is_this_guy_owner}"
@@ -235,10 +235,16 @@ class Martin(commands.AutoShardedBot):
             return
 
         if isinstance(error, commands.NSFWChannelRequired):
-            await context.send(content="This command can only be used in a NSFW channel.")
+            await context.send(
+                content="This command can only be used in a NSFW channel."
+            )
             return
 
-        self.log.error("Unhandled command error in %s", context.command, exc_info=(type(error), error, error.__traceback__))
+        self.log.error(
+            "Unhandled command error in %s",
+            context.command.qualified_name,
+            exc_info=(type(error), error, error.__traceback__),
+        )
         await context.send(
             f"Error in command `'{context.command}'`. {is_this_guy_owner}"
         )
