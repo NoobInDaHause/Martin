@@ -115,6 +115,7 @@ class General(commands.Cog):
         await initial_message.edit(embed=result_embed)
 
     @commands.command(name="info", aliases=["botinfo"])
+    @commands.bot_has_permissions(embed_links=True)
     async def info(self, ctx: MartinContext) -> None:
         """Check info about the bot."""
         async with ctx.typing():

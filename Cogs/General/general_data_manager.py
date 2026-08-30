@@ -27,7 +27,7 @@ class GeneralDB(DataManager):
         await self.execute(sql)
 
     async def insert_or_update_custom_info(
-        self, update: bool, custom_info: Optional[str] = None
+        self, update: bool, custom_info: str
     ) -> None:
         """Insert or update custom info in the database.
 
@@ -35,7 +35,7 @@ class GeneralDB(DataManager):
         ----------
         update : bool
             Whether to update (True) or insert (False) the data.
-        custom_info : Optional[str]
+        custom_info : str
             The custom info to insert or update.
         """
         if update:
@@ -50,9 +50,7 @@ class GeneralDB(DataManager):
             )
         await self.execute(sql_cmd[0], sql_cmd[1])
 
-    async def get_or_delete_custom_info(
-        self, delete: bool
-    ) -> Optional[str]:
+    async def get_or_delete_custom_info(self, delete: bool) -> Optional[str]:
         """Get or delete custom info from the database.
 
         Parameters
