@@ -317,5 +317,5 @@ class Owner(commands.Cog):
             await ctx.send(content=f"Unblacklisted {format_list(removed)}.")
         if failed:
             await ctx.send(
-                content=f"Failed to unblacklist {format_list(failed)} since they are likely to be a bot, bot owner, or not blacklisted."
+                content=f"Failed to unblacklist {format_list(failed)} since they are likely to be a bot, bot owner, or already blacklisted."
             )
