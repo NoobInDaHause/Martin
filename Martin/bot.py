@@ -158,6 +158,27 @@ class Martin(commands.AutoShardedBot):
         self.log.info("Logged in as %s (ID: %s).", self.user, self.user.id)
         self.log.info("--------------------------------------------------")
 
+        update = await self.get_updates()
+        self.log.info("Checking for Martin updates.")
+        if update["status"] == "error":
+            self.log.warning(update["message"])
+        elif update["status"] == "update_available":
+            self.log.info(
+                f"Update detected: `{update['current_version']}` -> `{update['latest_version']}`"
+            )
+            embed = discord.Embed(
+                title="Hey there :wave:. I have detected a newer version of Martin on GitHub.",
+                description=(
+                    f"`{update['current_version']}` -> `{update['latest_version']}`\n"
+                    f"[View release]({update['release_url']})"
+                ),
+                colour=self.colour,
+                timestamp=discord.utils.utcnow(),
+            )
+            await self.send_to_owners(embed=embed,)
+        else:
+            self.log.info("Martin is up to date.")
+
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot:
             return

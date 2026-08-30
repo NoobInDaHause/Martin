@@ -98,40 +98,6 @@ class Owner(commands.Cog):
         await ctx.send("\n".join(messages))
 
     @commands.is_owner()
-    @commands.bot_has_permissions(embed_links=True)
-    @commands.command(name="checkforupdates")
-    async def checkforupdates(self, ctx: MartinContext) -> None:
-        """
-        Check whether a newer Bot version is available.
-        """
-        update = await self.bot.get_updates()
-        if update["status"] == "error":
-            await ctx.send(update["message"])
-            return
-
-        current_version = update["current_version"]
-        latest_version = update["latest_version"]
-        if update["status"] == "update_available":
-            embed = discord.Embed(
-                title="Update available",
-                description=(
-                    f"`{current_version}` -> `{latest_version}`\n"
-                    f"[View release]({update['release_url']})"
-                ),
-                colour=self.bot.colour,
-                timestamp=discord.utils.utcnow(),
-            )
-        else:
-            embed = discord.Embed(
-                title="Bot is up to date",
-                description=f"Current version: `{current_version}`\n"
-                f"GitHub version: `{latest_version}`",
-                colour=self.bot.colour,
-                timestamp=discord.utils.utcnow(),
-            )
-        await ctx.send(embed=embed)
-
-    @commands.is_owner()
     @commands.command(name="restart")
     async def restart(self, ctx: MartinContext) -> None:
         """Restart the bot process."""

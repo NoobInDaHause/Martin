@@ -137,15 +137,27 @@ class General(commands.Cog):
 
             embed.description = custom_info
             embed.set_thumbnail(url=self.bot.user.display_avatar)
-            embed.add_field(
-                name="Martin Version:", value=self.bot.__version__, inline=True
-            )
+
             embed.add_field(
                 name="Discord.py Version:", value=discord.__version__, inline=True
             )
             embed.add_field(
                 name="Python Version:", value=platform.python_version(), inline=True
             )
+            embed.add_field(name="Martin Version:", value=self.bot.__version__, inline=True)
+
+            update = await self.bot.get_updates()
+            if update["status"] == "error":
+                nam = "GitHub:"
+                ver = "Failed to check for updates."
+            elif update["status"] == "update_available":
+                nam = "New Martin Version:"
+                ver = update['latest_version']
+            else:
+                nam = "GitHub:"
+                ver = "Martin is up to date."
+            embed.add_field(name=nam, value=ver, inline=True)
+
             await ctx.send(embed=embed)
 
     @commands.command(name="invite")

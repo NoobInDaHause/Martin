@@ -182,7 +182,6 @@ General-purpose commands for all users.
 Administrative commands for bot owners only.
 
 **Commands:**
-- `[p]checkforupdates` - Check if a newer version is available on GitHub
 - `[p]restart` - Restart the bot process
 - `[p]shutdown` - Shutdown the bot
 - `[p]cog list` - Show loaded/unloaded cogs
