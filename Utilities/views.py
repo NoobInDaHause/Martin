@@ -115,7 +115,6 @@ class PaginatorView(discord.ui.View):
         self, interaction: "MartinInteraction", button: discord.ui.Button
     ) -> None:
         await interaction.response.defer()
-        await self.on_timeout()
         self.stop()
 
     @discord.ui.button(label="▶", style=discord.ButtonStyle.primary)
@@ -137,7 +136,7 @@ class PaginatorView(discord.ui.View):
                 content="Hmmm no interaction user found... This interaction is now timed out.",
                 ephemeral=True,
             )
-            await self.on_timeout()
+            self.stop()
             return False
         if await interaction.client.is_owner(interaction.user):
             return True
@@ -220,7 +219,6 @@ class ConfirmationView(discord.ui.View):
                 content="Hmmm no interaction user found... This interaction is now timed out.",
                 ephemeral=True,
             )
-            await self.on_timeout()
             self.stop()
             return False
         if await interaction.client.is_owner(interaction.user):

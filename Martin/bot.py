@@ -125,17 +125,16 @@ class Martin(commands.AutoShardedBot):
                 "message": "Unable to connect to GitHub while checking for updates.",
             }
 
-        current_version = str(self.__version__)
         if not latest_version:
             return {"status": "error", "message": "GitHub did not provide a version."}
 
         return {
             "status": (
                 "update_available"
-                if Version(latest_version) > Version(current_version)
+                if Version(latest_version) > Version(self.__version__)
                 else "up_to_date"
             ),
-            "current_version": current_version,
+            "current_version": self.__version__,
             "latest_version": latest_version,
             "release_url": release_url,
         }
@@ -193,7 +192,7 @@ class Martin(commands.AutoShardedBot):
 
         if isinstance(error, commands.BotMissingPermissions):
             permissions = format_list(error.missing_permissions)
-            await context.send(f"I need these permissions: {permissions}.")
+            await context.send(f"I require these permissions: {permissions}.")
             return
 
         if isinstance(error, commands.NotOwner):
@@ -209,7 +208,9 @@ class Martin(commands.AutoShardedBot):
             return
 
         if isinstance(error, commands.MaxConcurrencyReached):
-            await context.send("That command is already running. Try again later.")
+            await context.send(
+                "Command max concurrecy reached, please wait for the previous command to finish."
+            )
             return
 
         if isinstance(error, commands.BadArgument):

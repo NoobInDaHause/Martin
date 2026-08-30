@@ -61,8 +61,7 @@ class Owner(commands.Cog):
             if cog_name not in missing and cog_name not in protected
         ]
         results = [
-            (cog_name, await self.manage_cog(action, cog_name))
-            for cog_name in existing
+            (cog_name, await self.manage_cog(action, cog_name)) for cog_name in existing
         ]
         successful = [cog_name for cog_name, (succeeded, _) in results if succeeded]
         failed = [

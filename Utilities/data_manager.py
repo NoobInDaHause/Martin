@@ -9,7 +9,7 @@ from Utilities.formatting import format_list
 
 class DataManager:
     """Manages database operations for cogs.
-    
+
     This class handles SQLite database connections and executes SQL commands for storing and retrieving cog-specific data.
     """
 
