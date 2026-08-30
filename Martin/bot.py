@@ -204,7 +204,7 @@ class Martin(commands.AutoShardedBot):
             return
 
         if isinstance(error, commands.NoPrivateMessage):
-            await context.send("That command cannot be used in private messages.")
+            await context.send("This command can only be used in guilds.")
             return
 
         if isinstance(error, commands.MaxConcurrencyReached):
@@ -234,7 +234,11 @@ class Martin(commands.AutoShardedBot):
             )
             return
 
-        self.log.error("Unhandled command error in %s: %s", context.command, error)
+        if isinstance(error, commands.NSFWChannelRequired):
+            await context.send(content="This command can only be used in a NSFW channel.")
+            return
+
+        self.log.error("Unhandled command error in %s", context.command, exc_info=(type(error), error, error.__traceback__))
         await context.send(
             f"Error in command `'{context.command}'`. {is_this_guy_owner}"
         )
