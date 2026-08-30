@@ -211,7 +211,7 @@ class Owner(commands.Cog):
         if new_ctx.command is None:
             await ctx.send("No command found, probably a typo.")
         else:
-            await self.bot.invoke(new_ctx)
+            await self.bot.process_commands(fake_message)
 
     @commands.command(name="changecolour", aliases=["changecolor"])
     @commands.is_owner()

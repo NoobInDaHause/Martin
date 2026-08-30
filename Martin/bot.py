@@ -183,8 +183,6 @@ class Martin(commands.AutoShardedBot):
             self.log.info("Martin is up to date.")
 
     async def on_message(self, message: discord.Message) -> None:
-        if message.author.bot:
-            return
         if self.is_blacklisted(message.author) and not await self.is_owner(
             message.author
         ):
