@@ -205,7 +205,7 @@ class MartinHelpCommand(commands.HelpCommand):
                 cog_commands, delims=["\n"], page_length=900
             )
 
-            if field_count >= 10:
+            if field_count >= 5:
                 embed_pages.append(current_embed)
                 current_embed = discord.Embed(colour=self.context.bot.colour)
                 current_embed.set_author(
@@ -218,7 +218,7 @@ class MartinHelpCommand(commands.HelpCommand):
                 field_count = 0
 
             for index, chunk in enumerate(command_chunks, 1):
-                if field_count >= 10:
+                if field_count >= 5:
                     embed_pages.append(current_embed)
                     current_embed = discord.Embed(colour=self.context.bot.colour)
                     current_embed.set_author(
