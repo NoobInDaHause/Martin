@@ -116,6 +116,7 @@ class PaginatorView(discord.ui.View):
     ) -> None:
         await interaction.response.defer()
         self.stop()
+        await self.on_timeout()
 
     @discord.ui.button(label="▶", style=discord.ButtonStyle.primary)
     async def next_page_button(
@@ -137,6 +138,7 @@ class PaginatorView(discord.ui.View):
                 ephemeral=True,
             )
             self.stop()
+            await self.on_timeout()
             return False
         if await interaction.client.is_owner(interaction.user):
             return True
@@ -220,6 +222,7 @@ class ConfirmationView(discord.ui.View):
                 ephemeral=True,
             )
             self.stop()
+            await self.on_timeout()
             return False
         if await interaction.client.is_owner(interaction.user):
             return True

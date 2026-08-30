@@ -176,6 +176,8 @@ class MartinHelpCommand(commands.HelpCommand):
                 [
                     discord.Embed(
                         description="No cogs found.", colour=self.context.bot.colour
+                    ).set_footer(
+                        text=f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
                     )
                 ],
                 timeout=60.0,
@@ -188,9 +190,6 @@ class MartinHelpCommand(commands.HelpCommand):
         current_embed.set_author(
             name=f"{name} Help Menu", icon_url=self.context.bot.user.display_avatar
         )
-        current_embed.set_footer(
-            text=f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
-        )
 
         field_count: int = 0
         for cog in sorted(cog_list, key=lambda c: c.qualified_name.lower()):
@@ -202,7 +201,7 @@ class MartinHelpCommand(commands.HelpCommand):
                 self.format_commands(command_list).strip() or "No commands available."
             )
             command_chunks: List[str] = pagify(
-                cog_commands, delims=["\n"], page_length=900
+                cog_commands, delims=["\n"], page_length=512
             )
 
             if field_count >= 5:
@@ -211,9 +210,6 @@ class MartinHelpCommand(commands.HelpCommand):
                 current_embed.set_author(
                     name=f"{name} Help Menu",
                     icon_url=self.context.bot.user.display_avatar,
-                )
-                current_embed.set_footer(
-                    text=f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
                 )
                 field_count = 0
 
@@ -224,9 +220,6 @@ class MartinHelpCommand(commands.HelpCommand):
                     current_embed.set_author(
                         name=f"{name} Help Menu",
                         icon_url=self.context.bot.user.display_avatar,
-                    )
-                    current_embed.set_footer(
-                        text=f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
                     )
                     field_count = 0
 
@@ -252,7 +245,20 @@ class MartinHelpCommand(commands.HelpCommand):
                 )
             ]
 
-        await PaginatorView(self.context, embed_pages, timeout=60.0).start()
+        final_embeds = []
+
+        for index, embed in enumerate(embed_pages, 1):
+            final_embeds.append(
+                discord.Embed.from_dict(embed.to_dict()).set_footer(
+                    text=(
+                        f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
+                        if len(embed_pages) == 1
+                        else f"Page ({index}/{len(embed_pages)}) | Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
+                    )
+                )
+            )
+
+        await PaginatorView(self.context, final_embeds, timeout=60.0).start()
 
     async def send_cog_help(self, cog: commands.Cog) -> None:
         command_list = await self.filter_commands(cog.get_commands(), sort=True)
