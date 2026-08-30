@@ -126,7 +126,7 @@ class MartinHelpCommand(commands.HelpCommand):
         for command in command_list:
             desc = f"`{command.name:<{self.COMMAND_NAME_WIDTH}}:` {self.command_description(command).splitlines()[0]}"
             if len(desc) >= 57:
-                desc = f"{desc[:57]}...\n"
+                desc = f"{desc[:57]}...\n".replace("[p]", self.context.clean_prefix).replace("[bot]", self.context.bot.user.name)
             else:
                 desc += "\n"
 
