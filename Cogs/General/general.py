@@ -154,7 +154,7 @@ class General(commands.Cog):
                 ver = "Failed to check for updates."
             elif update["status"] == "update_available":
                 nam = "New Martin Version:"
-                ver = f"[{update['latest_version']}]({update['release_url']})"
+                ver = f"[{update['latest_version'].removeprefix('v')}]({update['release_url']})"
             else:
                 nam = "GitHub:"
                 ver = "Martin is up to date."
