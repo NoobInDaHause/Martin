@@ -175,7 +175,9 @@ class Martin(commands.AutoShardedBot):
                 colour=self.colour,
                 timestamp=discord.utils.utcnow(),
             )
-            await self.send_to_owners(embed=embed,)
+            await self.send_to_owners(
+                embed=embed,
+            )
         else:
             self.log.info("Martin is up to date.")
 
@@ -218,9 +220,11 @@ class Martin(commands.AutoShardedBot):
 
         if isinstance(error, commands.NotOwner):
             self.log.info(
-                "User %s tried to run an owner only command in %s. Command: %s",
+                "User %s (%s) tried to run an owner only command in channel #%s (%s). Command: '%s'",
                 context.author,
+                context.author.id,
                 context.channel,
+                context.channel.id,
                 context.command.qualified_name,
             )
             return

@@ -1,4 +1,4 @@
-import contextlib
+import copy
 from io import BytesIO
 from pathlib import Path
 from typing import List, Tuple
@@ -187,3 +187,28 @@ class Owner(commands.Cog):
     async def _cog_reload(self, ctx: MartinContext, *, cog_names: str) -> None:
         """Reload one or more cog extensions."""
         await self.manage_cogs(ctx, "reload", cog_names.split())
+
+    @commands.command(name="sudo")
+    @commands.is_owner()
+    async def sudo(
+        self, ctx: MartinContext, target_user: discord.User, *, command: str
+    ):
+        """
+        Simulates a command being run by another user.
+
+        Can not be used with other bots.
+        """
+        if target_user.bot:
+            return await ctx.send(content="Can not simulate sudo from other bots.")
+
+        fake_message = copy.copy(ctx.message)
+
+        fake_message.author = target_user
+        fake_message.content = f"{ctx.clean_prefix}{command}"
+
+        new_ctx = await self.bot.get_context(fake_message)
+
+        if new_ctx.command is None:
+            await ctx.send("No command found, probably a typo.")
+        else:
+            await self.bot.invoke(new_ctx)
