@@ -229,11 +229,28 @@ class Owner(commands.Cog):
 
     @commands.group(name="blacklist", invoke_without_command=True)
     @commands.is_owner()
+    @commands.bot_has_permissions(embed_links=True)
     async def blacklist(self, ctx: commands.Context):
         """
         Base commands for blacklisting users.
+
+        Shows who are in the naughty list.
         """
-        return await ctx.send_help(ctx.command)
+        blacklisted = []
+        
+        for x in self.bot.blacklisted_user_ids:
+            user = await self.bot.get_or_fetch_user(x)
+            if user is None:
+                blacklisted.append(f"**Unknown User** (`{x}`)")
+            else:
+                blacklisted.append(f"**{user}** (`{user.id}`)")
+
+        embed = discord.Embed(
+            title="List of users in the naughty list.",
+            description="\n".join(blacklisted) or "No users in the naughty list.",
+            colour=self.bot.colour,
+        )
+        await ctx.send(embed=embed)
 
     @blacklist.command(name="add", usage="<users...>")
     @commands.is_owner()
@@ -302,27 +319,3 @@ class Owner(commands.Cog):
             await ctx.send(
                 content=f"Failed to unblacklist {format_list(failed)} since they are likely to be a bot, bot owner, or not blacklisted."
             )
-
-    @blacklist.command(name="list")
-    @commands.is_owner()
-    async def blacklist_list(self, ctx: MartinContext):
-        """
-        Show who are blacklisted.
-
-        Naughty list.
-        """
-        blacklisted = []
-
-        for x in self.bot.blacklisted_user_ids:
-            user = await self.bot.get_or_fetch_user(x)
-            if user is None:
-                blacklisted.append(f"**Unknown User** (`{x}`)")
-            else:
-                blacklisted.append(f"**{user}** (`{user.id}`)")
-
-        embed = discord.Embed(
-            title="List of users in the naughty list.",
-            description="\n".join(blacklisted) or "No users in the naughty list.",
-            colour=self.bot.colour,
-        )
-        await ctx.send(embed=embed)
