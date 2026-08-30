@@ -182,10 +182,8 @@ class Martin(commands.AutoShardedBot):
         else:
             self.log.info("Martin is up to date.")
 
-    async def on_message(self, message: discord.Message) -> None:
-        if self.is_blacklisted(message.author) and not await self.is_owner(
-            message.author
-        ):
+    async def process_commands(self, message: discord.Message) -> None:
+        if self.is_blacklisted(message.author):
             self.log.info(
                 "User %s (%s) is blacklisted and tried to run commands in channel #%s (%s). Command: %s",
                 message.author,
@@ -195,7 +193,7 @@ class Martin(commands.AutoShardedBot):
                 message.content
             )
             return
-        await self.process_commands(message)
+        return await super().process_commands(message)
 
     async def on_command_error(
         self, context: "MartinContext", error: commands.CommandError
