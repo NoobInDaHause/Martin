@@ -186,7 +186,7 @@ class MartinHelpCommand(commands.HelpCommand):
 
         embed_pages: List[discord.Embed] = []
         current_embed: discord.Embed = discord.Embed(colour=self.context.bot.colour)
-        name = self.context.guild.me.nick or self.context.bot.user.name
+        name = self.context.guild.me.nick if self.context.guild else self.context.bot.user.name
         current_embed.set_author(
             name=f"{name} Help Menu", icon_url=self.context.bot.user.display_avatar
         )
@@ -277,7 +277,7 @@ class MartinHelpCommand(commands.HelpCommand):
             description=description,
             colour=self.context.bot.colour,
         )
-        name = self.context.guild.me.nick or self.context.bot.user.name
+        name = self.context.guild.me.nick if self.context.guild else self.context.bot.user.name
         embed.set_author(
             name=f"{name} Help Menu", icon_url=self.context.bot.user.display_avatar
         )
@@ -321,7 +321,7 @@ class MartinHelpCommand(commands.HelpCommand):
             description=desc,
             colour=self.context.bot.colour,
         )
-        name = self.context.guild.me.nick or self.context.bot.user.name
+        name = self.context.guild.me.nick if self.context.guild else self.context.bot.user.name
         embed.set_author(
             name=f"{name} Help Menu", icon_url=self.context.bot.user.display_avatar
         )
@@ -369,7 +369,7 @@ class MartinHelpCommand(commands.HelpCommand):
             description=desc,
             colour=self.context.bot.colour,
         )
-        name = self.context.guild.me.nick or self.context.bot.user.name
+        name = self.context.guild.me.nick if self.context.guild else self.context.bot.user.name
         embed.set_author(
             name=f"{name} Help Menu", icon_url=self.context.bot.user.display_avatar
         )
