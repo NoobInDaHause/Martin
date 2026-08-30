@@ -212,3 +212,17 @@ class Owner(commands.Cog):
             await ctx.send("No command found, probably a typo.")
         else:
             await self.bot.invoke(new_ctx)
+
+    @commands.command(name="changecolour", aliases=["changecolor"])
+    @commands.is_owner()
+    async def changecolour(
+        self, ctx: MartinContext, colour: discord.Colour = "#276a8a"
+    ):
+        """Change the global bot colour."""
+        self.bot.global_hex_colour = str(colour)
+        embed = discord.Embed(
+            description=f"Successfully changed bot colour to {colour}.",
+            colour=self.bot.colour,
+        )
+        self.bot.save_settings()
+        await ctx.send(embed=embed)

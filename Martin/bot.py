@@ -1,4 +1,5 @@
 import contextlib
+import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
@@ -303,4 +304,15 @@ class Martin(commands.AutoShardedBot):
         self.log.info(
             "Cleaning up before %s.", ("shutting down" if not restart else "restarting")
         )
+        self.save_settings()
         return await super().close()
+
+    def save_settings(self):
+        with open(PROJECT_ROOT / "config.json", "w", encoding="utf-8") as conf:
+            data = {
+                "default_prefixes": self.default_prefixes,
+                "guild_prefixes": self.guild_prefixes,
+                "global_hex_colour": self.global_hex_colour,
+                "blacklisted_user_ids": self.blacklisted_user_ids,
+            }
+            json.dump(data, conf, indent=4)
