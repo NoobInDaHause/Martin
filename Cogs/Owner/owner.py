@@ -322,7 +322,7 @@ class Owner(commands.Cog):
 
         embed = discord.Embed(
             title="List of users in the naughty list.",
-            description="\n".join(blacklisted),
+            description="\n".join(blacklisted) or "No users in the naughty list.",
             colour=self.bot.colour,
         )
         await ctx.send(embed=embed)
