@@ -218,11 +218,111 @@ class Owner(commands.Cog):
     async def changecolour(
         self, ctx: MartinContext, colour: discord.Colour = "#276a8a"
     ):
-        """Change the global bot colour."""
+        """Change the global embed bot colour."""
         self.bot.global_hex_colour = str(colour)
         embed = discord.Embed(
             description=f"Successfully changed bot colour to {colour}.",
             colour=self.bot.colour,
         )
         self.bot.save_settings()
+        await ctx.send(embed=embed)
+
+    @commands.group(name="blacklist", invoke_without_command=True)
+    @commands.is_owner()
+    async def blacklist(self, ctx: commands.Context):
+        """
+        Base commands for blacklisting users.
+        """
+        return await ctx.send_help(ctx.command)
+
+    @blacklist.command(name="add", usage="<users...>")
+    @commands.is_owner()
+    async def blacklist_add(
+        self, ctx: MartinContext, users: commands.Greedy[discord.User]
+    ):
+        """
+        Add users to the [bot]'s blacklist.
+
+        Can not add bots or bot owners or users already in blacklist to the blacklist.
+        """
+        added = []
+        failed = []
+        if not users:
+            return await ctx.send_help(ctx.command)
+
+        for user in users:
+            if (
+                await self.bot.is_owner(user)
+                or user.bot
+                or self.bot.is_blacklisted(user)
+            ):
+                failed.append(f"**{user.name}** (`{user.id}`)")
+                continue
+            self.bot.blacklisted_user_ids.append(user.id)
+            added.append(f"**{user.name}** (`{user.id}`)")
+
+        if added:
+            self.bot.save_settings()
+            await ctx.send(content=f"Blacklisted {format_list(added)}.")
+        if failed:
+            await ctx.send(
+                content=f"Failed to blacklist {format_list(failed)} since they are likely to be a bot, bot owner, or already blacklisted."
+            )
+
+    @blacklist.command(name="remove", usage="<users...>")
+    @commands.is_owner()
+    async def blacklist_remove(
+        self, ctx: MartinContext, users: commands.Greedy[discord.User]
+    ):
+        """
+        Remove users from the [bot]'s blacklist.
+
+        Can not remove users from the blacklist if they are not blacklisted.
+        """
+        removed = []
+        failed = []
+        if not users:
+            return await ctx.send_help(ctx.command)
+
+        for user in users:
+            if (
+                await self.bot.is_owner(user)
+                or user.bot
+                or not self.bot.is_blacklisted(user)
+            ):
+                failed.append(f"**{user.name}** (`{user.id}`)")
+                continue
+            self.bot.blacklisted_user_ids.remove(user.id)
+            removed.append(f"**{user.name}** (`{user.id}`)")
+
+        if removed:
+            self.bot.save_settings()
+            await ctx.send(content=f"Unblacklisted {format_list(removed)}.")
+        if failed:
+            await ctx.send(
+                content=f"Failed to unblacklist {format_list(failed)} since they are likely to be a bot, bot owner, or not blacklisted."
+            )
+
+    @blacklist.command(name="list")
+    @commands.is_owner()
+    async def blacklist_list(self, ctx: MartinContext):
+        """
+        Show who are blacklisted.
+
+        Naughty list.
+        """
+        blacklisted = []
+
+        for x in self.bot.blacklisted_user_ids:
+            user = await self.bot.get_or_fetch_user(x)
+            if user is None:
+                blacklisted.append(f"**Unknown User** (`{x}`)")
+            else:
+                blacklisted.append(f"**{user}** (`{user.id}`)")
+
+        embed = discord.Embed(
+            title="List of users in the naughty list.",
+            description="\n".join(blacklisted),
+            colour=self.bot.colour,
+        )
         await ctx.send(embed=embed)

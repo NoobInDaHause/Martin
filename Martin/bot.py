@@ -188,6 +188,14 @@ class Martin(commands.AutoShardedBot):
         if self.is_blacklisted(message.author) and not await self.is_owner(
             message.author
         ):
+            self.log.info(
+                "User %s (%s) is blacklisted and tried to run commands in channel #%s (%s). Command: %s",
+                message.author,
+                message.author.id,
+                message.channel,
+                message.channel.id,
+                message.content
+            )
             return
         await self.process_commands(message)
 
