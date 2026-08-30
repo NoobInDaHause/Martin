@@ -171,19 +171,19 @@ class Owner(commands.Cog):
         await ctx.send(file=cog_file)
 
     @commands.is_owner()
-    @_cog.command(name="load", usage="<cog_names...>")
+    @_cog.command(name="load")
     async def _cog_load(self, ctx: MartinContext, *, cog_names: str) -> None:
         """Load one or more cog extensions."""
         await self.manage_cogs(ctx, "load", cog_names.split())
 
     @commands.is_owner()
-    @_cog.command(name="unload", usage="<cog_names...>")
+    @_cog.command(name="unload")
     async def _cog_unload(self, ctx: MartinContext, *, cog_names: str) -> None:
         """Unload one or more cog extensions."""
         await self.manage_cogs(ctx, "unload", cog_names.split())
 
     @commands.is_owner()
-    @_cog.command(name="reload", usage="<cog_names...>")
+    @_cog.command(name="reload")
     async def _cog_reload(self, ctx: MartinContext, *, cog_names: str) -> None:
         """Reload one or more cog extensions."""
         await self.manage_cogs(ctx, "reload", cog_names.split())
