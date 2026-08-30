@@ -122,19 +122,20 @@ class General(commands.Cog):
             app_info = await self.bot.application_info()
             owner = f"Team {app_info.team.name}" if app_info.team else app_info.owner
             embed = discord.Embed(
-                title=f"Instance owned by `{owner}`.",
-                description=f"Instance owned by `{owner}`.",
+                title=f"Instance owned by `{owner}`",
+                description=(
+                    "This bot is a custom instance of [Martin](https://github.com/NoobInDaHause/Martin), "
+                    "an open-source Discord ~~BOT~~ APP built with Python & `discord.py`.\n\n"
+                    "• **Source:** [GitHub](https://github.com/NoobInDaHause/Martin)\n"
+                    "• **License:** MIT\n\n"
+                    "Want your own copy? Check out the repo to host or build one yourself!"
+                ),
                 timestamp=datetime.now(timezone.utc),
                 colour=self.bot.colour,
             )
-            custom_info = (
-                "This bot is an instance of [Martin](https://github.com/NoobInDaHause/Martin) an open source discord ~~bot~~ APP "
-                "written in Python. Make one yourself today."
-            )
             if c_i := await self.db.get_or_delete_custom_info(False):
-                custom_info += f"\n\n{c_i}"
+                embed.description = embed.description + f"\n\n**Custom Info:**\n{c_i}"
 
-            embed.description = custom_info
             embed.set_thumbnail(url=self.bot.user.display_avatar)
 
             embed.add_field(
@@ -144,7 +145,7 @@ class General(commands.Cog):
                 name="Python Version:", value=platform.python_version(), inline=True
             )
             embed.add_field(
-                name="Martin Version:", value=self.bot.__version__, inline=True
+                name="Martin Version:", value=self.bot.__version__.removeprefix("v"), inline=True
             )
 
             update = await self.bot.get_updates()
