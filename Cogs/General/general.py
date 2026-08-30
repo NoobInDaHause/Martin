@@ -122,13 +122,12 @@ class General(commands.Cog):
             app_info = await self.bot.application_info()
             owner = f"Team {app_info.team.name}" if app_info.team else app_info.owner
             embed = discord.Embed(
-                title=f"{self.bot.user.name} info",
+                title=f"Instance owned by `{owner}`.",
                 description=f"Instance owned by `{owner}`.",
                 timestamp=datetime.now(timezone.utc),
                 colour=self.bot.colour,
             )
             custom_info = (
-                f"Instance owned by `{owner}`.\n\n"
                 "This bot is an instance of [Martin](https://github.com/NoobInDaHause/Martin) an open source discord ~~bot~~ APP "
                 "written in Python. Make one yourself today."
             )
@@ -144,7 +143,9 @@ class General(commands.Cog):
             embed.add_field(
                 name="Python Version:", value=platform.python_version(), inline=True
             )
-            embed.add_field(name="Martin Version:", value=self.bot.__version__, inline=True)
+            embed.add_field(
+                name="Martin Version:", value=self.bot.__version__, inline=True
+            )
 
             update = await self.bot.get_updates()
             if update["status"] == "error":
@@ -152,7 +153,7 @@ class General(commands.Cog):
                 ver = "Failed to check for updates."
             elif update["status"] == "update_available":
                 nam = "New Martin Version:"
-                ver = update['latest_version']
+                ver = f"[{update['latest_version']}]({update['release_url']})"
             else:
                 nam = "GitHub:"
                 ver = "Martin is up to date."
