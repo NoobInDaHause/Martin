@@ -12,7 +12,7 @@ def run_bot() -> None:
         level=logging.INFO,
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler(Path(__file__).parents[1] / "logs.log", "w"),
+            logging.FileHandler(Path(__file__).parent / "logs.log", "w"),
         ],
         format="[{asctime}] [{levelname}] {name:<15}: {message}",
         datefmt="%Y-%m-%d %H:%M:%S",
