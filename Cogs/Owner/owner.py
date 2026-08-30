@@ -1,7 +1,7 @@
 import copy
 from io import BytesIO
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import discord
 from discord.ext import commands
@@ -237,7 +237,7 @@ class Owner(commands.Cog):
         Shows who are in the naughty list.
         """
         blacklisted = []
-        
+
         for x in self.bot.blacklisted_user_ids:
             user = await self.bot.get_or_fetch_user(x)
             if user is None:
@@ -319,3 +319,21 @@ class Owner(commands.Cog):
             await ctx.send(
                 content=f"Failed to unblacklist {format_list(failed)} since they are likely to be a bot, bot owner, or already blacklisted."
             )
+
+    @commands.command(name="setprefix")
+    @commands.is_owner()
+    async def setprefix(self, ctx: MartinContext, *, prefixes: Optional[str] = None):
+        """
+        Set [bot]'s prefix(es).
+
+        Leave blank to reset to default prefix(es): [">"]
+        """
+        if not prefixes:
+            prefixes = [">"]
+
+        prefixes = prefixes.split()
+        self.bot.default_prefixes = prefixes
+        self.bot.save_settings()
+        await ctx.send(
+            content=f"Set {ctx.bot.user.name}'s prefix(es) to {format_list(prefixes)}."
+        )
