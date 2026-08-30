@@ -213,9 +213,17 @@ class Owner(commands.Cog):
         else:
             await self.bot.process_commands(fake_message)
 
-    @commands.command(name="changecolour", aliases=["changecolor"])
+    @commands.group(name="set", invoke_without_command=True)
     @commands.is_owner()
-    async def changecolour(
+    async def _set(self, ctx: MartinContext):
+        """
+        Set [bot]'s settings.
+        """
+        return await ctx.send_help()
+
+    @_set.command(name="colour", aliases=["color"])
+    @commands.is_owner()
+    async def _set_colour(
         self, ctx: MartinContext, colour: discord.Colour = "#276a8a"
     ):
         """Change the global embed bot colour."""
@@ -227,10 +235,29 @@ class Owner(commands.Cog):
         self.bot.save_settings()
         await ctx.send(embed=embed)
 
-    @commands.group(name="blacklist", invoke_without_command=True)
+    @_set.command(name="prefix")
+    @commands.is_owner()
+    async def _set_prefix(self, ctx: MartinContext, *, prefixes: Optional[str] = None):
+        """
+        Set [bot]'s prefix(es).
+
+        Leave blank to reset to default prefix(es): [">"]
+        """
+        if not prefixes:
+            prefixes = [">"]
+        else:
+            prefixes = prefixes.split()
+
+        self.bot.default_prefixes = prefixes
+        self.bot.save_settings()
+        await ctx.send(
+            content=f"Set {ctx.bot.user.name}'s prefix(es) to {format_list(prefixes)}."
+        )
+
+    @_set.group(name="blacklist", invoke_without_command=True)
     @commands.is_owner()
     @commands.bot_has_permissions(embed_links=True)
-    async def blacklist(self, ctx: commands.Context):
+    async def _set_blacklist(self, ctx: commands.Context):
         """
         Base commands for blacklisting users.
 
@@ -252,7 +279,7 @@ class Owner(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @blacklist.command(name="add", usage="<users...>")
+    @_set_blacklist.command(name="add", usage="<users...>")
     @commands.is_owner()
     async def blacklist_add(
         self, ctx: MartinContext, users: commands.Greedy[discord.User]
@@ -286,7 +313,7 @@ class Owner(commands.Cog):
                 content=f"Failed to blacklist {format_list(failed)} since they are likely to be a bot, bot owner, or already blacklisted."
             )
 
-    @blacklist.command(name="remove", usage="<users...>")
+    @_set_blacklist.command(name="remove", usage="<users...>")
     @commands.is_owner()
     async def blacklist_remove(
         self, ctx: MartinContext, users: commands.Greedy[discord.User]
@@ -319,30 +346,3 @@ class Owner(commands.Cog):
             await ctx.send(
                 content=f"Failed to unblacklist {format_list(failed)} since they are likely to be a bot, bot owner, or already blacklisted."
             )
-
-    @commands.group(name="set", invoke_without_command=True)
-    @commands.is_owner()
-    async def set(self, ctx: MartinContext):
-        """
-        Set [bot]'s settings.
-        """
-        return await ctx.send_help()
-
-    @commands.command(name="setprefix")
-    @commands.is_owner()
-    async def setprefix(self, ctx: MartinContext, *, prefixes: Optional[str] = None):
-        """
-        Set [bot]'s prefix(es).
-
-        Leave blank to reset to default prefix(es): [">"]
-        """
-        if not prefixes:
-            prefixes = [">"]
-        else:
-            prefixes = prefixes.split()
-
-        self.bot.default_prefixes = prefixes
-        self.bot.save_settings()
-        await ctx.send(
-            content=f"Set {ctx.bot.user.name}'s prefix(es) to {format_list(prefixes)}."
-        )
