@@ -152,4 +152,4 @@ def format_list(lst: List[str], style: Optional[str] = "and") -> str:
     if length == 2:
         return f"{items[0]} {style} {items[1]}"
     last_item = items.pop()
-    return ", ".join(items) + " " + f"{style} {last_item}"
+    return ", ".join(items) + f"{style} {last_item}"

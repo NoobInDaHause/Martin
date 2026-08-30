@@ -1,10 +1,10 @@
 import inspect
-from typing import TYPE_CHECKING, Any, List, Mapping
+from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Union
 
 import discord
 from discord.ext import commands
 
-from Utilities.formatting import format_list, pagify
+from Utilities.formatting import format_list, format_time, pagify
 from Utilities.views import PaginatorView
 
 if TYPE_CHECKING:
@@ -15,23 +15,78 @@ class MartinHelpCommand(commands.HelpCommand):
     COMMAND_NAME_WIDTH = 15
     context: "MartinContext"
 
-    def __init__(self, **options: Any) -> None:
-        command_attrs: dict[str, Any] = options.setdefault("command_attrs", {})
-        command_attrs.update(
-            {
-                "cooldown": commands.CooldownMapping.from_cooldown(
-                    1, 3.0, commands.BucketType.user
-                ),
-                "help": "Shows help about the bot, command or category.",
-                "hidden": True,
-                "aliases": ["h", "hilfe", "hjelp", "cananyonehelpme"],
-            }
-        )
-        super().__init__(**options)
-
     @staticmethod
     def command_description(command: commands.Command) -> str:
         return inspect.cleandoc(command.help or "No description provided.")
+
+    def test(self):
+        self.add_check()
+
+    @staticmethod
+    def get_bot_permissions(command: commands.Command) -> Optional[str]:
+        source_lines = inspect.getsource(command.callback).split("\n")
+        for line in source_lines:
+            if "@" in line and "bot_has_permissions" in line:
+                permissions = line.split("(")[1].replace(")", "").split(",")
+                final_permissions = [
+                    perm.strip().split("=")[0]
+                    for perm in permissions
+                    if perm.strip().split("=")[1] == "True"
+                ]
+                list_str = [
+                    f"**{perm.replace('_', ' ').strip().title()}**"
+                    for perm in final_permissions
+                ]
+                return format_list(list(sorted(list_str)))
+
+    @staticmethod
+    def get_user_permissions(
+        command: Union[commands.Command, commands.Group]
+    ) -> Optional[str]:
+        source_lines = inspect.getsource(command.callback).split("\n")
+        list_str = []
+        for check in command.checks:
+            if "is_owner" in str(check):
+                list_str.append("**Bot Owner**")
+                break
+        for line in source_lines:
+            if "@" in line and "has_permissions" in line and "bot" not in line:
+                permissions = line.split("(")[1].replace(")", "").split(",")
+                final_permissions = [
+                    perm.strip().split("=")[0]
+                    for perm in permissions
+                    if perm.strip().split("=")[1] == "True"
+                ]
+                list_str.extend(
+                    [f"**{p.replace('_', ' ').title()}**" for p in final_permissions]
+                )
+                break
+        return format_list(list(sorted(list_str)), "or")
+
+    @staticmethod
+    def get_command_cooldown_and_max_concurrency(
+        command: Union[commands.Command, commands.Group]
+    ) -> Optional[str]:
+        cooldowns = []
+        if cd := command._buckets._cooldown:
+            txt = (
+                f"`Can be run`: **{cd.rate}** time{'s' if cd.rate > 1 else ''} every "
+                f"**{format_time(seconds=cd.per)}**"
+            )
+            if buckettype := getattr(cd, "type", None):
+                if bucketname := getattr(buckettype, "name", None):
+                    txt += f" per **{bucketname}**"
+            cooldowns.append(txt)
+
+        if mc := command._max_concurrency:
+            cooldowns.append(
+                f"`Maximum concurrent uses`: **{mc.number:,}** "
+                f"time{'s' if mc.number > 1 else ''} per **{mc.per.name.capitalize()}**"
+            )
+
+        return "\n".join(cooldowns)
+
+
 
     def split_subcommand_embed(
         self, embed: discord.Embed, command_str: str
@@ -236,7 +291,7 @@ class MartinHelpCommand(commands.HelpCommand):
             "[bot]", self.context.bot.user.name
         )
         desc += (
-            "".join(cmd_descs)
+            "\n".join(cmd_descs)
             .replace("[p]", prefix)
             .replace("[bot]", self.context.bot.user.name)
             .strip()
@@ -254,6 +309,12 @@ class MartinHelpCommand(commands.HelpCommand):
         embed.set_footer(
             text=f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
         )
+        if bp := self.get_bot_permissions(command):
+            embed.add_field(name="Bot Permissions:", value=bp, inline=False)
+        if up := self.get_user_permissions(command):
+            embed.add_field(name="User Permissions:", value=up, inline=False)
+        if cd := self.get_command_cooldown_and_max_concurrency(command):
+            embed.add_field(name="Cooldown:", value=cd, inline=False)
 
         await PaginatorView(self.context, [embed], 60.0).start()
 
@@ -278,7 +339,7 @@ class MartinHelpCommand(commands.HelpCommand):
             "[bot]", self.context.bot.user.name
         )
         desc += (
-            "".join(cmd_descs)
+            "\n".join(cmd_descs)
             .replace("[p]", prefix)
             .replace("[bot]", self.context.bot.user.name)
             .strip()
@@ -296,6 +357,13 @@ class MartinHelpCommand(commands.HelpCommand):
         embed.set_footer(
             text=f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
         )
+
+        if bp := self.get_bot_permissions(group):
+            embed.add_field(name="Bot Permissions:", value=bp, inline=False)
+        if up := self.get_user_permissions(group):
+            embed.add_field(name="User Permissions:", value=up, inline=False)
+        if cd := self.get_command_cooldown_and_max_concurrency(group):
+            embed.add_field(name="Cooldown:", value=cd, inline=False)
 
         await PaginatorView(
             self.context,

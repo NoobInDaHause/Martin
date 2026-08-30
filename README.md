@@ -265,7 +265,7 @@ from Utilities.formatting import format_list, format_time, pagify
 
 # Format a list
 text = format_list(["item1", "item2", "item3"], style="and")
-# Output: "item1, item2 and item3"
+# Output: "item1, item2, and item3"
 
 # Format time in seconds
 text = format_time(3661)  # Returns: "1 hour and 1 minute"

@@ -15,6 +15,19 @@ from .help_command import MartinHelpCommand
 from .settings import PROJECT_ROOT, Settings
 
 GITHUB_REPOSITORY = "NoobInDaHause/Martin"
+HELP_COMMAND_ATTRS = {
+    "cooldown": commands.CooldownMapping.from_cooldown(
+        1, 3.0, commands.BucketType.user
+    ),
+    "help": (
+        "Shows help about the bot, command or category.\n\n"
+        "Ich brauche hier etwas Hilfe.\n"
+        "Trenger litt hjelp her.\n"
+        "J'ai besoin d'aide."
+    ),
+    "hidden": True,
+    "aliases": ["h", "hilfe", "hjelp", "cananyonehelpme"],
+}
 
 if TYPE_CHECKING:
     from .context import MartinContext
@@ -34,7 +47,7 @@ class Martin(commands.AutoShardedBot):
         super().__init__(
             command_prefix=_prefix_callable,
             intents=discord.Intents.all(),
-            help_command=MartinHelpCommand(),
+            help_command=MartinHelpCommand(command_attrs=HELP_COMMAND_ATTRS),
             description="A Discord bot/app written in Python.",
         )
         self.default_prefixes = settings.default_prefixes
