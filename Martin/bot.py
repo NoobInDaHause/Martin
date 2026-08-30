@@ -21,7 +21,7 @@ HELP_COMMAND_ATTRS = {
         1, 3.0, commands.BucketType.user
     ),
     "help": (
-        "Shows help about the bot, command or category.\n\n"
+        "Shows help about the bot, command or cog.\n\n"
         "Ich brauche hier etwas Hilfe.\n"
         "Trenger litt hjelp her.\n"
         "J'ai besoin d'aide."
