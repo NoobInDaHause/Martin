@@ -212,7 +212,7 @@ class Owner(commands.Cog):
     ) -> None:
         """Load one or more cog extensions."""
         if not cog_names:
-            await ctx.send_help()
+            await ctx.send_help(ctx.command)
             return
         await self.manage_cogs(ctx, "load", cog_names)
 
@@ -223,7 +223,7 @@ class Owner(commands.Cog):
     ) -> None:
         """Unload one or more cog extensions."""
         if not cog_names:
-            await ctx.send_help()
+            await ctx.send_help(ctx.command)
             return
         await self.manage_cogs(ctx, "unload", cog_names)
 
@@ -234,6 +234,6 @@ class Owner(commands.Cog):
     ) -> None:
         """Reload one or more cog extensions."""
         if not cog_names:
-            await ctx.send_help()
+            await ctx.send_help(ctx.command)
             return
         await self.manage_cogs(ctx, "reload", cog_names)

@@ -19,11 +19,16 @@ class MartinHelpCommand(commands.HelpCommand):
     def command_description(command: commands.Command) -> str:
         return inspect.cleandoc(command.help or "No description provided.")
 
-    def test(self):
-        self.add_check()
+    async def command_callback(self, ctx: "MartinContext", /, *, command=None):
+        check = commands.bot_has_permissions(embed_links=True)
+        await check.predicate(ctx)
+        return await super().command_callback(ctx, command=command)
 
     @staticmethod
     def get_bot_permissions(command: commands.Command) -> Optional[str]:
+        if command.qualified_name == "help":
+            return "`Embed Links`"
+
         source_lines = inspect.getsource(command.callback).split("\n")
         for line in source_lines:
             if "@" in line and "bot_has_permissions" in line:
@@ -34,20 +39,20 @@ class MartinHelpCommand(commands.HelpCommand):
                     if perm.strip().split("=")[1] == "True"
                 ]
                 list_str = [
-                    f"**{perm.replace('_', ' ').strip().title()}**"
+                    f"`{perm.replace('_', ' ').strip().title()}`"
                     for perm in final_permissions
                 ]
                 return format_list(list(sorted(list_str)))
 
     @staticmethod
     def get_user_permissions(
-        command: Union[commands.Command, commands.Group]
+        command: Union[commands.Command, commands.Group],
     ) -> Optional[str]:
         source_lines = inspect.getsource(command.callback).split("\n")
         list_str = []
         for check in command.checks:
             if "is_owner" in str(check):
-                list_str.append("**Bot Owner**")
+                list_str.append("`Bot Owner`")
                 break
         for line in source_lines:
             if "@" in line and "has_permissions" in line and "bot" not in line:
@@ -58,19 +63,19 @@ class MartinHelpCommand(commands.HelpCommand):
                     if perm.strip().split("=")[1] == "True"
                 ]
                 list_str.extend(
-                    [f"**{p.replace('_', ' ').title()}**" for p in final_permissions]
+                    [f"`{p.replace('_', ' ').title()}`" for p in final_permissions]
                 )
                 break
         return format_list(list(sorted(list_str)), "or")
 
     @staticmethod
     def get_command_cooldown_and_max_concurrency(
-        command: Union[commands.Command, commands.Group]
+        command: Union[commands.Command, commands.Group],
     ) -> Optional[str]:
         cooldowns = []
         if cd := command._buckets._cooldown:
             txt = (
-                f"`Can be run`: **{cd.rate}** time{'s' if cd.rate > 1 else ''} every "
+                f"`Can be run:` **{cd.rate}** time{'s' if cd.rate > 1 else ''} every "
                 f"**{format_time(seconds=cd.per)}**"
             )
             if buckettype := getattr(cd, "type", None):
@@ -80,13 +85,11 @@ class MartinHelpCommand(commands.HelpCommand):
 
         if mc := command._max_concurrency:
             cooldowns.append(
-                f"`Maximum concurrent uses`: **{mc.number:,}** "
+                f"`Maximum concurrent uses:` **{mc.number:,}** "
                 f"time{'s' if mc.number > 1 else ''} per **{mc.per.name.capitalize()}**"
             )
 
         return "\n".join(cooldowns)
-
-
 
     def split_subcommand_embed(
         self, embed: discord.Embed, command_str: str
@@ -98,7 +101,11 @@ class MartinHelpCommand(commands.HelpCommand):
         for index, page in enumerate(pagified_str, 1):
             new_embed = discord.Embed.from_dict(embed.to_dict())
             new_embed.add_field(
-                name="Subcommands:" if index == 1 else "Subcommands (continued):",
+                name=(
+                    "Subcommands:"
+                    if len(pagified_str) == 1
+                    else f"Subcommands ({index}/{len(pagified_str)}):"
+                ),
                 value=page,
                 inline=False,
             )
@@ -130,14 +137,18 @@ class MartinHelpCommand(commands.HelpCommand):
     def split_command_field_embed(
         self, embed: discord.Embed, command_str: str
     ) -> List[discord.Embed]:
-        pagified_str: List[str] = pagify(command_str, delims=["\n"], page_length=1024)
+        pagified_str: List[str] = pagify(command_str, delims=["\n"], page_length=512)
 
         embeds: List[discord.Embed] = []
 
         for index, page in enumerate(pagified_str, 1):
             new_embed = discord.Embed.from_dict(embed.to_dict())
             new_embed.add_field(
-                name="Commands:" if index == 1 else "Commands (continued):",
+                name=(
+                    "Commands:"
+                    if len(pagified_str) == 1
+                    else f"Commands ({index}/{len(pagified_str)}):"
+                ),
                 value=page,
                 inline=False,
             )
@@ -276,11 +287,13 @@ class MartinHelpCommand(commands.HelpCommand):
         pages = self.split_command_field_embed(embed, command_text)
         await PaginatorView(self.context, pages, timeout=60.0).start()
 
-    async def send_command_help(self, command: commands.Command) -> None:
+    async def send_command_help(
+        self, command: Union[commands.Command, commands.Group]
+    ) -> None:
         prefix = self.context.clean_prefix
         desc = (
             "```properties\n"
-            f"Usage: {prefix}{command.qualified_name} {command.signature}\n"
+            f"Usage: {prefix}{command.qualified_name} {command.signature.replace(']...', '...]')}\n"
             f"{f'Aliases: {format_list([alias for alias in command.aliases])}\n' if command.aliases else ''}"
             "```"
         )
