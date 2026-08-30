@@ -328,10 +328,8 @@ class Owner(commands.Cog):
 
         Leave blank to reset to default prefix(es): [">"]
         """
-        if not prefixes:
-            prefixes = [">"]
+        prefixes = prefixes.split() or [">"]
 
-        prefixes = prefixes.split()
         self.bot.default_prefixes = prefixes
         self.bot.save_settings()
         await ctx.send(
