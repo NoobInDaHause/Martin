@@ -9,11 +9,8 @@ if TYPE_CHECKING:
 class MartinInteraction(discord.Interaction):
     client: "Martin"
 
-
-async def response_or_followup(
-    interaction: "MartinInteraction", *args, **kwargs
-) -> discord.InteractionMessage:
-    if interaction.response.is_done():
-        return await interaction.followup.send(*args, **kwargs)
-    await interaction.response.send_message(*args, **kwargs)
-    return await interaction.original_response()
+    async def response_or_followup(self, *args, **kwargs) -> discord.InteractionMessage:
+        if self.response.is_done():
+            return await self.followup.send(*args, **kwargs)
+        await self.response.send_message(*args, **kwargs)
+        return await self.original_response()

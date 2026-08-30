@@ -135,7 +135,7 @@ class Owner(commands.Cog):
         """
         Base commands for managing cogs.
         """
-        return await ctx.send_help(ctx.command)
+        return await ctx.send_help()
 
     @commands.is_owner()
     @commands.bot_has_permissions(attach_files=True)
@@ -265,7 +265,7 @@ class Owner(commands.Cog):
         added = []
         failed = []
         if not users:
-            return await ctx.send_help(ctx.command)
+            return await ctx.send_help()
 
         for user in users:
             if (
@@ -299,7 +299,7 @@ class Owner(commands.Cog):
         removed = []
         failed = []
         if not users:
-            return await ctx.send_help(ctx.command)
+            return await ctx.send_help()
 
         for user in users:
             if (
@@ -319,6 +319,14 @@ class Owner(commands.Cog):
             await ctx.send(
                 content=f"Failed to unblacklist {format_list(failed)} since they are likely to be a bot, bot owner, or already blacklisted."
             )
+
+    @commands.group(name="set", invoke_without_command=True)
+    @commands.is_owner()
+    async def set(self, ctx: MartinContext):
+        """
+        Set [bot]'s settings.
+        """
+        return await ctx.send_help()
 
     @commands.command(name="setprefix")
     @commands.is_owner()

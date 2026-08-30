@@ -3,7 +3,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Union, cast
+from typing import Dict, List, Union, cast
 
 import aiohttp
 import discord
@@ -12,8 +12,10 @@ from discord.utils import MISSING
 from packaging.version import Version
 
 from Utilities.formatting import format_list, format_time
+from .context import MartinContext
 from .help_command import MartinHelpCommand
 from .settings import PROJECT_ROOT, Settings
+from .tree import MartinTree
 
 GITHUB_REPOSITORY = "NoobInDaHause/Martin"
 HELP_COMMAND_ATTRS = {
@@ -29,9 +31,6 @@ HELP_COMMAND_ATTRS = {
     "hidden": True,
     "aliases": ["h", "hilfe", "hjelp", "cananyonehelpme"],
 }
-
-if TYPE_CHECKING:
-    from .context import MartinContext
 
 
 def _prefix_callable(bot: "Martin", message: discord.Message) -> List[str]:
@@ -58,6 +57,7 @@ class Martin(commands.AutoShardedBot):
             intents=discord.Intents.all(),
             help_command=MartinHelpCommand(command_attrs=HELP_COMMAND_ATTRS),
             description="A Discord bot/app written in Python.",
+            tree_cls=MartinTree
         )
         self.default_prefixes = settings.default_prefixes
         self.guild_prefixes = settings.guild_prefixes
@@ -202,7 +202,7 @@ class Martin(commands.AutoShardedBot):
         return await super().process_commands(message)
 
     async def on_command_error(
-        self, context: "MartinContext", error: commands.CommandError
+        self, context: MartinContext, error: commands.CommandError
     ) -> None:
         if isinstance(error, (commands.CommandNotFound, commands.DisabledCommand)):
             return
@@ -216,7 +216,7 @@ class Martin(commands.AutoShardedBot):
             return
 
         if isinstance(error, commands.MissingRequiredArgument):
-            await context.send_help(context.command)
+            await context.send_help()
             return
 
         if isinstance(error, commands.MissingPermissions):
@@ -285,7 +285,9 @@ class Martin(commands.AutoShardedBot):
             f"Error in command `'{context.command}'`. {is_this_guy_owner}"
         )
 
-    async def get_context(self, origin, /, *, cls=MISSING) -> "MartinContext":
+    async def get_context(self, origin, /, *, cls=MISSING) -> MartinContext:
+        if cls is MISSING:
+            cls = MartinContext
         return await super().get_context(origin, cls=cls)
 
     async def get_or_fetch_user(self, user_id: int) -> discord.User:

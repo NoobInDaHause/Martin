@@ -3,8 +3,6 @@ from typing import TYPE_CHECKING, List, Optional, Union
 
 import discord
 
-from Martin.interaction import response_or_followup
-
 if TYPE_CHECKING:
     from Martin import MartinContext, MartinInteraction
 
@@ -29,8 +27,7 @@ class PaginatorView(discord.ui.View):
     async def start(self) -> None:
         content, embed = self.page_to_content(self.pages[self.current_page])
         if isinstance(self.obj, discord.Interaction):
-            self.message = await response_or_followup(
-                self.obj,
+            self.message = await self.obj.response_or_followup(
                 content=content,
                 embed=embed,
                 view=self,
@@ -132,8 +129,7 @@ class PaginatorView(discord.ui.View):
 
     async def interaction_check(self, interaction: "MartinInteraction") -> bool:
         if not interaction.user:
-            await response_or_followup(
-                interaction,
+            await interaction.response_or_followup(
                 content="Hmmm no interaction user found... This interaction is now timed out.",
                 ephemeral=True,
             )
@@ -148,8 +144,7 @@ class PaginatorView(discord.ui.View):
             else self.obj.author
         )
         if interaction.user.id != author.id:
-            await response_or_followup(
-                interaction,
+            await interaction.response_or_followup(
                 content="You are not authorized to interact with this interaction.",
                 ephemeral=True,
             )
@@ -183,7 +178,7 @@ class ConfirmationView(discord.ui.View):
 
     async def start(self, *args, **kwargs) -> None:
         self.message = (
-            await response_or_followup(self.obj, *args, **kwargs)
+            await self.obj.response_or_followup(*args, **kwargs)
             if isinstance(self.obj, discord.Interaction)
             else await self.obj.send(*args, **kwargs)
         )
@@ -216,8 +211,7 @@ class ConfirmationView(discord.ui.View):
 
     async def interaction_check(self, interaction: "MartinInteraction") -> bool:
         if not interaction.user:
-            await response_or_followup(
-                interaction,
+            await interaction.response_or_followup(
                 content="Hmmm no interaction user found... This interaction is now timed out.",
                 ephemeral=True,
             )
@@ -232,8 +226,7 @@ class ConfirmationView(discord.ui.View):
             else self.obj.author
         )
         if interaction.user.id != author.id:
-            await response_or_followup(
-                interaction,
+            await interaction.response_or_followup(
                 content="You are not authorized to interact with this interaction.",
                 ephemeral=True,
             )
