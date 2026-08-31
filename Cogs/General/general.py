@@ -168,8 +168,8 @@ class General(commands.Cog):
         Invite the bot.
         """
         await ctx.send(
-            content=f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&"
-            "scope=bot+applications.commands&permissions=1099511627767"
+            content=f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}"
+            "&permissions=8866461766385655&integration_type=0&scope=bot+applications.commands"
         )
 
     @commands.command(name="custominfo")
