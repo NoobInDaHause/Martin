@@ -349,16 +349,16 @@ class Owner(commands.Cog):
     @commands.is_owner()
     async def guilds(self, ctx: MartinContext):
         """
-        Shows the list of guilds the bot is in.
+        Shows the list of guild(s) [bot] is in.
         """
 
         guilds: List[discord.Guild] = sorted(
             self.bot.guilds, key=lambda g: g.member_count, reverse=True
         )
-        guild_list = ""
-
-        for index, guild in enumerate(guilds, start=1):
-            guild_list += f"{index}. **{guild.name}** (`{guild.id}`) - {guild.member_count} members\n"
+        guild_list = "\n".join(
+            f"{index}. **{guild.name}** (`{guild.id}`) - {guild.member_count} members"
+            for index, guild in enumerate(guilds, start=1)
+        )
 
         pagified_guilds = pagify(guild_list)
 
@@ -369,16 +369,14 @@ class Owner(commands.Cog):
                 colour=self.bot.colour,
             )
             return await ctx.send(embed=embed)
-    
-        embeds = []
 
-        for index, page in enumerate(pagified_guilds, start=1):
-            embeds.append(
-                discord.Embed(
-                    title=f"{self.bot.user.name} is in `{len(guilds)}` guilds.",
-                    description=page,
-                    colour=self.bot.colour,
-                ).set_footer(text=f"Page ({index}/{len(pagified_guilds)})")
-            )
+        embeds = [
+            discord.Embed(
+                title=f"{self.bot.user.name} is in `{len(guilds)}` guilds.",
+                description=page,
+                colour=self.bot.colour,
+            ).set_footer(text=f"Page ({index}/{len(pagified_guilds)})")
+            for index, page in enumerate(pagified_guilds, start=1)
+        ]
 
         await PaginatorView(ctx, embeds).start()
