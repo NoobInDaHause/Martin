@@ -399,6 +399,3 @@ class MartinHelpCommand(commands.HelpCommand):
             self.split_subcommand_embed(embed, self.format_commands(command_list)),
             timeout=60.0,
         ).start()
-
-    async def send_error_message(self, error: str) -> None:
-        await self.get_destination().send(error)
