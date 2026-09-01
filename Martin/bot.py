@@ -206,7 +206,7 @@ class Martin(commands.AutoShardedBot):
     async def on_command_error(
         self, context: MartinContext, exception: commands.CommandError, /
     ) -> None:
-        if self.extra_events.get('on_command_error', None):
+        if self.extra_events.get("on_command_error", None):
             return
 
         command = context.command
@@ -323,8 +323,10 @@ class Martin(commands.AutoShardedBot):
             )
             return
 
-        if isinstance(exception, commands.CheckFailure): # will put this second to last since other checks above inherit from this class
-            return # the custom check will handle the sending of error message
+        if isinstance(
+            exception, commands.CheckFailure
+        ):  # will put this second to last since other checks above inherit from this class
+            return  # the custom check will handle the sending of error message
 
         self.log.error(
             "Unhandled command error in %s",
