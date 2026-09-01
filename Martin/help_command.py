@@ -19,7 +19,7 @@ class MartinHelpCommand(commands.HelpCommand):
     def command_description(command: commands.Command) -> str:
         return inspect.cleandoc(command.help or "No description provided.")
 
-    async def command_callback(self, ctx: "MartinContext", /, *, command=None):
+    async def command_callback(self, ctx: MartinContext, /, *, command: Optional[str] = None) -> None:
         check = commands.bot_has_permissions(embed_links=True)
         await check.predicate(ctx)
         return await super().command_callback(ctx, command=command)

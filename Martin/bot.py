@@ -218,6 +218,8 @@ class Martin(commands.AutoShardedBot):
 
         if isinstance(exception, (commands.CommandNotFound, commands.DisabledCommand)):
             return
+        elif isinstance(exception, commands.PrivateMessageOnly):
+            await context.send(content=str(exception))
         elif isinstance(exception, commands.CommandOnCooldown):
             time_left = datetime.now(timezone.utc) + timedelta(
                 seconds=exception.retry_after
@@ -251,9 +253,7 @@ class Martin(commands.AutoShardedBot):
         elif isinstance(exception, commands.NoPrivateMessage):
             await context.send("This command can only be used in guilds.")
         elif isinstance(exception, commands.MaxConcurrencyReached):
-            await context.send(
-                "Command max concurrecy reached, please wait for the previous command to finish."
-            )
+            await context.send(content=str(exception))
         elif isinstance(exception, commands.BadArgument):
             await context.send(content=str(exception))
         elif isinstance(exception, commands.CommandInvokeError):
@@ -264,9 +264,7 @@ class Martin(commands.AutoShardedBot):
             )
             await context.send(error_msg)
         elif isinstance(exception, commands.NSFWChannelRequired):
-            await context.send(
-                content="This command can only be used in a NSFW channel."
-            )
+            await context.send(content=str(exception))
         else:
             self.log.error(
                 "Unhandled command error in %s",
