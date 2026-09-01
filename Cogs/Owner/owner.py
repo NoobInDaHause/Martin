@@ -7,8 +7,8 @@ import discord
 from discord.ext import commands
 
 from Martin import Martin, MartinContext
-from Utilities.formatting import format_list
-from Utilities.views import ConfirmationView
+from Utilities.formatting import format_list, pagify
+from Utilities.views import ConfirmationView, PaginatorView
 
 
 class Owner(commands.Cog):
@@ -344,3 +344,41 @@ class Owner(commands.Cog):
             await ctx.send(
                 content=f"Failed to unblacklist {format_list(failed)} since they are likely to be a bot, bot owner, or already blacklisted."
             )
+
+    @commands.command(name="guilds")
+    @commands.is_owner()
+    async def guilds(self, ctx: MartinContext):
+        """
+        Shows the list of guilds the bot is in.
+        """
+
+        guilds: List[discord.Guild] = sorted(
+            self.bot.guilds, key=lambda g: g.member_count, reverse=True
+        )
+        guild_list = ""
+
+        for index, guild in enumerate(guilds, start=1):
+            guild_list += f"{index}. **{guild.name}** (`{guild.id}`) - {guild.member_count} members\n"
+
+        pagified_guilds = pagify(guild_list)
+
+        if len(pagified_guilds) == 1:
+            embed = discord.Embed(
+                title=f"{self.bot.user.name} is in `{len(guilds)}` guild.",
+                description=pagified_guilds[0],
+                colour=self.bot.colour,
+            )
+            return await ctx.send(embed=embed)
+    
+        embeds = []
+
+        for index, page in enumerate(pagified_guilds, start=1):
+            embeds.append(
+                discord.Embed(
+                    title=f"{self.bot.user.name} is in `{len(guilds)}` guilds.",
+                    description=page,
+                    colour=self.bot.colour,
+                ).set_footer(text=f"Page ({index}/{len(pagified_guilds)})")
+            )
+
+        await PaginatorView(ctx, embeds).start()
