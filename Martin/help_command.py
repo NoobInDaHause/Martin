@@ -393,7 +393,7 @@ class MartinHelpCommand(commands.HelpCommand):
 
     async def send_error_message(self, error: str) -> None:
         embed = discord.Embed(
-            description=f"Command or Cog `'{error}'` does not exist",
+            description=error,
             colour=self.context.bot.colour,
         )
         embed.set_author(
@@ -404,3 +404,15 @@ class MartinHelpCommand(commands.HelpCommand):
             text=f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
         )
         await self.get_destination().send(embed=embed)
+
+    def command_not_found(self, string: str) -> str:
+        return f'No command called `"{string}"` found.'
+
+    def subcommand_not_found(
+        self, command: commands.Command[Any, ..., Any], string: str, /
+    ) -> str:
+        if isinstance(command, commands.Group) and len(command.all_commands) > 0:
+            return (
+                f'Command `"{command.qualified_name}"` has no subcommand named {string}'
+            )
+        return f'Command `"{command.qualified_name}"` has no subcommands.'
