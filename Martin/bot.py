@@ -146,6 +146,23 @@ class Martin(commands.AutoShardedBot):
             "release_url": release_url,
         }
 
+    async def naughty_users(self, ctx: MartinContext, /) -> bool:
+        if self.is_blacklisted(ctx.author):
+            self.log.info(
+                "User %s (%s) is blacklisted and tried to run command '%s' in channel #%s (%s).",
+                ctx.author,
+                ctx.author.id,
+                ctx.command.qualified_name if ctx.command else "N/A",
+                (
+                    "DM Channel"
+                    if isinstance(ctx.channel, discord.DMChannel)
+                    else ctx.channel
+                ),
+                ctx.channel.id,
+            )
+            return False
+        return True
+
     async def setup_hook(self) -> None:
         await super().setup_hook()
         app_info = await self.application_info()
@@ -187,22 +204,9 @@ class Martin(commands.AutoShardedBot):
         else:
             self.log.info("Martin is up to date.")
 
-    async def invoke(self, ctx: MartinContext, /) -> None:
-        if self.is_blacklisted(ctx.author):
-            self.log.info(
-                "User %s (%s) is blacklisted and tried to run command '%s' in channel #%s (%s).",
-                ctx.author,
-                ctx.author.id,
-                ctx.command.qualified_name if ctx.command else "N/A",
-                (
-                    "DM Channel"
-                    if isinstance(ctx.channel, discord.DMChannel)
-                    else ctx.channel
-                ),
-                ctx.channel.id,
-            )
-            return
-        return await super().invoke(ctx)
+        self.add_check(self.naughty_users)
+
+        await super().setup_hook()
 
     async def on_command_error(
         self, context: MartinContext, exception: commands.CommandError, /
@@ -312,6 +316,7 @@ class Martin(commands.AutoShardedBot):
             "Cleaning up before %s.", ("restarting" if restart else "shutting down")
         )
         self.save_settings()
+        self.remove_check(self.naughty_users)
         return await super().close()
 
     def save_settings(self):
