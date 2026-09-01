@@ -1,5 +1,5 @@
 {
-    "default_prefixes": [">"],
+    "default_prefixes": ["="],
     "guild_prefixes": {},
     "global_hex_colour": "#276a8a",
     "blacklisted_user_ids": []
