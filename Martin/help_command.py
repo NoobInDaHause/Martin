@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Union
 import discord
 from discord.ext import commands
 
-from Utilities.formatting import format_list, format_time, pagify
+from Utilities.formatting import format_time, pagify
 from Utilities.views import PaginatorView
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ class MartinHelpCommand(commands.HelpCommand):
                     f"`{perm.replace('_', ' ').strip().title()}`"
                     for perm in final_permissions
                 ]
-                return format_list(list(sorted(list_str)))
+                return discord.utils._human_join(list(sorted(list_str)), final="and")
 
     @staticmethod
     def get_user_permissions(
@@ -54,19 +54,20 @@ class MartinHelpCommand(commands.HelpCommand):
             if "is_owner" in str(check):
                 list_str.append("`Bot Owner`")
                 break
-        for line in source_lines:
-            if "@" in line and "has_permissions" in line and "bot" not in line:
-                permissions = line.split("(")[1].replace(")", "").split(",")
-                final_permissions = [
-                    perm.strip().split("=")[0]
-                    for perm in permissions
-                    if perm.strip().split("=")[1] == "True"
-                ]
-                list_str.extend(
-                    [f"`{p.replace('_', ' ').title()}`" for p in final_permissions]
-                )
-                break
-        return format_list(list(sorted(list_str)), "or")
+        if not list_str:
+            for line in source_lines:
+                if "@" in line and "has_permissions" in line and "bot" not in line:
+                    permissions = line.split("(")[1].replace(")", "").split(",")
+                    final_permissions = [
+                        perm.strip().split("=")[0]
+                        for perm in permissions
+                        if perm.strip().split("=")[1] == "True"
+                    ]
+                    list_str.extend(
+                        [f"`{p.replace('_', ' ').title()}`" for p in final_permissions]
+                    )
+                    break
+        return discord.utils._human_join(list(sorted(list_str)), final="and")
 
     @staticmethod
     def get_command_cooldown_and_max_concurrency(
@@ -294,9 +295,10 @@ class MartinHelpCommand(commands.HelpCommand):
         self, command: Union[commands.Command, commands.Group]
     ) -> None:
         prefix = self.context.clean_prefix
+        alias_str = discord.utils._human_join(list(command.aliases), final="and")
         desc = (
             f"```properties\nUsage: {prefix}{command.qualified_name} {command.signature.replace(']...', '...]')}\n"
-            f"{f'Aliases: {format_list(list(command.aliases))}\n' if command.aliases else ''}```"
+            f"{f'Aliases: {alias_str}\n' if command.aliases else ''}```"
         )
 
         init_cmd_desc = self.command_description(command)
@@ -344,9 +346,10 @@ class MartinHelpCommand(commands.HelpCommand):
             return
 
         prefix = self.context.clean_prefix
+        alias_str = discord.utils._human_join(list(group.aliases), final="and")
         desc = (
             f"```properties\nUsage: {prefix}{group.qualified_name} {group.signature}\n"
-            f"{f'Aliases: {format_list(list(group.aliases))}\n' if group.aliases else ''}```"
+            f"{f'Aliases: {alias_str}\n' if group.aliases else ''}```"
         )
 
         init_cmd_desc = self.command_description(group)

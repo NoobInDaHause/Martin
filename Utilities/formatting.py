@@ -1,7 +1,8 @@
 from typing import Iterable, List, Optional, Union
 
+import discord
+
 from Utilities.exceptions import (
-    FormatListException,
     FormatTimeException,
     PagifyException,
 )
@@ -115,41 +116,4 @@ def format_time(seconds: Union[float, int]) -> str:
     if remaining:
         parts.append(f"{remaining:g} seconds")
 
-    return format_list(parts) or "0 seconds"
-
-
-def format_list(lst: List[str], style: Optional[str] = "and") -> Optional[str]:
-    """Formats a list.
-
-    Parameters
-    ----------
-    lst : List[str]
-        The list you want to format.
-    style : Optional[str]
-        The style or the text right before the last item of the list. (optional)
-        Example: `format_list(lst=["john", "cool aid"], style="and")` returns john `and` cool aid.
-        Default: and
-
-    Returns
-    -------
-    str
-        The formatted text of the list.
-
-    Raises
-    ------
-    FormatListException
-        If the iterable is not of type list.
-
-    """
-    if not isinstance(lst, list):
-        raise FormatListException(f"Parameter 'lst' should be of type list, not {type(lst)}")
-    items = lst.copy()
-    length = len(items)
-    if length == 0:
-        return None
-    if length == 1:
-        return str(items[0])
-    if length == 2:
-        return f"{items[0]} {style} {items[1]}"
-    last_item = items.pop()
-    return ", ".join(items) + f", {style} {last_item}"
+    return discord.utils._human_join(parts, final="and") or "0 seconds"

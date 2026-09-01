@@ -1,10 +1,10 @@
 from typing import Any, Literal, Optional
 
 import aiosqlite
+import discord
 
 from Martin.settings import COGS_DATA_PATH
 from Utilities.exceptions import DataManagerException
-from Utilities.formatting import format_list
 
 
 class DataManager:
@@ -56,7 +56,7 @@ class DataManager:
         accepted = {"one", "all"}
         if select and one_all not in accepted:
             raise DataManagerException(
-                f"Parameter 'one_all_many' should only be {format_list(list(accepted))}."
+                f"Parameter 'one_all_many' should only be {discord.utils._human_join(list(accepted), final='and')}."
             )
 
         async with aiosqlite.connect(self.path) as db:

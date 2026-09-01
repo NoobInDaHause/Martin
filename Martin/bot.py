@@ -11,7 +11,6 @@ from discord.ext import commands
 from discord.utils import MISSING
 from packaging.version import Version
 
-from Utilities.formatting import format_list
 from .context import MartinContext
 from .help_command import MartinHelpCommand
 from .interaction import MartinInteraction
@@ -160,7 +159,7 @@ class Martin(commands.AutoShardedBot):
 
         if cog_names := list(self.cogs):
             plural = "s" if len(cog_names) > 1 else ""
-            self.log.info("Loaded cog%s: %s", plural, format_list(cog_names))
+            self.log.info("Loaded cog%s: %s", plural, discord.utils._human_join(cog_names, final="and"))
 
         self.log.info("Logged in as %s (ID: %s).", self.user, self.user.id)
         self.log.info("--------------------------------------------------")
@@ -232,10 +231,16 @@ class Martin(commands.AutoShardedBot):
         elif isinstance(exception, commands.MissingRequiredArgument):
             await context.send_help()
         elif isinstance(exception, commands.MissingPermissions):
-            permissions = format_list(exception.missing_permissions)
+            permissions = discord.utils._human_join(
+                [f"`{perm.replace('_', ' ').strip().title()}`" for perm in exception.missing_permissions],
+                final="and"
+            )
             await context.send(f"You need these permissions: {permissions}.")
         elif isinstance(exception, commands.BotMissingPermissions):
-            permissions = format_list(exception.missing_permissions)
+            permissions = discord.utils._human_join(
+                [f"`{perm.replace('_', ' ').strip().title()}`" for perm in exception.missing_permissions],
+                final="and"
+            )
             await context.send(f"I require these permissions: {permissions}.")
         elif isinstance(exception, commands.NotOwner):
             self.log.info(

@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 from Martin import Martin, MartinContext
-from Utilities.formatting import format_list, pagify
+from Utilities.formatting import pagify
 from Utilities.views import ConfirmationView, PaginatorView
 
 
@@ -75,12 +75,12 @@ class Owner(commands.Cog):
         if successful:
             cog_label = "cog" if len(successful) == 1 else "cogs"
             messages.append(
-                f"{verb.capitalize()} {cog_label}: {format_list(successful)}"
+                f"{verb.capitalize()} {cog_label}: {discord.utils._human_join(successful, final='and')}"
             )
         if failed:
             cog_label = "cog" if len(failed) == 1 else "cogs"
-            failed_details = format_list(
-                [f"{cog_name} ({reason})" for cog_name, reason in failed]
+            failed_details = discord.utils._human_join(
+                [f"{cog_name} ({reason})" for cog_name, reason in failed], final="and"
             )
             messages.append(
                 f"The following {cog_label} failed to {action}: {failed_details}"
@@ -89,12 +89,12 @@ class Owner(commands.Cog):
             cog_label = "cog" if len(missing) == 1 else "cogs"
             exist_verb = "does not exist" if len(missing) == 1 else "do not exist"
             messages.append(
-                f"The following {cog_label} {exist_verb}: {format_list(missing)}"
+                f"The following {cog_label} {exist_verb}: {discord.utils._human_join(missing, final='and')}"
             )
         if protected:
             cog_label = "cog" if len(protected) == 1 else "cogs"
             messages.append(
-                f"The following {cog_label} cannot be {verb}: {format_list(protected)}"
+                f"The following {cog_label} cannot be {verb}: {discord.utils._human_join(protected, final='and')}"
             )
         await ctx.send("\n".join(messages))
 
@@ -246,7 +246,7 @@ class Owner(commands.Cog):
         self.bot.default_prefixes = prefixes
         self.bot.save_settings()
         await ctx.send(
-            content=f"Set {ctx.bot.user.name}'s prefix(es) to {format_list(prefixes)}."
+            content=f"Set {ctx.bot.user.name}'s prefix(es) to {discord.utils._human_join(prefixes, final='and')}."
         )
 
     @_set.group(name="blacklist", invoke_without_command=True)
@@ -302,10 +302,10 @@ class Owner(commands.Cog):
 
         if added:
             self.bot.save_settings()
-            await ctx.send(content=f"Blacklisted {format_list(added)}.")
+            await ctx.send(content=f"Blacklisted {discord.utils._human_join(added, final='and')}.")
         if failed:
             await ctx.send(
-                content=f"Failed to blacklist {format_list(failed)} since they are likely to be a bot, bot owner, or already blacklisted."
+                content=f"Failed to blacklist {discord.utils._human_join(failed, final='and')} since they are likely to be a bot, bot owner, or already blacklisted."
             )
 
     @_set_blacklist.command(name="remove", usage="<users...>")
@@ -336,10 +336,10 @@ class Owner(commands.Cog):
 
         if removed:
             self.bot.save_settings()
-            await ctx.send(content=f"Unblacklisted {format_list(removed)}.")
+            await ctx.send(content=f"Unblacklisted {discord.utils._human_join(removed, final='and')}.")
         if failed:
             await ctx.send(
-                content=f"Failed to unblacklist {format_list(failed)} since they are likely to be a bot, bot owner, or already blacklisted."
+                content=f"Failed to unblacklist {discord.utils._human_join(failed, final='and')} since they are likely to be a bot, bot owner, or already blacklisted."
             )
 
     @commands.command(name="guilds")
