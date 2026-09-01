@@ -168,12 +168,7 @@ class MartinHelpCommand(commands.HelpCommand):
         return embeds
 
     async def send_bot_help(self, mapping: Mapping[Any, Any]) -> None:
-        cog_list: List[commands.Cog] = []
-        for cog in mapping:
-            if cog is None:
-                continue
-            cog_list.append(cog)
-
+        cog_list: List[commands.Cog] = [cog for cog in mapping if cog is not None]
         if not cog_list:
             await PaginatorView(
                 self.context,
@@ -255,17 +250,16 @@ class MartinHelpCommand(commands.HelpCommand):
 
         final_embeds = []
 
-        for index, embed in enumerate(embed_pages, 1):
-            final_embeds.append(
-                discord.Embed.from_dict(embed.to_dict()).set_footer(
-                    text=(
-                        f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
-                        if len(embed_pages) == 1
-                        else f"Page ({index}/{len(embed_pages)}) | Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
-                    )
+        final_embeds.extend(
+            discord.Embed.from_dict(embed.to_dict()).set_footer(
+                text=(
+                    f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
+                    if len(embed_pages) == 1
+                    else f"Page ({index}/{len(embed_pages)}) | Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
                 )
             )
-
+            for index, embed in enumerate(embed_pages, 1)
+        )
         await PaginatorView(self.context, final_embeds, timeout=60.0).start()
 
     async def send_cog_help(self, cog: commands.Cog) -> None:
@@ -310,10 +304,8 @@ class MartinHelpCommand(commands.HelpCommand):
     ) -> None:
         prefix = self.context.clean_prefix
         desc = (
-            "```properties\n"
-            f"Usage: {prefix}{command.qualified_name} {command.signature.replace(']...', '...]')}\n"
-            f"{f'Aliases: {format_list([alias for alias in command.aliases])}\n' if command.aliases else ''}"
-            "```"
+            f"```properties\nUsage: {prefix}{command.qualified_name} {command.signature.replace(']...', '...]')}\n"
+            f"{f'Aliases: {format_list(list(command.aliases))}\n' if command.aliases else ''}```"
         )
 
         init_cmd_desc = self.command_description(command)
@@ -362,10 +354,8 @@ class MartinHelpCommand(commands.HelpCommand):
 
         prefix = self.context.clean_prefix
         desc = (
-            "```properties\n"
-            f"Usage: {prefix}{group.qualified_name} {group.signature}\n"
-            f"{f'Aliases: {format_list([alias for alias in group.aliases])}\n' if group.aliases else ''}"
-            "```"
+            f"```properties\nUsage: {prefix}{group.qualified_name} {group.signature}\n"
+            f"{f'Aliases: {format_list(list(group.aliases))}\n' if group.aliases else ''}```"
         )
 
         init_cmd_desc = self.command_description(group)

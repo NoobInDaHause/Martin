@@ -157,8 +157,7 @@ class Martin(commands.AutoShardedBot):
             if cog_folder.is_dir() and (cog_folder / "__init__.py").is_file():
                 await self.load_extension(f"Cogs.{cog_folder.name}")
 
-        cog_names = list(self.cogs)
-        if cog_names:
+        if cog_names := list(self.cogs):
             plural = "s" if len(cog_names) > 1 else ""
             self.log.info("Loaded cog%s: %s", plural, format_list(cog_names))
 
@@ -292,7 +291,7 @@ class Martin(commands.AutoShardedBot):
             self.exit_code = 26
 
         self.log.info(
-            "Cleaning up before %s.", ("shutting down" if not restart else "restarting")
+            "Cleaning up before %s.", ("restarting" if restart else "shutting down")
         )
         self.save_settings()
         return await super().close()

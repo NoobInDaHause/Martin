@@ -47,7 +47,7 @@ def pagify(
     else:
         delims = list(delims)
 
-    if any(not delim for delim in delims):
+    if not all(delims):
         raise PagifyException("delims cannot contain empty strings")
 
     pages = []
@@ -77,7 +77,7 @@ def pagify(
     return pages
 
 
-def format_time(seconds: float) -> str:
+def format_time(seconds: Union[float, int]) -> str:
     """Convert a number of seconds into human-readable duration text.
 
     Parameters

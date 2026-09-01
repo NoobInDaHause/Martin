@@ -43,9 +43,7 @@ class PaginatorView(discord.ui.View):
     def page_to_content(
         self, page: Union[str, discord.Embed]
     ) -> tuple[Optional[str], Optional[discord.Embed]]:
-        if isinstance(page, discord.Embed):
-            return None, page
-        return page, None
+        return (None, page) if isinstance(page, discord.Embed) else (page, None)
 
     def update_button_visibility(self) -> None:
         self.clear_items()

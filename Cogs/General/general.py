@@ -30,9 +30,7 @@ class General(commands.Cog):
     def latency_colour(latency_ms: float) -> discord.Colour:
         if latency_ms < 100:
             return discord.Colour.green()
-        if latency_ms < 250:
-            return discord.Colour.yellow()
-        return discord.Colour.red()
+        return discord.Colour.yellow() if latency_ms < 250 else discord.Colour.red()
 
     @commands.command(name="uptime")
     @commands.bot_has_permissions(embed_links=True)
@@ -134,7 +132,7 @@ class General(commands.Cog):
                 colour=self.bot.colour,
             )
             if c_i := await self.db.get_or_delete_custom_info(False):
-                embed.description = embed.description + f"\n\n**Custom Info:**\n{c_i}"
+                embed.description = f"{embed.description}\n\n**Custom Info:**\n{c_i}"
 
             embed.set_thumbnail(url=self.bot.user.display_avatar)
 
