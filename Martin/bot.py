@@ -58,7 +58,7 @@ class Martin(commands.AutoShardedBot):
             intents=discord.Intents.all(),
             help_command=MartinHelpCommand(command_attrs=HELP_COMMAND_ATTRS),
             description="A Discord bot/app written in Python.",
-            tree_cls=MartinTree
+            tree_cls=MartinTree,
         )
         self.default_prefixes = settings.default_prefixes
         self.guild_prefixes = settings.guild_prefixes
@@ -195,7 +195,11 @@ class Martin(commands.AutoShardedBot):
                 ctx.author,
                 ctx.author.id,
                 ctx.command.qualified_name if ctx.command else "N/A",
-                "DM Channel" if isinstance(ctx.channel, discord.DMChannel) else ctx.channel,
+                (
+                    "DM Channel"
+                    if isinstance(ctx.channel, discord.DMChannel)
+                    else ctx.channel
+                ),
                 ctx.channel.id,
             )
             return
@@ -211,11 +215,13 @@ class Martin(commands.AutoShardedBot):
         )
 
         error_msg = f"Error in command `'{context.command}'`. {is_this_guy_owner}"
-        
+
         if isinstance(exception, (commands.CommandNotFound, commands.DisabledCommand)):
             return
         elif isinstance(exception, commands.CommandOnCooldown):
-            time_left = datetime.now(timezone.utc) + timedelta(seconds=exception.retry_after)
+            time_left = datetime.now(timezone.utc) + timedelta(
+                seconds=exception.retry_after
+            )
             msg = await context.send(
                 f"This command is on cooldown. Try again in <t:{int(time_left.timestamp())}:R>."
             )
@@ -234,7 +240,11 @@ class Martin(commands.AutoShardedBot):
                 "User %s (%s) tried to run an owner only command in channel #%s (%s). Command: '%s'",
                 context.author,
                 context.author.id,
-                "DM Channel" if isinstance(context.channel, discord.DMChannel) else context.channel,
+                (
+                    "DM Channel"
+                    if isinstance(context.channel, discord.DMChannel)
+                    else context.channel
+                ),
                 context.channel.id,
                 context.command.qualified_name,
             )
@@ -265,7 +275,9 @@ class Martin(commands.AutoShardedBot):
             )
             await context.send(error_msg)
 
-    async def get_context(self, origin: Union[discord.Message, MartinInteraction], /, *, cls=MISSING) -> MartinContext:
+    async def get_context(
+        self, origin: Union[discord.Message, MartinInteraction], /, *, cls=MISSING
+    ) -> MartinContext:
         if cls is MISSING:
             cls = MartinContext
         return await super().get_context(origin, cls=cls)
