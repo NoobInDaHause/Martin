@@ -1,3 +1,6 @@
+from discord.ext import commands
+
+
 class FormattingException(Exception):
     pass
 
@@ -11,4 +14,8 @@ class FormatTimeException(FormattingException):
 
 
 class DataManagerException(Exception):
+    pass
+
+
+class UserIsBlacklisted(commands.CheckFailure):
     pass

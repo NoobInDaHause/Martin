@@ -11,6 +11,7 @@ from discord.ext import commands
 from discord.utils import MISSING
 from packaging.version import Version
 
+from Utilities.exceptions import UserIsBlacklisted
 from .context import MartinContext
 from .help_command import MartinHelpCommand
 from .interaction import MartinInteraction
@@ -147,20 +148,10 @@ class Martin(commands.AutoShardedBot):
         }
 
     async def naughty_users(self, ctx: MartinContext, /) -> bool:
+
         if self.is_blacklisted(ctx.author):
-            self.log.info(
-                "User %s (%s) is blacklisted and tried to run command '%s' in channel #%s (%s).",
-                ctx.author,
-                ctx.author.id,
-                ctx.command.qualified_name if ctx.command else "N/A",
-                (
-                    "DM Channel"
-                    if isinstance(ctx.channel, discord.DMChannel)
-                    else ctx.channel
-                ),
-                ctx.channel.id,
-            )
-            return False
+            raise UserIsBlacklisted("You are blacklisted from using this bot.")
+
         return True
 
     async def setup_hook(self) -> None:
@@ -176,7 +167,11 @@ class Martin(commands.AutoShardedBot):
 
         if cog_names := list(self.cogs):
             plural = "s" if len(cog_names) > 1 else ""
-            self.log.info("Loaded cog%s: %s", plural, discord.utils._human_join(cog_names, final="and"))
+            self.log.info(
+                "Loaded cog%s: %s",
+                plural,
+                discord.utils._human_join(cog_names, final="and"),
+            )
 
         self.log.info("Logged in as %s (ID: %s).", self.user, self.user.id)
         self.log.info("--------------------------------------------------")
@@ -211,19 +206,26 @@ class Martin(commands.AutoShardedBot):
     async def on_command_error(
         self, context: MartinContext, exception: commands.CommandError, /
     ) -> None:
-        is_this_guy_owner = (
+        if isinstance(exception, (commands.CommandNotFound, commands.DisabledCommand)):
+            return
+
+        await self.handle_command_error(context, exception)
+
+    async def handle_command_error(
+        self, context: MartinContext, exception: commands.CommandError, /
+    ) -> None:
+        owner_message = (
             "Check your console or logs for details."
             if await self.is_owner(context.author)
             else ""
         )
+        error_msg = f"Error in command `'{context.command}'`. {owner_message}"
 
-        error_msg = f"Error in command `'{context.command}'`. {is_this_guy_owner}"
-
-        if isinstance(exception, (commands.CommandNotFound, commands.DisabledCommand)):
-            return
-        elif isinstance(exception, commands.PrivateMessageOnly):
+        if isinstance(exception, commands.PrivateMessageOnly):
             await context.send(content=str(exception))
-        elif isinstance(exception, commands.CommandOnCooldown):
+            return
+
+        if isinstance(exception, commands.CommandOnCooldown):
             time_left = datetime.now(timezone.utc) + timedelta(
                 seconds=exception.retry_after
             )
@@ -232,21 +234,31 @@ class Martin(commands.AutoShardedBot):
             )
             with contextlib.suppress(discord.errors.NotFound):
                 await msg.delete(delay=exception.retry_after)
-        elif isinstance(exception, commands.MissingRequiredArgument):
+            return
+
+        if isinstance(exception, commands.MissingRequiredArgument):
             await context.send_help()
-        elif isinstance(exception, commands.MissingPermissions):
+            return
+
+        if isinstance(
+            exception, (commands.MissingPermissions, commands.BotMissingPermissions)
+        ):
             permissions = discord.utils._human_join(
-                [f"`{perm.replace('_', ' ').strip().title()}`" for perm in exception.missing_permissions],
-                final="and"
+                [
+                    f"`{permission.replace('_', ' ').strip().title()}`"
+                    for permission in exception.missing_permissions
+                ],
+                final="and",
             )
-            await context.send(f"You need these permissions: {permissions}.")
-        elif isinstance(exception, commands.BotMissingPermissions):
-            permissions = discord.utils._human_join(
-                [f"`{perm.replace('_', ' ').strip().title()}`" for perm in exception.missing_permissions],
-                final="and"
+            prefix = (
+                "I require these permissions"
+                if isinstance(exception, commands.BotMissingPermissions)
+                else "You need these permissions"
             )
-            await context.send(f"I require these permissions: {permissions}.")
-        elif isinstance(exception, commands.NotOwner):
+            await context.send(f"{prefix}: {permissions}.")
+            return
+
+        if isinstance(exception, commands.NotOwner):
             self.log.info(
                 "User %s (%s) tried to run an owner only command in channel #%s (%s). Command: '%s'",
                 context.author,
@@ -259,28 +271,56 @@ class Martin(commands.AutoShardedBot):
                 context.channel.id,
                 context.command.qualified_name,
             )
-        elif isinstance(exception, commands.NoPrivateMessage):
+            return
+
+        if isinstance(exception, commands.NoPrivateMessage):
             await context.send("This command can only be used in guilds.")
-        elif isinstance(exception, commands.MaxConcurrencyReached):
+            return
+
+        if isinstance(
+            exception,
+            (
+                commands.MaxConcurrencyReached,
+                commands.BadArgument,
+                commands.NSFWChannelRequired,
+            ),
+        ):
             await context.send(content=str(exception))
-        elif isinstance(exception, commands.BadArgument):
-            await context.send(content=str(exception))
-        elif isinstance(exception, commands.CommandInvokeError):
+            return
+
+        if isinstance(exception, commands.CommandInvokeError):
             self.log.error(
                 "Command %s failed.",
                 context.command,
                 exc_info=(type(exception), exception, exception.__traceback__),
             )
             await context.send(error_msg)
-        elif isinstance(exception, commands.NSFWChannelRequired):
-            await context.send(content=str(exception))
-        else:
-            self.log.error(
-                "Unhandled command error in %s",
-                context.command.qualified_name,
-                exc_info=(type(exception), exception, exception.__traceback__),
+            return
+
+        if isinstance(exception, UserIsBlacklisted):
+            self.log.info(
+                "User %s (%s) is blacklisted and tried to run command '%s' in channel #%s (%s).",
+                context.author,
+                context.author.id,
+                context.command.qualified_name if context.command else "N/A",
+                (
+                    "DM Channel"
+                    if isinstance(context.channel, discord.DMChannel)
+                    else context.channel
+                ),
+                context.channel.id,
             )
-            await context.send(error_msg)
+            return
+
+        if isinstance(exception, commands.CheckFailure): # will put this second to last since other checks above inherit from this class
+            return
+
+        self.log.error(
+            "Unhandled command error in %s",
+            context.command.qualified_name,
+            exc_info=(type(exception), exception, exception.__traceback__),
+        )
+        await context.send(error_msg)
 
     async def get_context(
         self, origin: Union[discord.Message, MartinInteraction], /, *, cls=MISSING
