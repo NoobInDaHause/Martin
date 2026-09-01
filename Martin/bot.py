@@ -313,7 +313,7 @@ class Martin(commands.AutoShardedBot):
             return
 
         if isinstance(exception, commands.CheckFailure): # will put this second to last since other checks above inherit from this class
-            return
+            return # the custom check will handle the sending of error message
 
         self.log.error(
             "Unhandled command error in %s",
@@ -331,6 +331,11 @@ class Martin(commands.AutoShardedBot):
 
     async def get_or_fetch_user(self, user_id: int) -> discord.User:
         return self.get_user(user_id) or await self.fetch_user(user_id)
+
+    async def get_or_fetch_member(
+        self, guild: discord.Guild, user_id: int
+    ) -> discord.Member:
+        return guild.get_member(user_id) or await guild.fetch_member(user_id)
 
     async def send_to_owners(self, *args, **kwargs) -> None:
         for o_id in self.owner_ids:
