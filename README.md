@@ -260,11 +260,7 @@ await db.execute("INSERT INTO my_table VALUES (...)", (value1, value2))
 Text formatting utilities.
 
 ```python
-from Utilities.formatting import format_list, format_time, pagify
-
-# Format a list
-text = format_list(["item1", "item2", "item3"], style="and")
-# Output: "item1, item2, and item3"
+from Utilities.formatting import format_time, pagify
 
 # Format time in seconds
 text = format_time(3661)  # Returns: "1 hour and 1 minute"
