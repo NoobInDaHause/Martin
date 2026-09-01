@@ -206,6 +206,17 @@ class Martin(commands.AutoShardedBot):
     async def on_command_error(
         self, context: MartinContext, exception: commands.CommandError, /
     ) -> None:
+        if self.extra_events.get('on_command_error', None):
+            return
+
+        command = context.command
+        if command and command.has_error_handler():
+            return
+
+        cog = context.cog
+        if cog and cog.has_error_handler():
+            return
+
         if isinstance(exception, (commands.CommandNotFound, commands.DisabledCommand)):
             return
 
