@@ -167,99 +167,90 @@ class MartinHelpCommand(commands.HelpCommand):
 
         return embeds
 
-    async def send_bot_help(self, mapping: Mapping[Any, Any]) -> None:
-        cog_list: List[commands.Cog] = [cog for cog in mapping if cog is not None]
-        if not cog_list:
-            await PaginatorView(
-                self.context,
-                [
-                    discord.Embed(
-                        description="No cogs found.", colour=self.context.bot.colour
-                    ).set_footer(
-                        text=f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
-                    )
-                ],
-                timeout=60.0,
-            ).start()
-            return
-
-        embed_pages: List[discord.Embed] = []
-        current_embed: discord.Embed = discord.Embed(colour=self.context.bot.colour)
+    def new_help_embed(self) -> discord.Embed:
         name = (
-            self.context.guild.me.nick
+            (self.context.guild.me.nick or self.context.bot.user.name)
             if self.context.guild
             else self.context.bot.user.name
         )
-        current_embed.set_author(
-            name=f"{name} Help Menu", icon_url=self.context.bot.user.display_avatar
+        embed = discord.Embed(colour=self.context.bot.colour)
+        embed.set_author(
+            name=f"{name} Help Menu",
+            icon_url=self.context.bot.user.display_avatar,
         )
+        return embed
 
-        field_count: int = 0
+    async def build_bot_help_pages(
+        self, cog_list: List[commands.Cog]
+    ) -> List[discord.Embed]:
+        pages: List[discord.Embed] = []
+        current = self.new_help_embed()
+
         for cog in sorted(cog_list, key=lambda c: c.qualified_name.lower()):
-            command_list = await self.filter_commands(cog.get_commands(), sort=True)
-            if not command_list:
+            commands_list = await self.filter_commands(cog.get_commands(), sort=True)
+            if not commands_list:
                 continue
 
-            cog_commands = (
-                self.format_commands(command_list).strip() or "No commands available."
+            command_text = self.format_commands(commands_list).strip()
+            chunks = pagify(
+                command_text or "No commands available.",
+                delims=["\n"],
+                page_length=512,
             )
-            command_chunks: List[str] = pagify(
-                cog_commands, delims=["\n"], page_length=512
-            )
 
-            if field_count >= 5:
-                embed_pages.append(current_embed)
-                current_embed = discord.Embed(colour=self.context.bot.colour)
-                current_embed.set_author(
-                    name=f"{name} Help Menu",
-                    icon_url=self.context.bot.user.display_avatar,
+            for index, chunk in enumerate(chunks, 1):
+                if len(current.fields) >= 5:
+                    pages.append(current)
+                    current = self.new_help_embed()
+
+                field_name = (
+                    f"{cog.qualified_name} ({index}/{len(chunks)})"
+                    if len(chunks) > 1
+                    else cog.qualified_name
                 )
-                field_count = 0
+                current.add_field(name=field_name, value=chunk, inline=False)
 
-            for index, chunk in enumerate(command_chunks, 1):
-                if field_count >= 5:
-                    embed_pages.append(current_embed)
-                    current_embed = discord.Embed(colour=self.context.bot.colour)
-                    current_embed.set_author(
-                        name=f"{name} Help Menu",
-                        icon_url=self.context.bot.user.display_avatar,
-                    )
-                    field_count = 0
+        if current.fields:
+            pages.append(current)
+        return pages
 
-                current_embed.add_field(
-                    name=(
-                        f"{cog.qualified_name} ({index}/{len(command_chunks)})"
-                        if len(command_chunks) > 1
-                        else cog.qualified_name
-                    ),
-                    value=chunk,
-                    inline=False,
-                )
-                field_count += 1
-
-        if current_embed.fields:
-            embed_pages.append(current_embed)
-
-        if not embed_pages:
-            embed_pages = [
-                discord.Embed(
-                    description="No available commands found.",
-                    colour=self.context.bot.colour,
-                )
-            ]
-
-        final_embeds = []
-
-        final_embeds.extend(
+    def add_bot_help_footers(
+        self, embed_pages: List[discord.Embed]
+    ) -> List[discord.Embed]:
+        footer = f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
+        return [
             discord.Embed.from_dict(embed.to_dict()).set_footer(
                 text=(
-                    f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
+                    footer
                     if len(embed_pages) == 1
-                    else f"Page ({index}/{len(embed_pages)}) | Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
+                    else f"Page ({index}/{len(embed_pages)}) | {footer}"
                 )
             )
             for index, embed in enumerate(embed_pages, 1)
-        )
+        ]
+
+    async def send_bot_help(self, mapping: Mapping[Any, Any]) -> None:
+        cog_list = [cog for cog in mapping if cog is not None]
+        if not cog_list:
+            embed = discord.Embed(
+                description="No cogs found.",
+                colour=self.context.bot.colour,
+            )
+            embed.set_footer(
+                text=f"Use {self.context.clean_prefix}help <cog_or_command> "
+                "for more info on a cog or command."
+            )
+            await PaginatorView(self.context, [embed], timeout=60.0).start()
+            return
+
+        pages = await self.build_bot_help_pages(cog_list) or [
+            discord.Embed(
+                description="No available commands found.",
+                colour=self.context.bot.colour,
+            )
+        ]
+
+        final_embeds = self.add_bot_help_footers(pages)
         await PaginatorView(self.context, final_embeds, timeout=60.0).start()
 
     async def send_cog_help(self, cog: commands.Cog) -> None:
@@ -280,7 +271,7 @@ class MartinHelpCommand(commands.HelpCommand):
             colour=self.context.bot.colour,
         )
         name = (
-            self.context.guild.me.nick
+            (self.context.guild.me.nick or self.context.bot.user.name)
             if self.context.guild
             else self.context.bot.user.name
         )
@@ -326,7 +317,7 @@ class MartinHelpCommand(commands.HelpCommand):
             colour=self.context.bot.colour,
         )
         name = (
-            self.context.guild.me.nick
+            (self.context.guild.me.nick or self.context.bot.user.name)
             if self.context.guild
             else self.context.bot.user.name
         )
@@ -376,7 +367,7 @@ class MartinHelpCommand(commands.HelpCommand):
             colour=self.context.bot.colour,
         )
         name = (
-            self.context.guild.me.nick
+            (self.context.guild.me.nick or self.context.bot.user.name)
             if self.context.guild
             else self.context.bot.user.name
         )
@@ -400,5 +391,16 @@ class MartinHelpCommand(commands.HelpCommand):
             timeout=60.0,
         ).start()
 
-    async def send_error_message(self, error: str) -> None: # let bot error handler handle this
-        return
+    async def send_error_message(self, error: str) -> None:
+        embed = discord.Embed(
+            description=f"Command or Cog `'{error}'` does not exist",
+            colour=self.context.bot.colour,
+        )
+        embed.set_author(
+            name=f"{(self.context.guild.me.nick or self.context.bot.user.name) if self.context.guild else self.context.bot.user.name} Help Menu",
+            icon_url=self.context.bot.user.display_avatar,
+        )
+        embed.set_footer(
+            text=f"Use {self.context.clean_prefix}help <cog_or_command> for more info on a cog or command."
+        )
+        await self.get_destination().send(embed=embed)

@@ -38,17 +38,17 @@ def pagify(
 
     """
     if page_length <= 0:
-        raise PagifyException("page_length must be greater than zero")
+        raise PagifyException("Parameter 'page_length' must be greater than zero")
 
     if delims is None:
-        delims = ["\n", " "]
+        delims = ["\n"]
     elif isinstance(delims, str):
         delims = [delims]
     else:
         delims = list(delims)
 
     if not all(delims):
-        raise PagifyException("delims cannot contain empty strings")
+        raise PagifyException("Parameter 'delims' cannot contain empty strings")
 
     pages = []
     remaining = text
@@ -92,7 +92,7 @@ def format_time(seconds: Union[float, int]) -> str:
 
     """
     if seconds < 0:
-        raise FormatTimeException("seconds cannot be less than 0")
+        raise FormatTimeException("Parameter 'seconds' cannot be less than 0")
 
     remaining = float(seconds)
     units = (
@@ -118,7 +118,7 @@ def format_time(seconds: Union[float, int]) -> str:
     return format_list(parts) or "0 seconds"
 
 
-def format_list(lst: List[str], style: Optional[str] = "and") -> str:
+def format_list(lst: List[str], style: Optional[str] = "and") -> Optional[str]:
     """Formats a list.
 
     Parameters
@@ -142,11 +142,11 @@ def format_list(lst: List[str], style: Optional[str] = "and") -> str:
 
     """
     if not isinstance(lst, list):
-        raise FormatListException(f"Iterable should be of type list, not {type(lst)}")
+        raise FormatListException(f"Parameter 'lst' should be of type list, not {type(lst)}")
     items = lst.copy()
     length = len(items)
     if length == 0:
-        return ""
+        return None
     if length == 1:
         return str(items[0])
     if length == 2:
