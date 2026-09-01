@@ -21,6 +21,13 @@ class Owner(commands.Cog):
     def __init__(self, bot: Martin):
         self.bot = bot
 
+    @staticmethod
+    def cog_exists(cog_name: str) -> bool:
+        cogs_path = Path(__file__).parents[2] / "Cogs"
+        return (cogs_path / cog_name).is_dir() and (
+            cogs_path / cog_name / "__init__.py"
+        ).is_file()
+
     async def manage_cog(self, action: str, cog_name: str) -> Tuple[bool, str]:
         extension = f"Cogs.{cog_name}"
         try:
@@ -40,13 +47,6 @@ class Owner(commands.Cog):
             return False, str(error)
 
         return True, ""
-
-    @staticmethod
-    def cog_exists(cog_name: str) -> bool:
-        cogs_path = Path(__file__).parents[2] / "Cogs"
-        return (cogs_path / cog_name).is_dir() and (
-            cogs_path / cog_name / "__init__.py"
-        ).is_file()
 
     async def manage_cogs(
         self, ctx: MartinContext, action: str, cog_names: List[str]
@@ -97,8 +97,8 @@ class Owner(commands.Cog):
             )
         await ctx.send("\n".join(messages))
 
-    @commands.is_owner()
     @commands.command(name="restart")
+    @commands.is_owner()
     async def restart(self, ctx: MartinContext) -> None:
         """Restart the bot process."""
         confirm_view = ConfirmationView(ctx, "Restarting... :arrows_counterclockwise:")
@@ -112,8 +112,8 @@ class Owner(commands.Cog):
             confirm_view.stop()
             await ctx.bot.close(True)
 
-    @commands.is_owner()
     @commands.command(name="shutdown")
+    @commands.is_owner()
     async def shutdown(self, ctx: MartinContext) -> None:
         """
         Shutdown the bot.
@@ -129,17 +129,17 @@ class Owner(commands.Cog):
             confirm_view.stop()
             await ctx.bot.close()
 
-    @commands.is_owner()
     @commands.group(name="cog", invoke_without_command=True)
+    @commands.is_owner()
     async def _cog(self, ctx: MartinContext) -> None:
         """
         Base commands for managing cogs.
         """
         return await ctx.send_help()
 
+    @_cog.command(name="list")
     @commands.is_owner()
     @commands.bot_has_permissions(attach_files=True)
-    @_cog.command(name="list")
     async def _cog_list(self, ctx: MartinContext) -> None:
         """
         Shows the list of loaded/unloaded cogs.
@@ -170,20 +170,20 @@ class Owner(commands.Cog):
         cog_file = discord.File(BytesIO(markdown.encode("utf-8")), filename="cogs.md")
         await ctx.send(file=cog_file)
 
-    @commands.is_owner()
     @_cog.command(name="load")
+    @commands.is_owner()
     async def _cog_load(self, ctx: MartinContext, *, cog_names: str) -> None:
         """Load one or more cog extensions."""
         await self.manage_cogs(ctx, "load", cog_names.split())
 
-    @commands.is_owner()
     @_cog.command(name="unload")
+    @commands.is_owner()
     async def _cog_unload(self, ctx: MartinContext, *, cog_names: str) -> None:
         """Unload one or more cog extensions."""
         await self.manage_cogs(ctx, "unload", cog_names.split())
 
-    @commands.is_owner()
     @_cog.command(name="reload")
+    @commands.is_owner()
     async def _cog_reload(self, ctx: MartinContext, *, cog_names: str) -> None:
         """Reload one or more cog extensions."""
         await self.manage_cogs(ctx, "reload", cog_names.split())
@@ -223,9 +223,7 @@ class Owner(commands.Cog):
 
     @_set.command(name="colour", aliases=["color"])
     @commands.is_owner()
-    async def _set_colour(
-        self, ctx: MartinContext, colour: discord.Colour = "#276a8a"
-    ):
+    async def _set_colour(self, ctx: MartinContext, colour: discord.Colour = "#276a8a"):
         """Change the global embed bot colour."""
         self.bot.global_hex_colour = str(colour)
         embed = discord.Embed(

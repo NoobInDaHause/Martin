@@ -1,7 +1,7 @@
 import contextlib
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Union, cast
 
@@ -204,32 +204,32 @@ class Martin(commands.AutoShardedBot):
     async def on_command_error(
         self, context: MartinContext, error: commands.CommandError
     ) -> None:
+        is_this_guy_owner = (
+            "Check your console or logs for details."
+            if await self.is_owner(context.author)
+            else ""
+        )
+
+        error_msg = f"Error in command `'{context.command}'`. {is_this_guy_owner}"
+        
         if isinstance(error, (commands.CommandNotFound, commands.DisabledCommand)):
             return
-
-        if isinstance(error, commands.CommandOnCooldown):
+        elif isinstance(error, commands.CommandOnCooldown):
+            time_left = datetime.now(timezone.utc) + timedelta(seconds=error.retry_after)
             msg = await context.send(
-                f"This command is on cooldown. Try again in **{format_time(error.retry_after)}**."
+                f"This command is on cooldown. Try again in <t:{int(time_left.timestamp())}:R>."
             )
             with contextlib.suppress(discord.errors.NotFound):
                 await msg.delete(delay=error.retry_after)
-            return
-
-        if isinstance(error, commands.MissingRequiredArgument):
+        elif isinstance(error, commands.MissingRequiredArgument):
             await context.send_help()
-            return
-
-        if isinstance(error, commands.MissingPermissions):
+        elif isinstance(error, commands.MissingPermissions):
             permissions = format_list(error.missing_permissions)
             await context.send(f"You need these permissions: {permissions}.")
-            return
-
-        if isinstance(error, commands.BotMissingPermissions):
+        elif isinstance(error, commands.BotMissingPermissions):
             permissions = format_list(error.missing_permissions)
             await context.send(f"I require these permissions: {permissions}.")
-            return
-
-        if isinstance(error, commands.NotOwner):
+        elif isinstance(error, commands.NotOwner):
             self.log.info(
                 "User %s (%s) tried to run an owner only command in channel #%s (%s). Command: '%s'",
                 context.author,
@@ -238,57 +238,35 @@ class Martin(commands.AutoShardedBot):
                 context.channel.id,
                 context.command.qualified_name,
             )
-            return
-
-        if isinstance(error, commands.NoPrivateMessage):
+        elif isinstance(error, commands.NoPrivateMessage):
             await context.send("This command can only be used in guilds.")
-            return
-
-        if isinstance(error, commands.MaxConcurrencyReached):
+        elif isinstance(error, commands.MaxConcurrencyReached):
             await context.send(
                 "Command max concurrecy reached, please wait for the previous command to finish."
             )
-            return
-
-        if isinstance(error, commands.BadArgument):
+        elif isinstance(error, commands.BadArgument):
             await context.send(content=str(error))
-            return
-
-        is_this_guy_owner = (
-            "Check your console or logs for details."
-            if await self.is_owner(context.author)
-            else ""
-        )
-        if isinstance(error, commands.CommandInvokeError):
+        elif isinstance(error, commands.CommandInvokeError):
             self.log.error(
                 "Command %s failed.",
                 context.command,
                 exc_info=(type(error), error, error.__traceback__),
             )
-            await context.send(
-                f"Error in command `'{context.command}'`. {is_this_guy_owner}"
-            )
-            return
-
-        if isinstance(error, commands.NSFWChannelRequired):
+            await context.send(error_msg)
+        elif isinstance(error, commands.NSFWChannelRequired):
             await context.send(
                 content="This command can only be used in a NSFW channel."
             )
-            return
-
-        self.log.error(
-            "Unhandled command error in %s",
-            context.command.qualified_name,
-            exc_info=(type(error), error, error.__traceback__),
-        )
-        await context.send(
-            f"Error in command `'{context.command}'`. {is_this_guy_owner}"
-        )
+        else:
+            self.log.error(
+                "Unhandled command error in %s",
+                context.command.qualified_name,
+                exc_info=(type(error), error, error.__traceback__),
+            )
+            await context.send(error_msg)
 
     async def get_context(self, origin, /, *, cls=MISSING) -> MartinContext:
-        if cls is MISSING:
-            cls = MartinContext
-        return await super().get_context(origin, cls=cls)
+        return await super().get_context(origin, cls=MartinContext)
 
     async def get_or_fetch_user(self, user_id: int) -> discord.User:
         return self.get_user(user_id) or await self.fetch_user(user_id)
