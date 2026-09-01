@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -359,10 +360,12 @@ class Owner(commands.Cog):
         pagified_guilds = pagify(guild_list)
 
         if len(pagified_guilds) == 1:
+            guild_len = len(guilds)
             embed = discord.Embed(
-                title=f"{self.bot.user.name} is in `{len(guilds)}` guild.",
+                title=f"{self.bot.user.name} is in `{guild_len}` guild{'' if guild_len == 1 else 's'}.",
                 description=pagified_guilds[0],
                 colour=self.bot.colour,
+                timestamp=datetime.now(timezone.utc),
             )
             return await ctx.send(embed=embed)
 
@@ -371,6 +374,7 @@ class Owner(commands.Cog):
                 title=f"{self.bot.user.name} is in `{len(guilds)}` guilds.",
                 description=page,
                 colour=self.bot.colour,
+                timestamp=datetime.now(timezone.utc),
             ).set_footer(text=f"Page ({index}/{len(pagified_guilds)})")
             for index, page in enumerate(pagified_guilds, start=1)
         ]
