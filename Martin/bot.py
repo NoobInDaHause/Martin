@@ -36,7 +36,6 @@ HELP_COMMAND_ATTRS = {
 
 def _prefix_callable(bot: "Martin", message: discord.Message) -> List[str]:
     """A callable that returns the prefix for a given message."""
-    bot.get_prefix()
     return (
         list(dict.fromkeys(bot.get_guild_prefix(message.guild.id)).keys())
         if message.guild
