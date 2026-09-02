@@ -200,8 +200,6 @@ class Martin(commands.AutoShardedBot):
 
         self.add_check(self.naughty_users)
 
-        await super().setup_hook()
-
     async def on_command_error(
         self, context: MartinContext, exception: commands.CommandError, /
     ) -> None:
