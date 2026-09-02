@@ -36,21 +36,20 @@ HELP_COMMAND_ATTRS = {
 
 def _prefix_callable(bot: "Martin", message: discord.Message) -> List[str]:
     """A callable that returns the prefix for a given message."""
-    default_prefixes = bot.default_prefixes
-    guild_id = str(message.guild.id) if message.guild else None
-    if guild_id:
-        guild_prefixes = bot.guild_prefixes.get(guild_id, default_prefixes)
-    else:
-        guild_prefixes = default_prefixes
-    prefixes = []
-    prefixes.extend(guild_prefixes)
-    return list(dict.fromkeys(prefixes).keys())
+    bot.get_prefix()
+    return (
+        list(dict.fromkeys(bot.get_guild_prefix(message.guild.id)).keys())
+        if message.guild
+        else list(dict.fromkeys(bot.default_prefixes).keys())
+    )
 
 
 class Martin(commands.AutoShardedBot):
     """
     Martin Bot.
     """
+
+    __version__ = (PROJECT_ROOT / "version.txt").read_text(encoding="utf-8").strip()
 
     def __init__(self, settings: Settings):
         super().__init__(
@@ -69,10 +68,6 @@ class Martin(commands.AutoShardedBot):
         self.exit_code = 0
 
     @property
-    def __version__(self) -> str:
-        return (PROJECT_ROOT / "version.txt").read_text(encoding="utf-8").strip()
-
-    @property
     def colour(self) -> discord.Colour:
         return discord.Colour.from_str(self.global_hex_colour)
 
@@ -80,9 +75,14 @@ class Martin(commands.AutoShardedBot):
     def color(self) -> discord.Colour:
         return self.colour
 
-    def _get_guild_prefix(self, guild: discord.Guild) -> List[str]:
+    def get_guild_prefix(
+        self, guild_or_guild_id: Union[discord.Guild, int]
+    ) -> List[str]:
         """Get the prefix for a given message."""
-        return self.guild_prefixes.get(str(guild.id), self.default_prefixes)
+        return self.guild_prefixes.get(
+            str(getattr(guild_or_guild_id, "id", guild_or_guild_id)),
+            self.default_prefixes,
+        )
 
     async def get_updates(self) -> Dict[str, str]:
         """Get the latest GitHub version and compare it with the bot version."""
