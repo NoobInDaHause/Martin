@@ -1,16 +1,18 @@
+from typing import TYPE_CHECKING
 import logging
 
 import discord
 from discord import app_commands
 
 from .interaction import MartinInteraction
-from .bot import Martin
+if TYPE_CHECKING:
+    from .bot import Martin
 
 
 class MartinTree(app_commands.CommandTree):
     def __init__(
         self,
-        client: Martin,
+        client: "Martin",
         *,
         fallback_to_global: bool = True,
         allowed_contexts: app_commands.AppCommandContext = discord.utils.MISSING,
