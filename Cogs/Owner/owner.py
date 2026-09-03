@@ -191,6 +191,11 @@ class Owner(commands.Cog):
         self.bot.save_settings()
         await interaction.response_or_followup(embed=embed)
 
+    async def plzerror(self, interaction: MartinInteraction, as_a_normie: bool):
+        if as_a_normie:
+            interaction.user = self.bot.user
+        assert False
+
     @app_commands.command(name="owner", description="Owner only commands.")
     @is_owner()
     @app_commands.checks.bot_has_permissions(attach_files=True, embed_links=True)
@@ -204,22 +209,24 @@ class Owner(commands.Cog):
             
             Available owner commands:
             > restart: Restarts the bot.
-            Usage: /owner command:restart
+            Usage: command:restart
             > shutdown: Shuts down the bot.
-            Usage: /owner command:shutdown
+            Usage: command:shutdown
             > guilds: Shows the list of guilds the bot is in.
-            Usage: /owner command:guilds
+            Usage: command:guilds
             > **loadcog**: Loads a cog. Separate cog names with spaces.
-            Usage: /owner command:loadcog argument:<cog_names...>
+            Usage: command:loadcog argument:<cog_names...>
             > **unloadcog**: Unloads a cog. Separate cog names with spaces.
-            Usage: /owner command:unloadcog argument:<cog_names...>
+            Usage: command:unloadcog argument:<cog_names...>
             > **reloadcog**: Reloads a cog. Separate cog names with spaces.
-            Usage: /owner command:reloadcog argument:<cog_names...>
+            Usage: command:reloadcog argument:<cog_names...>
             > coglist: Shows the list of loaded/unloaded cogs.
-            Usage: /owner command:coglist
+            Usage: command:coglist
             > **botcolour**: Change the bot global embed hex colour, leave argument blank to set it back to default.
-            Usage: /owner command:botcolour argument:[hex_code]
+            Usage: command:botcolour argument:[hex_code]
             Aliases: botcolor
+            > **plzerror**: Throws an assertion error. 
+            Usage: command:plzerror argument:[as_a_normie=False]
             """
         embed = discord.Embed(
             title="Owner command pannel", description=desc, colour=self.bot.colour
