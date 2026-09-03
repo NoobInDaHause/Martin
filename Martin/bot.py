@@ -27,6 +27,7 @@ class Martin(commands.AutoShardedBot):
         super().__init__(
             command_prefix="m.",
             intents=discord.Intents.all(),
+            help_command=None,
             description="A Discord bot/app written in Python.",
             tree_cls=MartinTree,
         )
@@ -107,6 +108,9 @@ class Martin(commands.AutoShardedBot):
             "release_url": release_url,
         }
 
+    async def on_message(self, message: discord.Message, /) -> None:
+        return  # Martin will be full on slash command in v1.0.0
+
     async def setup_hook(self) -> None:
         await super().setup_hook()
         app_info = await self.application_info()
@@ -126,10 +130,10 @@ class Martin(commands.AutoShardedBot):
                 discord.utils._human_join(cog_names, final="and"),
             )
 
-        self.log.info("Syncing slash commands...")
+        self.log.info("Syncing commands...")
         await self.tree.sync()
         self.log.info(
-            "Successfully synced %s slash command(s).", len(self.tree.get_commands())
+            "Successfully synced %s command(s).", len(self.tree.get_commands())
         )
 
         self.log.info("Logged in as %s (ID: %s).", self.user, self.user.id)
