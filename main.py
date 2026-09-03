@@ -10,7 +10,6 @@ from Martin.interaction import response_or_followup
 
 
 def run_bot() -> None:
-    from discord.ext import commands
     logging.basicConfig(
         level=logging.INFO,
         handlers=[
@@ -27,13 +26,6 @@ def run_bot() -> None:
     discord.Interaction.response_or_followup = response_or_followup
     settings = Settings.initialize()
     bot = Martin(settings)
-
-    @bot.command(name="sync")
-    @commands.is_owner()
-    async def slash_sync(ctx):
-        await bot.tree.sync()
-        await ctx.send("Done.")
-
     bot.run(token=os.getenv("TOKEN"), log_handler=None)
     raise SystemExit(bot.exit_code)
 

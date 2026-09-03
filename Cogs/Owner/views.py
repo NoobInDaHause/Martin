@@ -81,6 +81,12 @@ class OwnerView(discord.ui.View):
                     content=f"No command called '{command}' found."
                 )
 
+    @discord.ui.button(emoji="✖️", style=discord.ButtonStyle.danger)
+    async def close_button(self, interaction: MartinInteraction, button: discord.ui.Button):
+        await interaction.response.defer()
+        self.stop()
+        await self.on_timeout()
+
     async def interaction_check(self, interaction: MartinInteraction) -> bool:
         if not interaction.user:
             await interaction.response_or_followup(
