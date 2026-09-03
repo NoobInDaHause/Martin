@@ -98,6 +98,7 @@ class OwnerView(discord.ui.View):
         await self.on_timeout()
 
     async def interaction_check(self, interaction: MartinInteraction) -> bool:
+        await interaction.client.tree.interaction_check(interaction)
         if not interaction.user:
             await interaction.response_or_followup(
                 content="Hmmm no interaction user found... This interaction is now timed out.",
@@ -110,7 +111,7 @@ class OwnerView(discord.ui.View):
         is_owner = await interaction.client.is_owner(interaction.user)
         if not is_owner:
             await interaction.response_or_followup(
-                content="You are not an owner of this bot. 🖕🖕🖕"
+                content="You are not an owner of this bot. 🖕🖕🖕", ephemeral=True
             )
             return is_owner
         return is_owner
