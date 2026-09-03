@@ -107,7 +107,7 @@ class General(commands.Cog):
         )
         await initial_message.edit(embed=result_embed)
 
-    @app_commands.command(name="info", aliases=["botinfo"])
+    @app_commands.command(name="botinfo")
     @app_commands.checks.bot_has_permissions(embed_links=True)
     async def info(self, interaction: MartinInteraction) -> None:
         """Check info about the bot."""
