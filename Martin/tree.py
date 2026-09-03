@@ -30,8 +30,8 @@ class MartinTree(app_commands.CommandTree["Martin"]):
         )
         self.log = logging.getLogger("MartinTree")
 
-    async def interaction_check(self, interaction):
-        if await self.client.is_blacklisted():
+    async def interaction_check(self, interaction: MartinInteraction):
+        if await self.client.is_blacklisted(interaction.user):
             raise UserIsBlacklisted(
                 "LOL you are blacklisted from using this bot. Get wrecked idiot."
             )
