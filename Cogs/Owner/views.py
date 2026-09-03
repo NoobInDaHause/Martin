@@ -73,16 +73,16 @@ class OwnerView(discord.ui.View):
             elif command == "coglist":
                 await self.cog._cog_list(interaction)
             elif command in {"botcolour", "botcolor"}:
-                if not argument:
-                    return await interaction.response_or_followup(content=req)
-                await self.cog._colour(interaction, argument)
+                await self.cog._colour(interaction, argument or "#276a8a")
             else:
                 await interaction.response_or_followup(
                     content=f"No command called '{command}' found."
                 )
 
     @discord.ui.button(emoji="✖️", style=discord.ButtonStyle.danger)
-    async def close_button(self, interaction: MartinInteraction, button: discord.ui.Button):
+    async def close_button(
+        self, interaction: MartinInteraction, button: discord.ui.Button
+    ):
         await interaction.response.defer()
         self.stop()
         await self.on_timeout()

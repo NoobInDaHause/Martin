@@ -181,8 +181,7 @@ class Owner(commands.Cog):
         cog_file = discord.File(BytesIO(markdown.encode("utf-8")), filename="cogs.md")
         await interaction.response_or_followup(file=cog_file)
 
-    async def _colour(self, interaction: MartinInteraction, colour: str = None):
-        colour = colour or "#276a8a"
+    async def _colour(self, interaction: MartinInteraction, colour: str):
         dc = discord.Colour.from_str(colour)
         self.bot.global_hex_colour = str(dc)
         embed = discord.Embed(
@@ -195,13 +194,13 @@ class Owner(commands.Cog):
     @app_commands.command(name="owner", description="Owner only commands.")
     @is_owner()
     @app_commands.checks.bot_has_permissions(attach_files=True, embed_links=True)
-
     async def owner(self, interaction: MartinInteraction) -> None:
         """
         No peasants allowed.
         """
         desc = """
             Command names highlighted as bold require an argument.
+            Params wrapped around <> are required while [] are optional.
             
             Available owner commands:
             > restart: Restarts the bot.

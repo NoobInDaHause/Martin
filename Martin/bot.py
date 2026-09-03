@@ -39,7 +39,7 @@ class Martin(commands.AutoShardedBot):
 
     def __init__(self, settings: Settings):
         super().__init__(
-            command_prefix="=",
+            command_prefix="m.",
             intents=discord.Intents.all(),
             description="A Discord bot/app written in Python.",
             tree_cls=MartinTree,

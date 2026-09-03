@@ -22,8 +22,8 @@ def run_bot() -> None:
     )
 
     load_dotenv(find_dotenv(raise_error_if_not_found=True))
-    
-    discord.Interaction.response_or_followup = response_or_followup
+
+    discord.Interaction.response_or_followup = response_or_followup  # Dirty way to add custom functions but it works and does its job
     settings = Settings.initialize()
     bot = Martin(settings)
     bot.run(token=os.getenv("TOKEN"), log_handler=None)

@@ -34,12 +34,11 @@ class General(commands.Cog):
             return discord.Colour.green()
         return discord.Colour.yellow() if latency_ms < 250 else discord.Colour.red()
 
-    @app_commands.command(name="uptime")
+    @app_commands.command(
+        name="uptime", description="Check how long the bot has been up for."
+    )
     @app_commands.checks.cooldown(1, 5, key=lambda i: i.user.id)
     async def uptime(self, interaction: MartinInteraction) -> None:
-        """
-        Check how long the bot has been up for.
-        """
         elapsed_seconds = int(
             (datetime.now(timezone.utc) - self.bot.uptime).total_seconds()
         )
@@ -48,15 +47,10 @@ class General(commands.Cog):
             content=f"I have been up for **{format_time(elapsed_seconds)}**. Since <t:{startup_timestamp}:R>."
         )
 
-    @app_commands.command(name="ping")
+    @app_commands.command(name="ping", description="Pong.")
     @app_commands.checks.bot_has_permissions(embed_links=True)
     @app_commands.checks.cooldown(1, 5, key=lambda i: i.user.id)
     async def ping(self, interaction: MartinInteraction) -> None:
-        """
-        Ping.
-
-        Pong.
-        """
         send_started = perf_counter()
         initial_message = await interaction.response_or_followup(content="Pinging...")
         send_latency = (perf_counter() - send_started) * 1000
@@ -107,10 +101,9 @@ class General(commands.Cog):
         )
         await initial_message.edit(embed=result_embed)
 
-    @app_commands.command(name="botinfo")
+    @app_commands.command(name="botinfo", description="Check info about the bot.")
     @app_commands.checks.bot_has_permissions(embed_links=True)
     async def info(self, interaction: MartinInteraction) -> None:
-        """Check info about the bot."""
         await interaction.response.defer(thinking=True)
 
         app_info = await self.bot.application_info()
@@ -158,24 +151,21 @@ class General(commands.Cog):
 
         await interaction.response_or_followup(embed=embed)
 
-    @app_commands.command(name="invite")
+    @app_commands.command(name="invite", description="Invite the bot.")
     async def invite(self, interaction: MartinInteraction) -> None:
-        """
-        Invite the bot.
-        """
         await interaction.response_or_followup(
             content=f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}"
             "&permissions=8866461766385655&integration_type=0&scope=bot+applications.commands"
         )
 
-    @app_commands.command(name="custominfo")
+    @app_commands.command(
+        name="custominfo", description="Add a custom info from the /info slash command."
+    )
     @is_owner()
     async def custominfo(
         self, interaction: MartinInteraction, *, custom_info: Optional[str] = None
     ) -> None:
         """
-        Add a custom info from the [p]info command.
-
         Leave blank to clear.
         """
         if custom_info is None:
