@@ -43,7 +43,7 @@ class MartinTree(app_commands.CommandTree):
 
         owner_message = (
             "Check your console or logs for details."
-            if await interaction.client.is_owner(interaction.author)
+            if await interaction.client.is_owner(interaction.user)
             else "Please report this to the bot owner."
         )
         error_msg = f"Error in command `'{command}'`. {owner_message}"
