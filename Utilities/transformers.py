@@ -30,6 +30,9 @@ class ParseBoolTransformer(app_commands.Transformer):
 
 class UserTransformer(app_commands.Transformer):
     async def transform(self, interaction: "MartinInteraction", value: str):
-        return await commands.UserConverter().convert(
-            await interaction.client.get_context(interaction.message), value
-        )
+        try:
+            return await commands.UserConverter().convert(
+                await interaction.client.get_context(interaction.message), value
+            )
+        except commands.BadArgument as e:
+            raise app_commands.TransformerError(str(e)) from e

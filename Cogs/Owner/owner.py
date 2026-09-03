@@ -200,7 +200,7 @@ class Owner(commands.Cog):
         for u in users:
             try:
                 verified.append(await UserTransformer().transform(interaction, u))
-            except commands.BadArgument:
+            except app_commands.TransformerError:
                 failed.append(f"Uknown User (`{u}`)")
                 continue
 
