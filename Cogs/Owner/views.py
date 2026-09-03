@@ -55,7 +55,7 @@ class OwnerView(discord.ui.View):
         if cmdmodal.command.value:
             command = cmdmodal.command.value.lower()
             argument = cmdmodal.argument.value
-            req = f"Command '{command}' requires an argument."
+            req = f"Command '{command}' requires an argument. See the usage from the Owner command panel."
             if command in {"restart", "shutdown"}:
                 self.stop()
                 await self.on_timeout()
@@ -66,7 +66,9 @@ class OwnerView(discord.ui.View):
                 await self.cog._guilds(interaction)
             elif command in {"loadcog", "unloadcog", "reloadcog"}:
                 if not argument:
-                    return await interaction.response_or_followup(content=req)
+                    return await interaction.response_or_followup(
+                        content=req, ephemeral=True
+                    )
                 await self.cog.manage_cogs(
                     interaction, command.removesuffix("cog"), argument.split()
                 )
@@ -74,6 +76,14 @@ class OwnerView(discord.ui.View):
                 await self.cog._cog_list(interaction)
             elif command in {"botcolour", "botcolor"}:
                 await self.cog._colour(interaction, argument or "#276a8a")
+            elif command in {"blacklist", "unblacklist"}:
+                if not argument:
+                    return await interaction.response_or_followup(
+                        content=req, ephemeral=True
+                    )
+                await self.cog.blacklist_or_unblacklist(
+                    command, interaction, argument.split()
+                )
             else:
                 await interaction.response_or_followup(
                     content=f"No command called '{command}' found."

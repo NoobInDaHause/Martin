@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .bot import Martin
 
 
-class MartinTree(app_commands.CommandTree):
+class MartinTree(app_commands.CommandTree["Martin"]):
     def __init__(
         self,
         client: "Martin",
@@ -29,6 +29,13 @@ class MartinTree(app_commands.CommandTree):
             allowed_installs=allowed_installs,
         )
         self.log = logging.getLogger("MartinTree")
+
+    async def interaction_check(self, interaction):
+        if await self.client.is_blacklisted():
+            raise UserIsBlacklisted(
+                "LOL you are blacklisted from using this bot. Get wrecked idiot."
+            )
+        return await super().interaction_check(interaction)
 
     async def on_error(
         self, interaction: MartinInteraction, error: app_commands.AppCommandError
@@ -60,7 +67,7 @@ class MartinTree(app_commands.CommandTree):
         if isinstance(error, (UserIsNotOwner, UserIsBlacklisted)):
             await interaction.response_or_followup(content=str(error), ephemeral=True)
             self.log.info(
-                "User %s (%s) %s command in channel #%s (%s). Command: '%s'",
+                "User %s (%s) %s command in channel #%s (%s). Command: '/%s'",
                 interaction.user,
                 interaction.user.id,
                 (

@@ -182,6 +182,24 @@ class Martin(commands.AutoShardedBot):
             getattr(user_or_user_id, "id", user_or_user_id) in self.blacklisted_user_ids
         )
 
+    def add_user_to_blacklist(
+        self, user_or_user_id: Union[discord.Member, discord.User, int]
+    ) -> bool:
+        uid = getattr(user_or_user_id, "id", user_or_user_id)
+        if uid in self.blacklisted_user_ids:
+            return False
+        self.blacklisted_user_ids.append(uid)
+        return True
+
+    def remove_user_from_blacklist(
+        self, user_or_user_id: Union[discord.Member, discord.User, int]
+    ) -> bool:
+        uid = getattr(user_or_user_id, "id", user_or_user_id)
+        if uid not in self.blacklisted_user_ids:
+            return False
+        self.blacklisted_user_ids.remove(uid)
+        return True
+
     async def close(self, restart: bool = False) -> None:
         if restart:
             self.exit_code = 26
