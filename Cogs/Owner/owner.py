@@ -195,13 +195,8 @@ class Owner(commands.Cog):
     @app_commands.command(name="owner", description="Owner only commands.")
     @is_owner()
     @app_commands.checks.bot_has_permissions(attach_files=True, embed_links=True)
-    @app_commands.describe(
-        command="The owner command to execute.",
-        argument="An optional argument for the command.",
-    )
-    async def owner(
-        self, interaction: MartinInteraction, command: str, argument: str = None
-    ) -> None:
+
+    async def owner(self, interaction: MartinInteraction) -> None:
         """
         No peasants allowed.
         """
