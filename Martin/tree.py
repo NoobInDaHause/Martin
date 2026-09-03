@@ -26,10 +26,6 @@ class MartinTree(app_commands.CommandTree):
         )
         self.log = logging.getLogger("MartinTree")
 
-    async def _call(self, interaction: discord.Interaction):
-        interaction.__class__ = MartinInteraction
-        return await super()._call(interaction)
-
     async def on_error(
         self, interaction: MartinInteraction, error: app_commands.AppCommandError
     ) -> None:
