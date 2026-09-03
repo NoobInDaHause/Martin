@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING, Union
-import copy
 
 from discord import app_commands
 from discord.ext import commands
+
+from Utilities.exceptions import BadArgument
 
 if TYPE_CHECKING:
     from Martin import MartinInteraction
@@ -35,4 +36,4 @@ class UserTransformer(app_commands.Transformer):
                 await interaction.client.get_context(interaction.message), value
             )
         except commands.BadArgument as e:
-            raise app_commands.TransformerError(str(e)) from e
+            raise BadArgument(str(e)) from e

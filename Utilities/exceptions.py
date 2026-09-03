@@ -23,3 +23,7 @@ class UserIsBlacklisted(app_commands.CheckFailure):
 
 class UserIsNotOwner(app_commands.CheckFailure):
     pass
+
+
+class BadArgument(app_commands.AppCommandError):
+    pass

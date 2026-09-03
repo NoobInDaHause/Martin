@@ -5,7 +5,7 @@ import logging
 import discord
 from discord import app_commands
 
-from Utilities.exceptions import UserIsBlacklisted, UserIsNotOwner
+from Utilities.exceptions import BadArgument, UserIsBlacklisted, UserIsNotOwner
 
 from .interaction import MartinInteraction
 
@@ -95,7 +95,7 @@ class MartinTree(app_commands.CommandTree["Martin"]):
                 app_commands.MissingAnyRole,
                 app_commands.MissingPermissions,
                 app_commands.BotMissingPermissions,
-                app_commands.TransformerError,
+                BadArgument,
             ),
         ):
             await interaction.response_or_followup(content=str(error))

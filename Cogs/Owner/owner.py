@@ -9,6 +9,7 @@ from discord.ext import commands
 
 from Martin import Martin, MartinInteraction
 from Utilities.checks import is_owner
+from Utilities.exceptions import BadArgument
 from Utilities.formatting import pagify
 from Utilities.transformers import UserTransformer
 from Utilities.views import ConfirmationView, PaginatorView
@@ -200,7 +201,7 @@ class Owner(commands.Cog):
         for u in users:
             try:
                 verified.append(await UserTransformer().transform(interaction, u))
-            except app_commands.TransformerError:
+            except BadArgument:
                 failed.append(f"Uknown User (`{u}`)")
                 continue
 
