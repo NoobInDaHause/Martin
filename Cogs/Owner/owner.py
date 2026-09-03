@@ -221,6 +221,7 @@ class Owner(commands.Cog):
                 )
 
         if added_or_removed:
+            self.bot.save_settings()
             a2_msg = discord.utils._human_join(added_or_removed, final="and")
             await interaction.response_or_followup(
                 content=f"{what.title()}ed: {a2_msg}"
