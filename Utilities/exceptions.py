@@ -19,3 +19,7 @@ class DataManagerException(Exception):
 
 class UserIsBlacklisted(app_commands.CheckFailure):
     pass
+
+
+class UserIsNotOwner(app_commands.CheckFailure):
+    pass

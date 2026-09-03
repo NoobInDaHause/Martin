@@ -8,6 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from Martin import Martin, MartinInteraction
+from Utilities.checks import is_owner
 from Utilities.formatting import format_time
 
 from .general_data_manager import GeneralDB
@@ -169,7 +170,7 @@ class General(commands.Cog):
         )
 
     @app_commands.command(name="custominfo")
-    @app_commands.checks.is_owner()
+    @is_owner()
     async def custominfo(
         self, interaction: MartinInteraction, *, custom_info: Optional[str] = None
     ) -> None:

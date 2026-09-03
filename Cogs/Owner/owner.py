@@ -1,4 +1,3 @@
-import copy
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
@@ -9,6 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from Martin import Martin, MartinInteraction
+from Utilities.checks import is_owner
 from Utilities.formatting import pagify
 from Utilities.views import ConfirmationView, PaginatorView
 
@@ -193,7 +193,7 @@ class Owner(commands.Cog):
         await interaction.response_or_followup(embed=embed)
 
     @app_commands.command(name="owner", description="Owner only commands.")
-    @app_commands.checks.is_owner()
+    @is_owner()
     @app_commands.checks.bot_has_permissions(attach_files=True, embed_links=True)
     @app_commands.describe(
         command="The owner command to execute.",
