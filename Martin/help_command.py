@@ -1,5 +1,5 @@
 import inspect
-from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Union
+from typing import Any, List, Mapping, Optional, Union
 
 import discord
 from discord.ext import commands
@@ -7,19 +7,15 @@ from discord.ext import commands
 from Utilities.formatting import format_time, pagify
 from Utilities.views import PaginatorView
 
-if TYPE_CHECKING:
-    from .context import MartinContext
-
 
 class MartinHelpCommand(commands.HelpCommand):
     COMMAND_NAME_WIDTH = 15
-    context: "MartinContext"
 
     @staticmethod
     def command_description(command: commands.Command) -> str:
         return inspect.cleandoc(command.help or "No description provided.")
 
-    async def command_callback(self, ctx: "MartinContext", /, *, command: Optional[str] = None) -> None:
+    async def command_callback(self, ctx, /, *, command: Optional[str] = None) -> None:
         check = commands.bot_has_permissions(embed_links=True)
         await check.predicate(ctx)
         return await super().command_callback(ctx, command=command)
@@ -415,7 +411,5 @@ class MartinHelpCommand(commands.HelpCommand):
         self, command: commands.Command[Any, ..., Any], string: str, /
     ) -> str:
         if isinstance(command, commands.Group) and len(command.all_commands) > 0:
-            return (
-                f'Command `"{command.qualified_name}"` has no subcommand named **{string}**'
-            )
+            return f'Command `"{command.qualified_name}"` has no subcommand named **{string}**'
         return f'Command `"{command.qualified_name}"` has no subcommands.'

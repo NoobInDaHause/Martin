@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 import discord
 
 if TYPE_CHECKING:
-    from Martin import MartinContext, MartinInteraction
+    from Martin import MartinInteraction
 
 
 class PaginatorView(discord.ui.View):
@@ -12,12 +12,12 @@ class PaginatorView(discord.ui.View):
 
     def __init__(
         self,
-        obj: Union["MartinContext", "MartinInteraction"],
+        interaction: "MartinInteraction",
         pages: List[Union[str, discord.Embed]],
         timeout: float = 30.0,
     ):
         super().__init__(timeout=timeout)
-        self.obj = obj
+        self.interaction = interaction
         self.pages = pages
         self.message: Optional[Union[discord.Message, discord.WebhookMessage]] = None
         self.current_page = 0
@@ -26,18 +26,11 @@ class PaginatorView(discord.ui.View):
 
     async def start(self) -> None:
         content, embed = self.page_to_content(self.pages[self.current_page])
-        if isinstance(self.obj, discord.Interaction):
-            self.message = await self.obj.response_or_followup(
-                content=content,
-                embed=embed,
-                view=self,
-            )
-        else:
-            self.message = await self.obj.send(
-                content=content,
-                embed=embed,
-                view=self,
-            )
+        self.message = await self.interaction.response_or_followup(
+            content=content,
+            embed=embed,
+            view=self,
+        )
         self.update_button_states()
 
     def page_to_content(
@@ -136,12 +129,7 @@ class PaginatorView(discord.ui.View):
             return False
         if await interaction.client.is_owner(interaction.user):
             return True
-        author = (
-            self.obj.user
-            if isinstance(self.obj, discord.Interaction)
-            else self.obj.author
-        )
-        if interaction.user.id != author.id:
+        if interaction.user.id != self.interaction.user.id:
             await interaction.response_or_followup(
                 content="You are not authorized to interact with this interaction.",
                 ephemeral=True,
@@ -162,24 +150,20 @@ class ConfirmationView(discord.ui.View):
 
     def __init__(
         self,
-        obj: Union["MartinContext", "MartinInteraction"],
+        interaction: "MartinInteraction",
         confirmed_content: str = "Action confirmed.",
         confirmed_embed: Optional[discord.Embed] = None,
         timeout: float = 30.0,
     ):
         super().__init__(timeout=timeout)
         self.message: Optional[Union[discord.Message, discord.WebhookMessage]] = None
-        self.obj = obj
+        self.interaction = interaction
         self.confirmed_content = confirmed_content
         self.confirmed_embed = confirmed_embed
         self.value: Optional[bool] = None
 
     async def start(self, *args, **kwargs) -> None:
-        self.message = (
-            await self.obj.response_or_followup(*args, **kwargs)
-            if isinstance(self.obj, discord.Interaction)
-            else await self.obj.send(*args, **kwargs)
-        )
+        self.message = await self.interaction.response_or_followup(*args, **kwargs)
 
     @discord.ui.button(emoji="✔️", style=discord.ButtonStyle.success)
     async def confirm_button(
@@ -218,12 +202,7 @@ class ConfirmationView(discord.ui.View):
             return False
         if await interaction.client.is_owner(interaction.user):
             return True
-        author = (
-            self.obj.user
-            if isinstance(self.obj, discord.Interaction)
-            else self.obj.author
-        )
-        if interaction.user.id != author.id:
+        if interaction.user.id != self.interaction.user.id:
             await interaction.response_or_followup(
                 content="You are not authorized to interact with this interaction.",
                 ephemeral=True,

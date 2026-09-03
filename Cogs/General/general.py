@@ -4,9 +4,10 @@ from time import perf_counter
 from typing import Optional
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
-from Martin import Martin, MartinContext
+from Martin import Martin, MartinInteraction
 from Utilities.formatting import format_time
 
 from .general_data_manager import GeneralDB
@@ -32,38 +33,32 @@ class General(commands.Cog):
             return discord.Colour.green()
         return discord.Colour.yellow() if latency_ms < 250 else discord.Colour.red()
 
-    @commands.command(name="uptime")
-    @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    async def uptime(self, ctx: MartinContext) -> None:
+    @app_commands.command(name="uptime")
+    @app_commands.bot_has_permissions(embed_links=True)
+    @app_commands.checks.cooldown(1, 5, key=lambda i: i.user.id)
+    async def uptime(self, interaction: MartinInteraction) -> None:
         """
-        Check how long the bot has been up.
+        Check how long the bot has been up for.
         """
         elapsed_seconds = int(
             (datetime.now(timezone.utc) - self.bot.uptime).total_seconds()
         )
         startup_timestamp = int(self.bot.uptime.timestamp())
-        embed = discord.Embed(
-            title="Bot uptime",
-            description=(
-                f"{format_time(elapsed_seconds)}\nStarted <t:{startup_timestamp}:R>"
-            ),
-            colour=self.bot.colour,
-            timestamp=datetime.now(timezone.utc),
+        await interaction.response_or_followup(
+            content=f"I have been up for **{format_time(elapsed_seconds)}**. Since <t:{startup_timestamp}:R>."
         )
-        await ctx.send(embed=embed)
 
-    @commands.command(name="ping")
-    @commands.bot_has_permissions(embed_links=True)
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    async def ping(self, ctx: MartinContext) -> None:
+    @app_commands.command(name="ping")
+    @app_commands.bot_has_permissions(embed_links=True)
+    @app_commands.checks.cooldown(1, 5, key=lambda i: i.user.id)
+    async def ping(self, interaction: MartinInteraction) -> None:
         """
         Ping.
 
         Pong.
         """
         send_started = perf_counter()
-        initial_message = await ctx.send(content="Pinging...")
+        initial_message = await interaction.response_or_followup(content="Pinging...")
         send_latency = (perf_counter() - send_started) * 1000
 
         edit_started = perf_counter()
@@ -112,68 +107,71 @@ class General(commands.Cog):
         )
         await initial_message.edit(embed=result_embed)
 
-    @commands.command(name="info", aliases=["botinfo"])
-    @commands.bot_has_permissions(embed_links=True)
-    async def info(self, ctx: MartinContext) -> None:
+    @app_commands.command(name="info", aliases=["botinfo"])
+    @app_commands.bot_has_permissions(embed_links=True)
+    async def info(self, interaction: MartinInteraction) -> None:
         """Check info about the bot."""
-        async with ctx.typing():
-            app_info = await self.bot.application_info()
-            owner = f"Team {app_info.team.name}" if app_info.team else app_info.owner
-            embed = discord.Embed(
-                title=f"Instance owned by `{owner}`",
-                description=(
-                    "This bot is a custom instance of [Martin](https://github.com/NoobInDaHause/Martin), "
-                    "an open-source Discord ~~BOT~~ APP built with Python & `discord.py`.\n\n"
-                    "• **Source:** [GitHub](https://github.com/NoobInDaHause/Martin)\n"
-                    "• **License:** MIT\n\n"
-                    "Want your own copy? Check out the repo to host or build one yourself!"
-                ),
-                timestamp=datetime.now(timezone.utc),
-                colour=self.bot.colour,
-            )
-            if c_i := await self.db.get_or_delete_custom_info(False):
-                embed.description = f"{embed.description}\n\n**Custom Info:**\n{c_i}"
+        await interaction.response.defer(thinking=True)
 
-            embed.set_thumbnail(url=self.bot.user.display_avatar)
+        app_info = await self.bot.application_info()
+        owner = f"Team {app_info.team.name}" if app_info.team else app_info.owner
+        embed = discord.Embed(
+            title=f"Instance owned by `{owner}`",
+            description=(
+                "This bot is a custom instance of [Martin](https://github.com/NoobInDaHause/Martin), "
+                "an open-source Discord ~~BOT~~ APP built with Python & `discord.py`.\n\n"
+                "• **Source:** [GitHub](https://github.com/NoobInDaHause/Martin)\n"
+                "• **License:** MIT\n\n"
+                "Want your own copy? Check out the repo to host or build one yourself!"
+            ),
+            timestamp=datetime.now(timezone.utc),
+            colour=self.bot.colour,
+        )
+        if c_i := await self.db.get_or_delete_custom_info(False):
+            embed.description = f"{embed.description}\n\n**Custom Info:**\n{c_i}"
 
-            embed.add_field(
-                name="Discord.py Version:", value=discord.__version__, inline=True
-            )
-            embed.add_field(
-                name="Python Version:", value=platform.python_version(), inline=True
-            )
-            embed.add_field(
-                name="Martin Version:", value=self.bot.__version__.removeprefix("v"), inline=True
-            )
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
 
-            update = await self.bot.get_updates()
-            if update["status"] == "error":
-                nam = "GitHub:"
-                ver = "Failed to check for updates."
-            elif update["status"] == "update_available":
-                nam = "New Martin Version:"
-                ver = f"[{update['latest_version'].removeprefix('v')}]({update['release_url']})"
-            else:
-                nam = "GitHub:"
-                ver = "Martin is up to date."
-            embed.add_field(name=nam, value=ver, inline=True)
+        embed.add_field(
+            name="Discord.py Version:", value=discord.__version__, inline=True
+        )
+        embed.add_field(
+            name="Python Version:", value=platform.python_version(), inline=True
+        )
+        embed.add_field(
+            name="Martin Version:",
+            value=self.bot.__version__.removeprefix("v"),
+            inline=True,
+        )
 
-            await ctx.send(embed=embed)
+        update = await self.bot.get_updates()
+        if update["status"] == "error":
+            nam = "GitHub:"
+            ver = "Failed to check for updates."
+        elif update["status"] == "update_available":
+            nam = "New Martin Version:"
+            ver = f"[{update['latest_version'].removeprefix('v')}]({update['release_url']})"
+        else:
+            nam = "GitHub:"
+            ver = "Martin is up to date."
+        embed.add_field(name=nam, value=ver, inline=True)
 
-    @commands.command(name="invite")
-    async def invite(self, ctx: MartinContext) -> None:
+        await interaction.response_or_followup(embed=embed)
+
+    @app_commands.command(name="invite")
+    async def invite(self, interaction: MartinInteraction) -> None:
         """
         Invite the bot.
         """
-        await ctx.send(
+        await interaction.response_or_followup(
             content=f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}"
             "&permissions=8866461766385655&integration_type=0&scope=bot+applications.commands"
         )
 
-    @commands.command(name="custominfo")
-    @commands.is_owner()
+    @app_commands.command(name="custominfo")
+    @app_commands.checks.is_owner()
     async def custominfo(
-        self, ctx: MartinContext, *, custom_info: Optional[str] = None
+        self, interaction: MartinInteraction, *, custom_info: Optional[str] = None
     ) -> None:
         """
         Add a custom info from the [p]info command.
@@ -187,4 +185,4 @@ class General(commands.Cog):
         else:
             await self.db.insert_or_update_custom_info(False, custom_info)
 
-        await ctx.send(content="Done.")
+        await interaction.response_or_followup(content="Done.")

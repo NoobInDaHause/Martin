@@ -2,14 +2,17 @@ import copy
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
-from Martin import Martin, MartinContext
+from Martin import Martin, MartinInteraction
 from Utilities.formatting import pagify
 from Utilities.views import ConfirmationView, PaginatorView
+
+from .views import OwnerView
 
 
 class Owner(commands.Cog):
@@ -50,7 +53,7 @@ class Owner(commands.Cog):
         return True, ""
 
     async def manage_cogs(
-        self, ctx: MartinContext, action: str, cog_names: List[str]
+        self, interaction: MartinInteraction, action: str, cog_names: List[str]
     ) -> None:
         protected = [
             cog_name for cog_name in cog_names if cog_name.casefold() == "owner"
@@ -96,55 +99,62 @@ class Owner(commands.Cog):
             messages.append(
                 f"The following {cog_label} cannot be {verb}: {discord.utils._human_join(protected, final='and')}"
             )
-        await ctx.send("\n".join(messages))
+        await interaction.response_or_followup(content="\n".join(messages))
 
-    @commands.command(name="restart")
-    @commands.is_owner()
-    async def restart(self, ctx: MartinContext) -> None:
-        """Restart the bot process."""
-        confirm_view = ConfirmationView(ctx, "Restarting... :arrows_counterclockwise:")
+    async def restart_or_shutdown(
+        self, interaction: MartinInteraction, restart: bool
+    ) -> None:
+        done_msg = (
+            "Restarting... :arrows_counterclockwise:"
+            if restart
+            else "Shutting down. :wave:"
+        )
+        confirm_view = ConfirmationView(interaction, done_msg)
 
         await confirm_view.start(
-            content="Are you sure you want me to restart?", view=confirm_view
+            content=f"Are you sure you want me to {'restart' if restart else 'shutdown'}?",
+            view=confirm_view,
         )
         await confirm_view.wait()
 
         if confirm_view.value:
             confirm_view.stop()
-            await ctx.bot.close(True)
+            await interaction.client.close(restart)
 
-    @commands.command(name="shutdown")
-    @commands.is_owner()
-    async def shutdown(self, ctx: MartinContext) -> None:
-        """
-        Shutdown the bot.
-        """
-        confirm_view = ConfirmationView(ctx, "Shutting down. :wave:")
-
-        await confirm_view.start(
-            content="Are you sure you want me to shutdown?", view=confirm_view
+    async def _guilds(self, interaction: MartinInteraction) -> None:
+        guilds: List[discord.Guild] = sorted(
+            self.bot.guilds, key=lambda g: g.member_count, reverse=True
         )
-        await confirm_view.wait()
+        guild_list = "\n".join(
+            f"{index}. **{guild.name}** (`{guild.id}`) - {guild.member_count} members"
+            for index, guild in enumerate(guilds, start=1)
+        )
 
-        if confirm_view.value:
-            confirm_view.stop()
-            await ctx.bot.close()
+        pagified_guilds = pagify(guild_list)
 
-    @commands.group(name="cog", invoke_without_command=True)
-    @commands.is_owner()
-    async def _cog(self, ctx: MartinContext) -> None:
-        """
-        Base commands for managing cogs.
-        """
-        return await ctx.send_help()
+        if len(pagified_guilds) == 1:
+            guild_len = len(guilds)
+            embed = discord.Embed(
+                title=f"{self.bot.user.name} is in `{guild_len}` guild{'' if guild_len == 1 else 's'}.",
+                description=pagified_guilds[0],
+                colour=self.bot.colour,
+                timestamp=datetime.now(timezone.utc),
+            )
+            await interaction.response_or_followup(embed=embed)
+        else:
+            embeds = [
+                discord.Embed(
+                    title=f"{self.bot.user.name} is in `{len(guilds)}` guilds.",
+                    description=page,
+                    colour=self.bot.colour,
+                    timestamp=datetime.now(timezone.utc),
+                ).set_footer(text=f"Page ({index}/{len(pagified_guilds)})")
+                for index, page in enumerate(pagified_guilds, start=1)
+            ]
 
-    @_cog.command(name="list")
-    @commands.is_owner()
-    @commands.bot_has_permissions(attach_files=True)
-    async def _cog_list(self, ctx: MartinContext) -> None:
-        """
-        Shows the list of loaded/unloaded cogs.
-        """
+            await PaginatorView(interaction, embeds).start()
+
+    async def _cog_list(self, interaction: MartinInteraction) -> None:
         cogs_path = Path(__file__).parents[2]
         cog_names = sorted(
             cog_folder.name
@@ -169,89 +179,60 @@ class Owner(commands.Cog):
             f"{format_cogs(unloaded)}\n"
         )
         cog_file = discord.File(BytesIO(markdown.encode("utf-8")), filename="cogs.md")
-        await ctx.send(file=cog_file)
+        await interaction.response_or_followup(file=cog_file)
 
-    @_cog.command(name="load")
-    @commands.is_owner()
-    async def _cog_load(self, ctx: MartinContext, *, cog_names: str) -> None:
-        """Load one or more cog extensions."""
-        await self.manage_cogs(ctx, "load", cog_names.split())
-
-    @_cog.command(name="unload")
-    @commands.is_owner()
-    async def _cog_unload(self, ctx: MartinContext, *, cog_names: str) -> None:
-        """Unload one or more cog extensions."""
-        await self.manage_cogs(ctx, "unload", cog_names.split())
-
-    @_cog.command(name="reload")
-    @commands.is_owner()
-    async def _cog_reload(self, ctx: MartinContext, *, cog_names: str) -> None:
-        """Reload one or more cog extensions."""
-        await self.manage_cogs(ctx, "reload", cog_names.split())
-
-    @commands.command(name="sudo")
-    @commands.is_owner()
-    async def sudo(
-        self, ctx: MartinContext, target_user: discord.User, *, command: str
-    ):
-        """
-        Simulates a command being run by another user.
-
-        Can not be used with other bots.
-        """
-        if target_user.bot:
-            return await ctx.send(content="Can not simulate sudo from other bots.")
-
-        fake_message = copy.copy(ctx.message)
-
-        fake_message.author = target_user
-        fake_message.content = f"{ctx.clean_prefix}{command}"
-
-        new_ctx = await self.bot.get_context(fake_message)
-
-        if new_ctx.command is None:
-            await ctx.send("No command found, probably a typo.")
-        else:
-            await self.bot.process_commands(fake_message)
-
-    @commands.group(name="set", invoke_without_command=True)
-    @commands.is_owner()
-    async def _set(self, ctx: MartinContext):
-        """
-        Set [bot]'s settings.
-        """
-        return await ctx.send_help()
-
-    @_set.command(name="colour", aliases=["color"])
-    @commands.is_owner()
-    async def _set_colour(self, ctx: MartinContext, colour: discord.Colour = "#276a8a"):
-        """Change the global embed bot colour."""
-        self.bot.global_hex_colour = str(colour)
+    async def _colour(self, interaction: MartinInteraction, colour: str = None):
+        colour = colour or "#276a8a"
+        dc = discord.Colour.from_str(colour)
+        self.bot.global_hex_colour = str(dc)
         embed = discord.Embed(
-            description=f"Successfully changed bot colour to {colour}.",
+            description=f"Successfully changed bot colour to {dc}.",
             colour=self.bot.colour,
         )
         self.bot.save_settings()
-        await ctx.send(embed=embed)
+        await interaction.response_or_followup(embed=embed)
 
-    @_set.command(name="prefix")
-    @commands.is_owner()
-    async def _set_prefix(self, ctx: MartinContext, *, prefixes: Optional[str] = None):
+    @app_commands.command(name="owner", description="Owner only commands.")
+    @app_commands.checks.is_owner()
+    @app_commands.checks.bot_has_permissions(attach_files=True, embed_links=True)
+    @app_commands.describe(
+        command="The owner command to execute.",
+        argument="An optional argument for the command.",
+    )
+    async def owner(
+        self, interaction: MartinInteraction, command: str, argument: str = None
+    ) -> None:
         """
-        Set [bot]'s prefix(es).
-
-        Leave blank to reset to default prefix(es): [">"]
+        No peasants allowed.
         """
-        prefixes = prefixes.split() if prefixes else [">"]
-        self.bot.default_prefixes = prefixes
-        self.bot.save_settings()
-        await ctx.send(
-            content=f"Set {ctx.bot.user.name}'s prefix(es) to {discord.utils._human_join(prefixes, final='and')}."
+        desc = """
+            Command names highlighted as bold require an argument.
+            
+            Available owner commands:
+            > restart: Restarts the bot.
+            Usage: /owner command:restart
+            > shutdown: Shuts down the bot.
+            Usage: /owner command:shutdown
+            > guilds: Shows the list of guilds the bot is in.
+            Usage: /owner command:guilds
+            > **loadcog**: Loads a cog. Separate cog names with spaces.
+            Usage: /owner command:loadcog argument:<cog_names...>
+            > **unloadcog**: Unloads a cog. Separate cog names with spaces.
+            Usage: /owner command:unloadcog argument:<cog_names...>
+            > **reloadcog**: Reloads a cog. Separate cog names with spaces.
+            Usage: /owner command:reloadcog argument:<cog_names...>
+            > coglist: Shows the list of loaded/unloaded cogs.
+            Usage: /owner command:coglist
+            > **botcolour**: Change the bot global embed hex colour, leave argument blank to set it back to default.
+            Usage: /owner command:botcolour argument:[hex_code]
+            Aliases: botcolor
+            """
+        embed = discord.Embed(
+            title="Owner command pannel", description=desc, colour=self.bot.colour
         )
 
-    @_set.group(name="blacklist", invoke_without_command=True)
-    @commands.is_owner()
-    @commands.bot_has_permissions(embed_links=True)
+        await OwnerView(self, interaction).start(embed=embed)
+
     async def _set_blacklist(self, ctx: commands.Context):
         """
         Base commands for blacklisting users.
@@ -274,10 +255,8 @@ class Owner(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @_set_blacklist.command(name="add", usage="<users...>")
-    @commands.is_owner()
     async def blacklist_add(
-        self, ctx: MartinContext, users: commands.Greedy[discord.User]
+        self, ctx: commands.Context, users: commands.Greedy[discord.User]
     ):
         """
         Add users to the [bot]'s blacklist.
@@ -302,16 +281,16 @@ class Owner(commands.Cog):
 
         if added:
             self.bot.save_settings()
-            await ctx.send(content=f"Blacklisted {discord.utils._human_join(added, final='and')}.")
+            await ctx.send(
+                content=f"Blacklisted {discord.utils._human_join(added, final='and')}."
+            )
         if failed:
             await ctx.send(
                 content=f"Failed to blacklist {discord.utils._human_join(failed, final='and')} since they are likely to be a bot, bot owner, or already blacklisted."
             )
 
-    @_set_blacklist.command(name="remove", usage="<users...>")
-    @commands.is_owner()
     async def blacklist_remove(
-        self, ctx: MartinContext, users: commands.Greedy[discord.User]
+        self, ctx: commands.Context, users: commands.Greedy[discord.User]
     ):
         """
         Remove users from the [bot]'s blacklist.
@@ -336,47 +315,10 @@ class Owner(commands.Cog):
 
         if removed:
             self.bot.save_settings()
-            await ctx.send(content=f"Unblacklisted {discord.utils._human_join(removed, final='and')}.")
+            await ctx.send(
+                content=f"Unblacklisted {discord.utils._human_join(removed, final='and')}."
+            )
         if failed:
             await ctx.send(
                 content=f"Failed to unblacklist {discord.utils._human_join(failed, final='and')} since they are likely to be a bot, bot owner, or already blacklisted."
             )
-
-    @commands.command(name="guilds")
-    @commands.is_owner()
-    async def guilds(self, ctx: MartinContext):
-        """
-        Shows the list of guild(s) [bot] is in.
-        """
-
-        guilds: List[discord.Guild] = sorted(
-            self.bot.guilds, key=lambda g: g.member_count, reverse=True
-        )
-        guild_list = "\n".join(
-            f"{index}. **{guild.name}** (`{guild.id}`) - {guild.member_count} members"
-            for index, guild in enumerate(guilds, start=1)
-        )
-
-        pagified_guilds = pagify(guild_list)
-
-        if len(pagified_guilds) == 1:
-            guild_len = len(guilds)
-            embed = discord.Embed(
-                title=f"{self.bot.user.name} is in `{guild_len}` guild{'' if guild_len == 1 else 's'}.",
-                description=pagified_guilds[0],
-                colour=self.bot.colour,
-                timestamp=datetime.now(timezone.utc),
-            )
-            return await ctx.send(embed=embed)
-
-        embeds = [
-            discord.Embed(
-                title=f"{self.bot.user.name} is in `{len(guilds)}` guilds.",
-                description=page,
-                colour=self.bot.colour,
-                timestamp=datetime.now(timezone.utc),
-            ).set_footer(text=f"Page ({index}/{len(pagified_guilds)})")
-            for index, page in enumerate(pagified_guilds, start=1)
-        ]
-
-        await PaginatorView(ctx, embeds).start()

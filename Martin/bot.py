@@ -8,39 +8,26 @@ from typing import Dict, List, Union, cast
 import aiohttp
 import discord
 from discord.ext import commands
-from discord.utils import MISSING
 from packaging.version import Version
 
 from Utilities.exceptions import UserIsBlacklisted
-from .context import MartinContext
-from .help_command import MartinHelpCommand
-from .interaction import MartinInteraction
 from .settings import PROJECT_ROOT, Settings
 from .tree import MartinTree
 
 GITHUB_REPOSITORY = "NoobInDaHause/Martin"
-HELP_COMMAND_ATTRS = {
-    "cooldown": commands.CooldownMapping.from_cooldown(
-        1, 3.0, commands.BucketType.user
-    ),
-    "help": (
-        "Shows help about the bot, command or cog.\n\n"
-        "Ich brauche hier etwas Hilfe.\n"
-        "Trenger litt hjelp her.\n"
-        "J'ai besoin d'aide."
-    ),
-    "hidden": True,
-    "aliases": ["h", "hilfe", "hjelp", "cananyonehelpme"],
-}
-
-
-def _prefix_callable(bot: "Martin", message: discord.Message) -> List[str]:
-    """A callable that returns the prefix for a given message."""
-    return (
-        list(dict.fromkeys(bot.get_guild_prefix(message.guild.id)).keys())
-        if message.guild
-        else list(dict.fromkeys(bot.default_prefixes).keys())
-    )
+# HELP_COMMAND_ATTRS = {
+#     "cooldown": commands.CooldownMapping.from_cooldown(
+#         1, 3.0, commands.BucketType.user
+#     ),
+#     "help": (
+#         "Shows help about the bot, command or cog.\n\n"
+#         "Ich brauche hier etwas Hilfe.\n"
+#         "Trenger litt hjelp her.\n"
+#         "J'ai besoin d'aide."
+#     ),
+#     "hidden": True,
+#     "aliases": ["h", "hilfe", "hjelp", "cananyonehelpme"],
+# }
 
 
 class Martin(commands.AutoShardedBot):
@@ -52,14 +39,11 @@ class Martin(commands.AutoShardedBot):
 
     def __init__(self, settings: Settings):
         super().__init__(
-            command_prefix=_prefix_callable,
+            command_prefix="=",
             intents=discord.Intents.all(),
-            help_command=MartinHelpCommand(command_attrs=HELP_COMMAND_ATTRS),
             description="A Discord bot/app written in Python.",
             tree_cls=MartinTree,
         )
-        self.default_prefixes = settings.default_prefixes
-        self.guild_prefixes = settings.guild_prefixes
         self.blacklisted_user_ids = settings.blacklisted_user_ids
         self.global_hex_colour = settings.global_hex_colour
         self.uptime = datetime.now(timezone.utc)
@@ -73,15 +57,6 @@ class Martin(commands.AutoShardedBot):
     @property
     def color(self) -> discord.Colour:
         return self.colour
-
-    def get_guild_prefix(
-        self, guild_or_guild_id: Union[discord.Guild, int]
-    ) -> List[str]:
-        """Get the prefix for a given message."""
-        return self.guild_prefixes.get(
-            str(getattr(guild_or_guild_id, "id", guild_or_guild_id)),
-            self.default_prefixes,
-        )
 
     async def get_updates(self) -> Dict[str, str]:
         """Get the latest GitHub version and compare it with the bot version."""
@@ -146,7 +121,7 @@ class Martin(commands.AutoShardedBot):
             "release_url": release_url,
         }
 
-    async def naughty_users(self, ctx: MartinContext, /) -> bool:
+    async def naughty_users(self, ctx, /) -> bool:
 
         if self.is_blacklisted(ctx.author):
             raise UserIsBlacklisted("You are blacklisted from using this bot.")
@@ -171,6 +146,12 @@ class Martin(commands.AutoShardedBot):
                 plural,
                 discord.utils._human_join(cog_names, final="and"),
             )
+
+        self.log.info("Syncing slash commands...")
+        await self.tree.sync()
+        self.log.info(
+            "Successfully synced %s slash command(s).", len(self.tree.get_commands())
+        )
 
         self.log.info("Logged in as %s (ID: %s).", self.user, self.user.id)
         self.log.info("--------------------------------------------------")
@@ -201,7 +182,7 @@ class Martin(commands.AutoShardedBot):
         self.add_check(self.naughty_users)
 
     async def on_command_error(
-        self, context: MartinContext, exception: commands.CommandError, /
+        self, context, exception: commands.CommandError, /
     ) -> None:
         if self.extra_events.get("on_command_error", None):
             return
@@ -220,7 +201,7 @@ class Martin(commands.AutoShardedBot):
         await self.handle_command_error(context, exception)
 
     async def handle_command_error(
-        self, context: MartinContext, exception: commands.CommandError, /
+        self, context, exception: commands.CommandError, /
     ) -> None:
         owner_message = (
             "Check your console or logs for details."
@@ -332,13 +313,6 @@ class Martin(commands.AutoShardedBot):
         )
         await context.send(error_msg)
 
-    async def get_context(
-        self, origin: Union[discord.Message, MartinInteraction], /, *, cls=MISSING
-    ) -> MartinContext:
-        if cls is MISSING:
-            cls = MartinContext
-        return await super().get_context(origin, cls=cls)
-
     async def get_or_fetch_user(self, user_id: int) -> discord.User:
         return self.get_user(user_id) or await self.fetch_user(user_id)
 
@@ -377,9 +351,10 @@ class Martin(commands.AutoShardedBot):
     def save_settings(self):
         with open(PROJECT_ROOT / "config.json", "w", encoding="utf-8") as conf:
             data = {
-                "default_prefixes": self.default_prefixes,
-                "guild_prefixes": self.guild_prefixes,
                 "global_hex_colour": self.global_hex_colour,
                 "blacklisted_user_ids": self.blacklisted_user_ids,
             }
             json.dump(data, conf, indent=4)
+
+    # async def send_app_command_help(self, interaction: MartinInteraction, command: str):
+    #     cmd = self.tree.get_command(command)

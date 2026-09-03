@@ -1,4 +1,4 @@
-from discord.ext import commands
+from discord import app_commands
 
 
 class FormattingException(Exception):
@@ -17,5 +17,5 @@ class DataManagerException(Exception):
     pass
 
 
-class UserIsBlacklisted(commands.CheckFailure):
+class UserIsBlacklisted(app_commands.CheckFailure):
     pass
