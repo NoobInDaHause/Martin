@@ -47,6 +47,7 @@ class MartinTree(app_commands.CommandTree["Martin"]):
             self.log.error("Ignoring exception in command tree", exc_info=error)
             return
 
+        self.client.dispatch("app_command_error", interaction, error)
         if command._has_any_error_handlers():
             return
 
