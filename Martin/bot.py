@@ -1,7 +1,7 @@
 import contextlib
 import json
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Union, cast
 
@@ -10,24 +10,10 @@ import discord
 from discord.ext import commands
 from packaging.version import Version
 
-from Utilities.exceptions import UserIsBlacklisted
 from .settings import PROJECT_ROOT, Settings
 from .tree import MartinTree
 
 GITHUB_REPOSITORY = "NoobInDaHause/Martin"
-# HELP_COMMAND_ATTRS = {
-#     "cooldown": commands.CooldownMapping.from_cooldown(
-#         1, 3.0, commands.BucketType.user
-#     ),
-#     "help": (
-#         "Shows help about the bot, command or cog.\n\n"
-#         "Ich brauche hier etwas Hilfe.\n"
-#         "Trenger litt hjelp her.\n"
-#         "J'ai besoin d'aide."
-#     ),
-#     "hidden": True,
-#     "aliases": ["h", "hilfe", "hjelp", "cananyonehelpme"],
-# }
 
 
 class Martin(commands.AutoShardedBot):
@@ -121,13 +107,6 @@ class Martin(commands.AutoShardedBot):
             "release_url": release_url,
         }
 
-    async def naughty_users(self, ctx, /) -> bool:
-
-        if self.is_blacklisted(ctx.author):
-            raise UserIsBlacklisted("You are blacklisted from using this bot.")
-
-        return True
-
     async def setup_hook(self) -> None:
         await super().setup_hook()
         app_info = await self.application_info()
@@ -179,140 +158,6 @@ class Martin(commands.AutoShardedBot):
         else:
             self.log.info("Martin is up to date.")
 
-        self.add_check(self.naughty_users)
-
-    async def on_command_error(
-        self, context, exception: commands.CommandError, /
-    ) -> None:
-        if self.extra_events.get("on_command_error", None):
-            return
-
-        command = context.command
-        if command and command.has_error_handler():
-            return
-
-        cog = context.cog
-        if cog and cog.has_error_handler():
-            return
-
-        if isinstance(exception, (commands.CommandNotFound, commands.DisabledCommand)):
-            return
-
-        await self.handle_command_error(context, exception)
-
-    async def handle_command_error(
-        self, context, exception: commands.CommandError, /
-    ) -> None:
-        owner_message = (
-            "Check your console or logs for details."
-            if await self.is_owner(context.author)
-            else ""
-        )
-        error_msg = f"Error in command `'{context.command}'`. {owner_message}"
-
-        if isinstance(exception, commands.PrivateMessageOnly):
-            await context.send(content=str(exception))
-            return
-
-        if isinstance(exception, commands.CommandOnCooldown):
-            time_left = datetime.now(timezone.utc) + timedelta(
-                seconds=exception.retry_after
-            )
-            msg = await context.send(
-                f"This command is on cooldown. Try again in <t:{int(time_left.timestamp())}:R>."
-            )
-            with contextlib.suppress(discord.errors.NotFound):
-                await msg.delete(delay=exception.retry_after)
-            return
-
-        if isinstance(exception, commands.MissingRequiredArgument):
-            await context.send_help()
-            return
-
-        if isinstance(
-            exception, (commands.MissingPermissions, commands.BotMissingPermissions)
-        ):
-            permissions = discord.utils._human_join(
-                [
-                    f"`{permission.replace('_', ' ').strip().title()}`"
-                    for permission in exception.missing_permissions
-                ],
-                final="and",
-            )
-            prefix = (
-                "I require these permissions"
-                if isinstance(exception, commands.BotMissingPermissions)
-                else "You need these permissions"
-            )
-            await context.send(f"{prefix}: {permissions}.")
-            return
-
-        if isinstance(exception, commands.NotOwner):
-            self.log.info(
-                "User %s (%s) tried to run an owner only command in channel #%s (%s). Command: '%s'",
-                context.author,
-                context.author.id,
-                (
-                    "DM Channel"
-                    if isinstance(context.channel, discord.DMChannel)
-                    else context.channel
-                ),
-                context.channel.id,
-                context.command.qualified_name,
-            )
-            return
-
-        if isinstance(exception, commands.NoPrivateMessage):
-            await context.send("This command can only be used in guilds.")
-            return
-
-        if isinstance(
-            exception,
-            (
-                commands.MaxConcurrencyReached,
-                commands.BadArgument,
-                commands.NSFWChannelRequired,
-            ),
-        ):
-            await context.send(content=str(exception))
-            return
-
-        if isinstance(exception, commands.CommandInvokeError):
-            self.log.error(
-                "Command %s failed.",
-                context.command,
-                exc_info=(type(exception), exception, exception.__traceback__),
-            )
-            await context.send(error_msg)
-            return
-
-        if isinstance(exception, UserIsBlacklisted):
-            self.log.info(
-                "User %s (%s) is blacklisted and tried to run command '%s' in channel #%s (%s).",
-                context.author,
-                context.author.id,
-                context.command.qualified_name if context.command else "N/A",
-                (
-                    "DM Channel"
-                    if isinstance(context.channel, discord.DMChannel)
-                    else context.channel
-                ),
-                context.channel.id,
-            )
-            return
-
-        if isinstance(
-            exception, commands.CheckFailure
-        ):  # will put this second to last since other checks above inherit from this class
-            return  # the custom check will handle the sending of error message
-
-        self.log.error(
-            "Unhandled command error in %s",
-            context.command.qualified_name,
-            exc_info=(type(exception), exception, exception.__traceback__),
-        )
-        await context.send(error_msg)
-
     async def get_or_fetch_user(self, user_id: int) -> discord.User:
         return self.get_user(user_id) or await self.fetch_user(user_id)
 
@@ -345,7 +190,6 @@ class Martin(commands.AutoShardedBot):
             "Cleaning up before %s.", ("restarting" if restart else "shutting down")
         )
         self.save_settings()
-        self.remove_check(self.naughty_users)
         return await super().close()
 
     def save_settings(self):
@@ -355,6 +199,3 @@ class Martin(commands.AutoShardedBot):
                 "blacklisted_user_ids": self.blacklisted_user_ids,
             }
             json.dump(data, conf, indent=4)
-
-    # async def send_app_command_help(self, interaction: MartinInteraction, command: str):
-    #     cmd = self.tree.get_command(command)

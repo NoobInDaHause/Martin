@@ -4,7 +4,6 @@ import contextlib
 import discord
 
 from Martin import MartinInteraction
-from Utilities.transformers import ParseBoolTransformer
 
 if TYPE_CHECKING:
     from .owner import Owner

@@ -13,8 +13,9 @@ def is_owner():
         is_owner = await interaction.client.is_owner(interaction.user)
         if not is_owner:
             raise UserIsNotOwner(
-                "You must be an owner of this bot to use this command."
+                "Nice try but you must be an actual owner of this bot to use this command."
             )
         return is_owner
 
     return app_commands.check(predicate)
+ 

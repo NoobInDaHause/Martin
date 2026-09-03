@@ -104,8 +104,9 @@ class MartinTree(app_commands.CommandTree):
 
         if isinstance(
             error, app_commands.CheckFailure
-        ):  # will put this second to last since other checks above inherit from this class
-            return  # the custom check will handle the sending of error message
+        ):  # will put this second to last since some of the errors above inherrit this
+            await interaction.response_or_followup(content=str(error))
+            return
 
         self.log.error(
             "Unhandled slash command error in %s",

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 class MartinInteraction(discord.Interaction["Martin"]):
     async def response_or_followup(self, *args, **kwargs) -> discord.InteractionMessage:
-        pass # This is just for type annotaions
+        raise NotImplementedError("This is just for type annotaions.")
 
 
 async def response_or_followup(
