@@ -233,92 +233,92 @@ class Owner(commands.Cog):
 
         await OwnerView(self, interaction).start(embed=embed)
 
-    async def _set_blacklist(self, ctx: commands.Context):
-        """
-        Base commands for blacklisting users.
+    # async def _set_blacklist(self, ctx: commands.Context):
+    #     """
+    #     Base commands for blacklisting users.
 
-        Shows who are in the naughty list.
-        """
-        blacklisted = []
+    #     Shows who are in the naughty list.
+    #     """
+    #     blacklisted = []
 
-        for x in self.bot.blacklisted_user_ids:
-            user = await self.bot.get_or_fetch_user(x)
-            if user is None:
-                blacklisted.append(f"**Unknown User** (`{x}`)")
-            else:
-                blacklisted.append(f"**{user}** (`{user.id}`)")
+    #     for x in self.bot.blacklisted_user_ids:
+    #         user = await self.bot.get_or_fetch_user(x)
+    #         if user is None:
+    #             blacklisted.append(f"**Unknown User** (`{x}`)")
+    #         else:
+    #             blacklisted.append(f"**{user}** (`{user.id}`)")
 
-        embed = discord.Embed(
-            title="List of users in the naughty list.",
-            description="\n".join(blacklisted) or "No users in the naughty list.",
-            colour=self.bot.colour,
-        )
-        await ctx.send(embed=embed)
+    #     embed = discord.Embed(
+    #         title="List of users in the naughty list.",
+    #         description="\n".join(blacklisted) or "No users in the naughty list.",
+    #         colour=self.bot.colour,
+    #     )
+    #     await ctx.send(embed=embed)
 
-    async def blacklist_add(
-        self, ctx: commands.Context, users: commands.Greedy[discord.User]
-    ):
-        """
-        Add users to the [bot]'s blacklist.
+    # async def blacklist_add(
+    #     self, ctx: commands.Context, users: commands.Greedy[discord.User]
+    # ):
+    #     """
+    #     Add users to the [bot]'s blacklist.
 
-        Can not add bots or bot owners or users already in blacklist to the blacklist.
-        """
-        added = []
-        failed = []
-        if not users:
-            return await ctx.send_help()
+    #     Can not add bots or bot owners or users already in blacklist to the blacklist.
+    #     """
+    #     added = []
+    #     failed = []
+    #     if not users:
+    #         return await ctx.send_help()
 
-        for user in users:
-            if (
-                await self.bot.is_owner(user)
-                or user.bot
-                or self.bot.is_blacklisted(user)
-            ):
-                failed.append(f"**{user.name}** (`{user.id}`)")
-                continue
-            self.bot.blacklisted_user_ids.append(user.id)
-            added.append(f"**{user.name}** (`{user.id}`)")
+    #     for user in users:
+    #         if (
+    #             await self.bot.is_owner(user)
+    #             or user.bot
+    #             or self.bot.is_blacklisted(user)
+    #         ):
+    #             failed.append(f"**{user.name}** (`{user.id}`)")
+    #             continue
+    #         self.bot.blacklisted_user_ids.append(user.id)
+    #         added.append(f"**{user.name}** (`{user.id}`)")
 
-        if added:
-            self.bot.save_settings()
-            await ctx.send(
-                content=f"Blacklisted {discord.utils._human_join(added, final='and')}."
-            )
-        if failed:
-            await ctx.send(
-                content=f"Failed to blacklist {discord.utils._human_join(failed, final='and')} since they are likely to be a bot, bot owner, or already blacklisted."
-            )
+    #     if added:
+    #         self.bot.save_settings()
+    #         await ctx.send(
+    #             content=f"Blacklisted {discord.utils._human_join(added, final='and')}."
+    #         )
+    #     if failed:
+    #         await ctx.send(
+    #             content=f"Failed to blacklist {discord.utils._human_join(failed, final='and')} since they are likely to be a bot, bot owner, or already blacklisted."
+    #         )
 
-    async def blacklist_remove(
-        self, ctx: commands.Context, users: commands.Greedy[discord.User]
-    ):
-        """
-        Remove users from the [bot]'s blacklist.
+    # async def blacklist_remove(
+    #     self, ctx: commands.Context, users: commands.Greedy[discord.User]
+    # ):
+    #     """
+    #     Remove users from the [bot]'s blacklist.
 
-        Can not remove users from the blacklist if they are not blacklisted.
-        """
-        removed = []
-        failed = []
-        if not users:
-            return await ctx.send_help()
+    #     Can not remove users from the blacklist if they are not blacklisted.
+    #     """
+    #     removed = []
+    #     failed = []
+    #     if not users:
+    #         return await ctx.send_help()
 
-        for user in users:
-            if (
-                await self.bot.is_owner(user)
-                or user.bot
-                or not self.bot.is_blacklisted(user)
-            ):
-                failed.append(f"**{user.name}** (`{user.id}`)")
-                continue
-            self.bot.blacklisted_user_ids.remove(user.id)
-            removed.append(f"**{user.name}** (`{user.id}`)")
+    #     for user in users:
+    #         if (
+    #             await self.bot.is_owner(user)
+    #             or user.bot
+    #             or not self.bot.is_blacklisted(user)
+    #         ):
+    #             failed.append(f"**{user.name}** (`{user.id}`)")
+    #             continue
+    #         self.bot.blacklisted_user_ids.remove(user.id)
+    #         removed.append(f"**{user.name}** (`{user.id}`)")
 
-        if removed:
-            self.bot.save_settings()
-            await ctx.send(
-                content=f"Unblacklisted {discord.utils._human_join(removed, final='and')}."
-            )
-        if failed:
-            await ctx.send(
-                content=f"Failed to unblacklist {discord.utils._human_join(failed, final='and')} since they are likely to be a bot, bot owner, or already blacklisted."
-            )
+    #     if removed:
+    #         self.bot.save_settings()
+    #         await ctx.send(
+    #             content=f"Unblacklisted {discord.utils._human_join(removed, final='and')}."
+    #         )
+    #     if failed:
+    #         await ctx.send(
+    #             content=f"Failed to unblacklist {discord.utils._human_join(failed, final='and')} since they are likely to be a bot, bot owner, or already blacklisted."
+    #         )
