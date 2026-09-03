@@ -193,7 +193,6 @@ class ConfirmationView(discord.ui.View):
         self.stop()
 
     async def interaction_check(self, interaction: "MartinInteraction") -> bool:
-        await interaction.client.tree.interaction_check(interaction)
         if not interaction.user:
             await interaction.response_or_followup(
                 content="Hmmm no interaction user found... This interaction is now timed out.",
