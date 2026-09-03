@@ -191,11 +191,6 @@ class Owner(commands.Cog):
         self.bot.save_settings()
         await interaction.response_or_followup(embed=embed)
 
-    async def plzerror(self, interaction: MartinInteraction, as_a_normie: bool):
-        if as_a_normie:
-            interaction.user = self.bot.user
-        assert False
-
     @app_commands.command(name="owner", description="Owner only commands.")
     @is_owner()
     @app_commands.checks.bot_has_permissions(attach_files=True, embed_links=True)
@@ -223,10 +218,8 @@ class Owner(commands.Cog):
             > coglist: Shows the list of loaded/unloaded cogs.
             Usage: command:coglist
             > **botcolour**: Change the bot global embed hex colour, leave argument blank to set it back to default.
-            Usage: command:botcolour argument:[hex_code]
+            Usage: command:botcolour argument:[hex_code=#276a8a]
             Aliases: botcolor
-            > **plzerror**: Throws an assertion error. 
-            Usage: command:plzerror argument:[as_a_normie=False]
             """
         embed = discord.Embed(
             title="Owner command pannel", description=desc, colour=self.bot.colour

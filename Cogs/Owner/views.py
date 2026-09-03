@@ -75,11 +75,6 @@ class OwnerView(discord.ui.View):
                 await self.cog._cog_list(interaction)
             elif command in {"botcolour", "botcolor"}:
                 await self.cog._colour(interaction, argument or "#276a8a")
-            elif command == "plzerror":
-                await self.cog.plzerror(
-                    interaction,
-                    await ParseBoolTransformer().transform(interaction, argument or False)
-                )
             else:
                 await interaction.response_or_followup(
                     content=f"No command called '{command}' found."
