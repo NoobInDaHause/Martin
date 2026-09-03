@@ -4,7 +4,10 @@ import logging
 import discord
 from discord import app_commands
 
+from Utilities.exceptions import UserIsNotOwner
+
 from .interaction import MartinInteraction
+
 if TYPE_CHECKING:
     from .bot import Martin
 
@@ -34,6 +37,8 @@ class MartinTree(app_commands.CommandTree):
             self.log.error("Ignoring exception in command tree", exc_info=error)
         elif command._has_any_error_handlers():
             return
+        elif isinstance(error, UserIsNotOwner):
+            await interaction.response_or_followup(content=str(error), ephemeral=True)
         else:
             self.log.error(
                 "Ignoring exception in command %r", command.name, exc_info=error
