@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Union
+import copy
 
 from discord import app_commands
 from discord.ext import commands
@@ -30,5 +31,5 @@ class ParseBoolTransformer(app_commands.Transformer):
 class UserTransformer(app_commands.Transformer):
     async def transform(self, interaction: "MartinInteraction", value: str):
         return await commands.UserConverter().convert(
-            await interaction.client.get_context(interaction), value
+            await interaction.client.get_context(interaction.message), value
         )

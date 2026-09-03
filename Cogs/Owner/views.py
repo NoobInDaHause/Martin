@@ -86,7 +86,7 @@ class OwnerView(discord.ui.View):
                 )
             else:
                 await interaction.response_or_followup(
-                    content=f"No command called '{command}' found."
+                    content=f"No command called '{command}' found.", ephemeral=True
                 )
 
     @discord.ui.button(emoji="✖️", style=discord.ButtonStyle.danger)
