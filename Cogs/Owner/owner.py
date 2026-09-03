@@ -232,6 +232,27 @@ class Owner(commands.Cog):
                 content=f"Users already {what}ed or unknown: {b2_msg}"
             )
 
+    async def naughty_list(self, interaction: MartinInteraction):
+        blacklisted = []
+
+        for x in self.bot.blacklisted_user_ids:
+            try:
+                user = await self.bot.get_or_fetch_user(x)
+            except discord.errors.NotFound:
+                blacklisted.append(f"**Unknown User** (`{x}`)")
+
+            if user is None:
+                blacklisted.append(f"**Unknown User** (`{x}`)")
+            else:
+                blacklisted.append(f"**{user}** (`{user.id}`)")
+
+        embed = discord.Embed(
+            title="List of users in the naughty list.",
+            description="\n".join(blacklisted) or "No users in the naughty list.",
+            colour=self.bot.colour,
+        )
+        await interaction.response_or_followup(embed=embed)
+
     @app_commands.command(name="owner", description="Owner only commands.")
     @is_owner()
     @app_commands.checks.bot_has_permissions(attach_files=True, embed_links=True)
@@ -261,10 +282,10 @@ class Owner(commands.Cog):
             > **botcolour**: Change the bot global embed hex colour, leave argument blank to set it back to default.
             Usage: command:botcolour argument:[hex_code=#276a8a]
             Aliases: botcolor
-            > **blacklist**: Blacklist one or more user.
-            Usage: command:blacklist argument:<users...>
-            > **unblacklist**: Unblacklist one or more user.
-            Usage: command:unblacklist argument:<users...>
+            > **blacklist**: Blacklist one or more user. Leave argument blank to check list.
+            Usage: command:blacklist argument:[users...]
+            > **unblacklist**: Unblacklist one or more user. Leave argument blank to check list.
+            Usage: command:unblacklist argument:[users...]
             """
         embed = discord.Embed(
             title="Owner command pannel", description=desc, colour=self.bot.colour

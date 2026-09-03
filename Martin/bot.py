@@ -221,3 +221,4 @@ class Martin(commands.AutoShardedBot):
                 "blacklisted_user_ids": self.blacklisted_user_ids,
             }
             json.dump(data, conf, indent=4)
+            self.log.info("Settings successfully saved.")

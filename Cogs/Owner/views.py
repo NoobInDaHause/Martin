@@ -78,9 +78,7 @@ class OwnerView(discord.ui.View):
                 await self.cog._colour(interaction, argument or "#276a8a")
             elif command in {"blacklist", "unblacklist"}:
                 if not argument:
-                    return await interaction.response_or_followup(
-                        content=req, ephemeral=True
-                    )
+                    return await self.cog.naughty_list(interaction)
                 await self.cog.blacklist_or_unblacklist(
                     command, interaction, argument.split()
                 )
