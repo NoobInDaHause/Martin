@@ -219,16 +219,17 @@ class Owner(commands.Cog):
                     if self.bot.remove_user_from_blacklist(v)
                     else failed.append(f"{v} (`{v.id}`)")
                 )
-            if added_or_removed:
-                a2_msg = discord.utils._human_join(added_or_removed, final="and")
-                await interaction.response_or_followup(
-                    content=f"{what.title()}ed: {a2_msg}"
-                )
-            if failed:
-                b2_msg = discord.utils._human_join(failed, final="and")
-                await interaction.response_or_followup(
-                    content=f"Users already {what}ed or unknown: {b2_msg}"
-                )
+
+        if added_or_removed:
+            a2_msg = discord.utils._human_join(added_or_removed, final="and")
+            await interaction.response_or_followup(
+                content=f"{what.title()}ed: {a2_msg}"
+            )
+        if failed:
+            b2_msg = discord.utils._human_join(failed, final="and")
+            await interaction.response_or_followup(
+                content=f"Users already {what}ed or unknown: {b2_msg}"
+            )
 
     @app_commands.command(name="owner", description="Owner only commands.")
     @is_owner()
