@@ -35,7 +35,6 @@ class General(commands.Cog):
         return discord.Colour.yellow() if latency_ms < 250 else discord.Colour.red()
 
     @app_commands.command(name="uptime")
-    @app_commands.bot_has_permissions(embed_links=True)
     @app_commands.checks.cooldown(1, 5, key=lambda i: i.user.id)
     async def uptime(self, interaction: MartinInteraction) -> None:
         """
@@ -50,7 +49,7 @@ class General(commands.Cog):
         )
 
     @app_commands.command(name="ping")
-    @app_commands.bot_has_permissions(embed_links=True)
+    @app_commands.checks.bot_has_permissions(embed_links=True)
     @app_commands.checks.cooldown(1, 5, key=lambda i: i.user.id)
     async def ping(self, interaction: MartinInteraction) -> None:
         """
@@ -109,7 +108,7 @@ class General(commands.Cog):
         await initial_message.edit(embed=result_embed)
 
     @app_commands.command(name="info", aliases=["botinfo"])
-    @app_commands.bot_has_permissions(embed_links=True)
+    @app_commands.checks.bot_has_permissions(embed_links=True)
     async def info(self, interaction: MartinInteraction) -> None:
         """Check info about the bot."""
         await interaction.response.defer(thinking=True)
