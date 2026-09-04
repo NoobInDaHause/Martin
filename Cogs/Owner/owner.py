@@ -266,28 +266,28 @@ class Owner(commands.Cog):
             
             Available owner commands:
             > restart: Restarts the bot.
-            Usage: command:restart
+            `Usage: command:restart`
             > shutdown: Shuts down the bot.
-            Usage: command:shutdown
+            `Usage: command:shutdown`
             > guilds: Shows the list of guilds the bot is in.
-            Usage: command:guilds
+            `Usage: command:guilds`
             > **loadcog**: Loads a cog. Separate cog names with spaces.
-            Usage: command:loadcog argument:<cog_names...>
+            `Usage: command:loadcog argument:<cog_names...>`
             > **unloadcog**: Unloads a cog. Separate cog names with spaces.
-            Usage: command:unloadcog argument:<cog_names...>
+            `Usage:command:unloadcog argument:<cog_names...>` 
             > **reloadcog**: Reloads a cog. Separate cog names with spaces.
-            Usage: command:reloadcog argument:<cog_names...>
+            `Usage: command:reloadcog argument:<cog_names...>`
             > coglist: Shows the list of loaded/unloaded cogs.
-            Usage: command:coglist
+            `Usage: command:coglist`
             > **botcolour**: Change the bot global embed hex colour, leave argument blank to set it back to default.
-            Usage: command:botcolour argument:[hex_code=#276a8a]
-            Aliases: botcolor
+            `Usage: command:botcolour argument:[hex_code=#276a8a]`
+            `Aliases: botcolor`
             > **blacklist**: Blacklist one or more user. Leave argument blank to check list.
-            Usage: command:blacklist argument:[users...]
+            `Usage: command:blacklist argument:[users...]`
             > **unblacklist**: Unblacklist one or more user. Leave argument blank to check list.
-            Usage: command:unblacklist argument:[users...]
+            `Usage: command:unblacklist argument:[users...]`
             > **custominfo**: Add/change/remove a custom info from the /botinfo slash command. Leave argument blank to remove.
-            Usage: command:custominfo argument:[new_info]
+            `Usage: command:custominfo argument:[new_info]`
             """
         embed = discord.Embed(
             title="Owner command pannel", description=desc, colour=self.bot.colour
