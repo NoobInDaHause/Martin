@@ -30,6 +30,10 @@ class MartinTree(app_commands.CommandTree["Martin"]):
         )
         self.log = logging.getLogger("MartinTree")
 
+    async def _dispatch_error(self, interaction: MartinInteraction, error: app_commands.AppCommandError, /) -> None:
+        self.client.dispatch("app_command_error", interaction, error)
+        await super()._dispatch_error(interaction, error)
+    
     async def interaction_check(self, interaction: MartinInteraction):
         if self.client.is_blacklisted(
             interaction.user
