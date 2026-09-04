@@ -3,3 +3,5 @@ aiosqlite
 aiohttp
 packaging
 python-dotenv
+psutil
+py-cpuinfo

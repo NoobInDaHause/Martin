@@ -7,9 +7,10 @@ from discord import app_commands
 from discord.ext import commands
 
 from Martin import Martin, MartinInteraction
-from Utilities.formatting import format_time
+from Utilities.formatting import format_bytes, format_time
 
 from .general_data_manager import GeneralDB
+from .systeminfo import SystemInfo
 
 
 class General(commands.Cog):
@@ -31,6 +32,57 @@ class General(commands.Cog):
         if latency_ms < 100:
             return discord.Colour.green()
         return discord.Colour.yellow() if latency_ms < 250 else discord.Colour.red()
+
+    @staticmethod
+    def get_system_info():
+        cpu = SystemInfo.cpu()
+        memory = SystemInfo.memory()
+        disk = SystemInfo.disk()
+        system = SystemInfo.platform()
+
+        envi = (
+            "Environment:",
+            (
+            f"**Host:** {SystemInfo.environment()}\n"
+            f"**Container:** "
+            f"{'Yes' if SystemInfo.is_docker() else 'No'}"
+            )
+        )
+        plat = (
+            "Platform:",
+            (
+            f"**OS:** {system['system']} {system['release']}\n"
+            f"**Architecture:** {system['machine']}"
+            )
+        )
+        _cpu = (
+            "CPU:",
+            (
+            f"**Brand:** {cpu['name']}\n"
+            f"**Usage:** {cpu['usage']:.1f}%\n"
+            f"**Cores:** {cpu['physical']}\n"
+            f"**Threads:** {cpu['logical']}"
+            )
+        )
+        memo = (
+            "Memory:",
+            (
+            f"**Used:** {format_bytes(memory['used'])}\n"
+            f"**Total:** {format_bytes(memory['total'])}\n"
+            f"**Usage:** {memory['percent']:.1f}%"
+            )
+        )
+        _disk = (
+            "Disk:",
+            (
+            f"**Used:** {format_bytes(disk['used'])}\n"
+            f"**Free:** {format_bytes(disk['free'])}\n"
+            f"**Total:** {format_bytes(disk['total'])}\n"
+            f"**Usage:** {disk['percent']:.1f}%"
+            )
+        )
+        sys_uptime = ("System Uptime:", format_time(int(SystemInfo.uptime())))
+        return envi, plat, _cpu, memo, _disk, sys_uptime
 
     @app_commands.command(name="ping", description="Pong.")
     @app_commands.checks.bot_has_permissions(embed_links=True)
@@ -128,11 +180,15 @@ class General(commands.Cog):
         )
 
         embed.add_field(
-            name="Uptime:",
+            name="Bot Uptime:",
             value=f"{format_time(int((datetime.now(timezone.utc) - self.bot.uptime).total_seconds()))}.\n"
             f"<t:{int(self.bot.uptime.timestamp())}:F> (<t:{int(self.bot.uptime.timestamp())}:R>).",
             inline=False,
         )
+        if await interaction.client.is_owner(interaction.user):
+            _sys = self.get_system_info()
+            for s in _sys:
+                embed.add_field(name=s[0], value=s[1])
 
         await interaction.response_or_followup(embed=embed)
 

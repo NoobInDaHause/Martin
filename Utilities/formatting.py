@@ -117,3 +117,15 @@ def format_time(seconds: int) -> str:
         parts.append(f"{remaining} seconds")
 
     return discord.utils._human_join(parts, final="and") or "0 seconds"
+
+
+def format_bytes(value: int) -> str:
+    units = ["B", "KB", "MB", "GB", "TB"]
+
+    for unit in units:
+        if value < 1024:
+            return f"{value:.1f} {unit}"
+
+        value /= 1024
+
+    return f"{value:.1f} PB"
