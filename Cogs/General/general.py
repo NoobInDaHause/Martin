@@ -111,13 +111,11 @@ class General(commands.Cog):
         embed.set_author(
             name=f"Instance owned by `{f'Team {app_info.team.name}' if app_info.team else app_info.owner}`",
             icon_url=(
-                app_info.team.icon
-                if app_info.team
-                else app_info.owner.display_avatar
+                app_info.team.icon if app_info.team else app_info.owner.display_avatar
             ),
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar)
-        embed.set_footer(text="This bot was created at |")
+        embed.set_footer(text=f"{self.bot.user} was created at")
 
         embed.add_field(name="Discord.py Version:", value=discord.__version__)
         embed.add_field(name="Python Version:", value=platform.python_version())
@@ -128,23 +126,21 @@ class General(commands.Cog):
 
         update = await self.bot.get_updates()
         upd = (
-            ("GitHub:", "Failed to check for updates.")
+            "Failed to check for updates."
             if update["status"] == "error"
             else (
-                (
-                    "New Martin Version:",
-                    f"[{update['latest_version'].removeprefix('v')}]({update['release_url']})",
-                )
+                f"Update Avaibale: [{update['latest_version'].removeprefix('v')}]({update['release_url']})"
                 if update["status"] == "update_available"
-                else ("GitHub:", "Martin is up to date.")
+                else "Martin is up to date."
             )
         )
-        embed.add_field(name=upd[0], value=upd[1])
+        embed.add_field(name="Updates:", value=upd)
 
         embed.add_field(
             name="Been up for:",
-            value=f"**{format_time((datetime.now(timezone.utc) - self.bot.uptime).total_seconds())}**. "
+            value=f"**{format_time((datetime.now(timezone.utc) - self.bot.uptime).total_seconds())}**.\n"
             f"Since <t:{int(self.bot.uptime.timestamp())}:F> (<t:{int(self.bot.uptime.timestamp())}:R>).",
+            inline=False,
         )
 
         await interaction.response_or_followup(embed=embed)
