@@ -95,6 +95,7 @@ class General(commands.Cog):
 
         app_info = await self.bot.application_info()
         embed = discord.Embed(
+            title=f"Instance owned by `{f'Team {app_info.team.name}' if app_info.team else app_info.owner}`",
             description=(
                 "This bot is a custom instance of [Martin](https://github.com/NoobInDaHause/Martin), "
                 "an open-source Discord ~~BOT~~ APP built with Python & `discord.py`.\n\n"
@@ -108,14 +109,8 @@ class General(commands.Cog):
         if c_i := await self.db.get_or_delete_custom_info(False):
             embed.add_field(name="Custom Info:", value=c_i, inline=False)
 
-        embed.set_author(
-            name=f"Instance owned by `{f'Team {app_info.team.name}' if app_info.team else app_info.owner}`",
-            icon_url=(
-                app_info.team.icon if app_info.team else app_info.owner.display_avatar
-            ),
-        )
-        embed.set_thumbnail(url=self.bot.user.display_avatar)
-        embed.set_footer(text=f"{self.bot.user} was created at")
+        embed.set_thumbnail(url=app_info.team.icon if app_info.team else app_info.owner.display_avatar)
+        embed.set_footer(text=f"{self.bot.user} was created at", icon_url=self.bot.user.display_avatar)
 
         embed.add_field(name="Discord.py Version:", value=discord.__version__)
         embed.add_field(name="Python Version:", value=platform.python_version())
