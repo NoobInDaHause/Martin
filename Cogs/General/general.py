@@ -1,14 +1,12 @@
 import platform
 from datetime import datetime, timezone
 from time import perf_counter
-from typing import Optional
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
 from Martin import Martin, MartinInteraction
-from Utilities.checks import is_owner
 from Utilities.formatting import format_time
 
 from .general_data_manager import GeneralDB
@@ -131,7 +129,7 @@ class General(commands.Cog):
 
         embed.add_field(
             name="Uptime:",
-            value=f"{format_time((datetime.now(timezone.utc) - self.bot.uptime).total_seconds())}.\n"
+            value=f"{format_time(int((datetime.now(timezone.utc) - self.bot.uptime).total_seconds()))}.\n"
             f"<t:{int(self.bot.uptime.timestamp())}:F> (<t:{int(self.bot.uptime.timestamp())}:R>).",
             inline=False,
         )
