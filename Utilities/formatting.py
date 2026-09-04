@@ -78,12 +78,12 @@ def pagify(
     return pages
 
 
-def format_time(seconds: Union[float, int]) -> str:
+def format_time(seconds: int) -> str:
     """Convert a number of seconds into human-readable duration text.
 
     Parameters
     ----------
-    seconds : float
+    seconds : int
         The seconds to convert to human-readable text.
 
     Raises
@@ -95,7 +95,7 @@ def format_time(seconds: Union[float, int]) -> str:
     if seconds < 0:
         raise FormatTimeException("Parameter 'seconds' cannot be less than 0")
 
-    remaining = float(seconds)
+    remaining = seconds
     units = (
         ("century", "centuries", 100 * 365 * 86400),
         ("year", "years", 365 * 86400),
@@ -111,9 +111,9 @@ def format_time(seconds: Union[float, int]) -> str:
         unit_value, remaining = divmod(remaining, unit_length)
         if unit_value:
             unit_name = singular if unit_value == 1 else plural
-            parts.append(f"{unit_value:g} {unit_name}")
+            parts.append(f"{unit_value} {unit_name}")
 
     if remaining:
-        parts.append(f"{remaining:g} seconds")
+        parts.append(f"{remaining} seconds")
 
     return discord.utils._human_join(parts, final="and") or "0 seconds"
