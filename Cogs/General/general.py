@@ -109,8 +109,13 @@ class General(commands.Cog):
         if c_i := await self.db.get_or_delete_custom_info(False):
             embed.add_field(name="Custom Info:", value=c_i, inline=False)
 
-        embed.set_thumbnail(url=app_info.team.icon if app_info.team else app_info.owner.display_avatar)
-        embed.set_footer(text=f"{self.bot.user} was created at", icon_url=self.bot.user.display_avatar)
+        embed.set_thumbnail(
+            url=app_info.team.icon if app_info.team else app_info.owner.display_avatar
+        )
+        embed.set_footer(
+            text=f"{self.bot.user} was created at",
+            icon_url=self.bot.user.display_avatar,
+        )
 
         embed.add_field(name="Discord.py Version:", value=discord.__version__)
         embed.add_field(name="Python Version:", value=platform.python_version())

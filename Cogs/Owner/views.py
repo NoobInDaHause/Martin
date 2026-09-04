@@ -107,7 +107,9 @@ class OwnerView(discord.ui.View):
 
                     await interaction.response_or_followup(content="Done.")
                 else:
-                    await interaction.response_or_followup(content="General cog must be loaded to add/create/remove the custom info.")
+                    await interaction.response_or_followup(
+                        content="General cog must be loaded to add/create/remove the custom info."
+                    )
                 return
 
             await interaction.response_or_followup(
