@@ -119,27 +119,20 @@ class General(commands.Cog):
 
         embed.add_field(name="Discord.py Version:", value=discord.__version__)
         embed.add_field(name="Python Version:", value=platform.python_version())
+        ver = self.bot.__version__.removeprefix("v")
+        update = await self.bot.get_updates()
+        if update["status"] == "update_available":
+            update += f"\n[New version available: {update['latest_version'].removeprefix('v')}]({update['release_url']})"
+
         embed.add_field(
             name="Martin Version:",
-            value=self.bot.__version__.removeprefix("v"),
+            value=ver,
         )
-
-        update = await self.bot.get_updates()
-        upd = (
-            "Failed to check for updates."
-            if update["status"] == "error"
-            else (
-                f"Update Avaibale: [{update['latest_version'].removeprefix('v')}]({update['release_url']})"
-                if update["status"] == "update_available"
-                else "Martin is up to date."
-            )
-        )
-        embed.add_field(name="Updates:", value=upd)
 
         embed.add_field(
-            name="Been up for:",
-            value=f"**{format_time((datetime.now(timezone.utc) - self.bot.uptime).total_seconds())}**.\n"
-            f"Since <t:{int(self.bot.uptime.timestamp())}:F> (<t:{int(self.bot.uptime.timestamp())}:R>).",
+            name="Uptime:",
+            value=f"{format_time((datetime.now(timezone.utc) - self.bot.uptime).total_seconds())}.\n"
+            f"<t:{int(self.bot.uptime.timestamp())}:F> (<t:{int(self.bot.uptime.timestamp())}:R>).",
             inline=False,
         )
 
