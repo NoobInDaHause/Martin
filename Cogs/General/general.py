@@ -34,19 +34,6 @@ class General(commands.Cog):
             return discord.Colour.green()
         return discord.Colour.yellow() if latency_ms < 250 else discord.Colour.red()
 
-    @app_commands.command(
-        name="uptime", description="Check how long the bot has been up for."
-    )
-    @app_commands.checks.cooldown(1, 5, key=lambda i: i.user.id)
-    async def uptime(self, interaction: MartinInteraction) -> None:
-        elapsed_seconds = int(
-            (datetime.now(timezone.utc) - self.bot.uptime).total_seconds()
-        )
-        startup_timestamp = int(self.bot.uptime.timestamp())
-        await interaction.response_or_followup(
-            content=f"I have been up for **{format_time(elapsed_seconds)}**. Since <t:{startup_timestamp}:R>."
-        )
-
     @app_commands.command(name="ping", description="Pong.")
     @app_commands.checks.bot_has_permissions(embed_links=True)
     @app_commands.checks.cooldown(1, 5, key=lambda i: i.user.id)
@@ -107,9 +94,7 @@ class General(commands.Cog):
         await interaction.response.defer(thinking=True)
 
         app_info = await self.bot.application_info()
-        owner = f"Team {app_info.team.name}" if app_info.team else app_info.owner
         embed = discord.Embed(
-            title=f"Instance owned by `{owner}`",
             description=(
                 "This bot is a custom instance of [Martin](https://github.com/NoobInDaHause/Martin), "
                 "an open-source Discord ~~BOT~~ APP built with Python & `discord.py`.\n\n"
@@ -117,37 +102,50 @@ class General(commands.Cog):
                 "• **License:** MIT\n\n"
                 "Want your own copy? Check out the repo to host or build one yourself!"
             ),
-            timestamp=datetime.now(timezone.utc),
+            timestamp=self.bot.user.created_at,
             colour=self.bot.colour,
         )
         if c_i := await self.db.get_or_delete_custom_info(False):
-            embed.description = f"{embed.description}\n\n**Custom Info:**\n{c_i}"
+            embed.add_field(name="Custom Info:", value=c_i, inline=False)
 
+        embed.set_author(
+            name=f"Instance owned by `{f'Team {app_info.team.name}' if app_info.team else app_info.owner}`",
+            icon_url=(
+                app_info.team.icon.url
+                if app_info.team
+                else app_info.owner.display_avatar.url
+            ),
+        )
         embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embed.set_footer(text="This bot was created at |")
 
-        embed.add_field(
-            name="Discord.py Version:", value=discord.__version__, inline=True
-        )
-        embed.add_field(
-            name="Python Version:", value=platform.python_version(), inline=True
-        )
+        embed.add_field(name="Discord.py Version:", value=discord.__version__)
+        embed.add_field(name="Python Version:", value=platform.python_version())
         embed.add_field(
             name="Martin Version:",
             value=self.bot.__version__.removeprefix("v"),
-            inline=True,
         )
 
         update = await self.bot.get_updates()
-        if update["status"] == "error":
-            nam = "GitHub:"
-            ver = "Failed to check for updates."
-        elif update["status"] == "update_available":
-            nam = "New Martin Version:"
-            ver = f"[{update['latest_version'].removeprefix('v')}]({update['release_url']})"
-        else:
-            nam = "GitHub:"
-            ver = "Martin is up to date."
-        embed.add_field(name=nam, value=ver, inline=True)
+        upd = (
+            ("GitHub:", "Failed to check for updates.")
+            if update["status"] == "error"
+            else (
+                (
+                    "New Martin Version:",
+                    f"[{update['latest_version'].removeprefix('v')}]({update['release_url']})",
+                )
+                if update["status"] == "update_available"
+                else ("GitHub:", "Martin is up to date.")
+            )
+        )
+        embed.add_field(name=upd[0], value=upd[1])
+
+        embed.add_field(
+            name="Been up for:",
+            value=f"**{format_time((datetime.now(timezone.utc) - self.bot.uptime).total_seconds())}**. "
+            f"Since <t:{int(self.bot.uptime.timestamp())}:F> (<t:{int(self.bot.uptime.timestamp())}:R>).",
+        )
 
         await interaction.response_or_followup(embed=embed)
 
