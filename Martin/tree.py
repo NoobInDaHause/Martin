@@ -56,12 +56,12 @@ class MartinTree(app_commands.CommandTree["Martin"]):
             if await interaction.client.is_owner(interaction.user)
             else "Please report this to the bot owner."
         )
-        error_msg = f"Error in command `'{command}'`. {owner_message}"
+        error_msg = f"Error in command `'{command.qualified_name}'`. {owner_message}"
 
         if isinstance(error, app_commands.CommandInvokeError):
             self.log.error(
                 "SlashCommand %s failed.",
-                interaction.command,
+                command.qualified_name,
                 exc_info=(type(error), error, error.__traceback__),
             )
             await interaction.response_or_followup(content=error_msg, ephemeral=True)

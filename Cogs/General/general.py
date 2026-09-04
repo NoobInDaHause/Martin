@@ -111,9 +111,9 @@ class General(commands.Cog):
         embed.set_author(
             name=f"Instance owned by `{f'Team {app_info.team.name}' if app_info.team else app_info.owner}`",
             icon_url=(
-                app_info.team.icon.url
+                app_info.team.icon
                 if app_info.team
-                else app_info.owner.display_avatar.url
+                else app_info.owner.display_avatar
             ),
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar)
