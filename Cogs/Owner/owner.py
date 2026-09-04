@@ -286,6 +286,8 @@ class Owner(commands.Cog):
             Usage: command:blacklist argument:[users...]
             > **unblacklist**: Unblacklist one or more user. Leave argument blank to check list.
             Usage: command:unblacklist argument:[users...]
+            > **custominfo**: Add/change/remove a custom info from the /botinfo slash command. Leave argument blank to remove.
+            Usage: command:custominfo argument:[new_info]
             """
         embed = discord.Embed(
             title="Owner command pannel", description=desc, colour=self.bot.colour

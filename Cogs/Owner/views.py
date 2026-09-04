@@ -7,6 +7,7 @@ from Martin import MartinInteraction
 
 if TYPE_CHECKING:
     from .owner import Owner
+    from Cogs.General import General
 
 
 class CommandModal(discord.ui.Modal):
@@ -62,9 +63,13 @@ class OwnerView(discord.ui.View):
                 await self.cog.restart_or_shutdown(
                     interaction, restart=command == "restart"
                 )
-            elif command == "guilds":
+                return
+
+            if command == "guilds":
                 await self.cog._guilds(interaction)
-            elif command in {"loadcog", "unloadcog", "reloadcog"}:
+                return
+
+            if command in {"loadcog", "unloadcog", "reloadcog"}:
                 if not argument:
                     return await interaction.response_or_followup(
                         content=req, ephemeral=True
@@ -72,20 +77,42 @@ class OwnerView(discord.ui.View):
                 await self.cog.manage_cogs(
                     interaction, command.removesuffix("cog"), argument.split()
                 )
-            elif command == "coglist":
+                return
+
+            if command == "coglist":
                 await self.cog._cog_list(interaction)
-            elif command in {"botcolour", "botcolor"}:
+                return
+
+            if command in {"botcolour", "botcolor"}:
                 await self.cog._colour(interaction, argument or "#276a8a")
-            elif command in {"blacklist", "unblacklist"}:
+                return
+
+            if command in {"blacklist", "unblacklist"}:
                 if not argument:
                     return await self.cog.naughty_list(interaction)
                 await self.cog.blacklist_or_unblacklist(
                     command, interaction, argument.split()
                 )
-            else:
-                await interaction.response_or_followup(
-                    content=f"No command called '{command}' found.", ephemeral=True
-                )
+                return
+
+            if command == "custominfo":
+                if cog := interaction.client.get_cog("General"):
+                    cog: "General" = cog
+                    if not argument:
+                        await cog.db.get_or_delete_custom_info(True)
+                    elif await cog.db.get_or_delete_custom_info(False):
+                        await cog.db.insert_or_update_custom_info(True, argument)
+                    else:
+                        await cog.db.insert_or_update_custom_info(False, argument)
+
+                    await interaction.response_or_followup(content="Done.")
+                else:
+                    await interaction.response_or_followup(content="General cog must be loaded to add/create/remove the custom info.")
+                return
+
+            await interaction.response_or_followup(
+                content=f"No command called '{command}' found.", ephemeral=True
+            )
 
     @discord.ui.button(emoji="✖️", style=discord.ButtonStyle.danger)
     async def close_button(

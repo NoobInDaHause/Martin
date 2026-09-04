@@ -146,22 +146,3 @@ class General(commands.Cog):
             content=f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}"
             "&permissions=8866461766385655&integration_type=0&scope=bot+applications.commands"
         )
-
-    @app_commands.command(
-        name="custominfo", description="Add a custom info from the /info slash command."
-    )
-    @is_owner()
-    async def custominfo(
-        self, interaction: MartinInteraction, *, custom_info: Optional[str] = None
-    ) -> None:
-        """
-        Leave blank to clear.
-        """
-        if custom_info is None:
-            await self.db.get_or_delete_custom_info(True)
-        elif await self.db.get_or_delete_custom_info(False):
-            await self.db.insert_or_update_custom_info(True, custom_info)
-        else:
-            await self.db.insert_or_update_custom_info(False, custom_info)
-
-        await interaction.response_or_followup(content="Done.")
