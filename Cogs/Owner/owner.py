@@ -170,24 +170,18 @@ class Owner(commands.Cog):
         ]
         unloaded = [cog_name for cog_name in cog_names if cog_name not in loaded]
 
-        def format_cogs(names: List[str]) -> str:
-            return "\n".join(f"- `{name}`" for name in names) or "- None"
-
         markdown = (
             "# Cogs\n\n"
             f"## Loaded ({len(loaded)})\n\n"
-            f"{format_cogs(loaded)}\n\n"
+            f"{"\n".join(f'- `{l}`' for l in loaded) or '- None'}\n\n"
             f"## Unloaded ({len(unloaded)})\n\n"
-            f"{format_cogs(unloaded)}\n"
+            f"{"\n".join(f'- `{ul}`' for ul in unloaded) or '- None'}\n"
         )
         cog_file = discord.File(BytesIO(markdown.encode("utf-8")), filename="cogs.md")
         await interaction.response_or_followup(file=cog_file)
 
     async def _colour(self, interaction: MartinInteraction, colour: str):
-        try:
-            dc = discord.Colour.from_str(colour)
-        except ValueError:
-            return await interaction.response_or_followup(content=f"Colour `'{colour}'` is not a valid hex code.")
+        dc = discord.Colour.from_str(colour)
         self.bot.global_hex_colour = str(dc)
         embed = discord.Embed(
             description=f"Successfully changed bot colour to {dc}.",

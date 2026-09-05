@@ -57,59 +57,63 @@ class OwnerView(discord.ui.View):
             command = cmdmodal.command.value.lower()
             argument = cmdmodal.argument.value
             req = f"Command '{command}' requires an argument. See the usage from the Owner command panel."
-            if command in {"restart", "shutdown"}:
-                self.stop()
-                await self.on_timeout()
-                await self.cog.restart_or_shutdown(
-                    interaction, restart=command == "restart"
-                )
-                return
-
-            if command == "guilds":
-                await self.cog._guilds(interaction)
-                return
-
-            if command in {"loadcog", "unloadcog", "reloadcog"}:
-                if not argument:
-                    return await interaction.response_or_followup(
-                        content=req, ephemeral=True
+            try:
+                if command in {"restart", "shutdown"}:
+                    self.stop()
+                    await self.on_timeout()
+                    await self.cog.restart_or_shutdown(
+                        interaction, restart=command == "restart"
                     )
-                await self.cog.manage_cogs(
-                    interaction, command.removesuffix("cog"), argument.split()
-                )
-                return
+                    return
 
-            if command == "coglist":
-                await self.cog._cog_list(interaction)
-                return
+                if command == "guilds":
+                    await self.cog._guilds(interaction)
+                    return
 
-            if command in {"botcolour", "botcolor"}:
-                await self.cog._colour(interaction, argument or "#276a8a")
-                return
-
-            if command in {"blacklist", "unblacklist"}:
-                if not argument:
-                    return await self.cog.naughty_list(interaction)
-                await self.cog.blacklist_or_unblacklist(
-                    command, interaction, argument.split()
-                )
-                return
-
-            if command == "custominfo":
-                if cog := interaction.client.get_cog("General"):
-                    cog: "General" = cog
+                if command in {"loadcog", "unloadcog", "reloadcog"}:
                     if not argument:
-                        await cog.db.get_or_delete_custom_info(True)
-                    elif await cog.db.get_or_delete_custom_info(False):
-                        await cog.db.insert_or_update_custom_info(True, argument)
-                    else:
-                        await cog.db.insert_or_update_custom_info(False, argument)
-
-                    await interaction.response_or_followup(content="Done.")
-                else:
-                    await interaction.response_or_followup(
-                        content="General cog must be loaded to add/create/remove the custom info."
+                        return await interaction.response_or_followup(
+                            content=req, ephemeral=True
+                        )
+                    await self.cog.manage_cogs(
+                        interaction, command.removesuffix("cog"), argument.split()
                     )
+                    return
+
+                if command == "coglist":
+                    await self.cog._cog_list(interaction)
+                    return
+
+                if command in {"botcolour", "botcolor"}:
+                    await self.cog._colour(interaction, argument or "#276a8a")
+                    return
+
+                if command in {"blacklist", "unblacklist"}:
+                    if not argument:
+                        return await self.cog.naughty_list(interaction)
+                    await self.cog.blacklist_or_unblacklist(
+                        command, interaction, argument.split()
+                    )
+                    return
+
+                if command == "custominfo":
+                    if cog := interaction.client.get_cog("General"):
+                        cog: "General" = cog
+                        if not argument:
+                            await cog.db.get_or_delete_custom_info(True)
+                        elif await cog.db.get_or_delete_custom_info(False):
+                            await cog.db.insert_or_update_custom_info(True, argument)
+                        else:
+                            await cog.db.insert_or_update_custom_info(False, argument)
+
+                        await interaction.response_or_followup(content="Done.")
+                    else:
+                        await interaction.response_or_followup(
+                            content="General cog must be loaded to add/create/remove the custom info."
+                        )
+                    return
+            except ValueError as e:
+                await interaction.response_or_followup(content=str(e))
                 return
 
             await interaction.response_or_followup(
