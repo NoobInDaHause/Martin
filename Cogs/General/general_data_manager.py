@@ -63,10 +63,17 @@ class GeneralDB(DataManager):
         Optional[str]
             The custom info value, or None if not found.
         """
-        action = "DELETE" if delete else "SELECT value"
-        custom_info = await self.execute(
-            f"{action} FROM general_data WHERE name = ?",
-            ("custom_info",),
-            select=not delete,
-        )
+        if delete:
+            custom_info = await self.execute(
+                "DELETE FROM general_data WHERE name = ?",
+                ("custom_info",),
+                select=False,
+            )
+        else:
+            custom_info = await self.execute(
+                "SELECT value FROM general_data WHERE name = ?",
+                ("custom_info",),
+                select=True,
+            )
+
         return custom_info[0] if custom_info else None

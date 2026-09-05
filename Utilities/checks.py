@@ -18,4 +18,3 @@ def is_owner():
         return is_owner
 
     return app_commands.check(predicate)
- 
