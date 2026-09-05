@@ -2,6 +2,13 @@
 SETLOCAL EnableExtensions EnableDelayedExpansion
 CD /D "%~dp0"
 
+python -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)"
+IF ERRORLEVEL 1 (
+	ECHO Martin requires python version 3.10 or newer to run properly.
+	PAUSE
+	EXIT /B 1
+)
+
 IF NOT EXIST ".venv\Scripts\python.exe" (
 	ECHO Creating virtual environment...
 	python -m venv .venv

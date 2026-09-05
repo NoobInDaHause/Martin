@@ -6,6 +6,11 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd -- "$SCRIPT_DIR" || exit 1
 
 PYTHON="${PYTHON:-python3}"
+if ! "$PYTHON" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)'; then
+    printf '%s\n' "Martin requires python version 3.10 or newer to run properly." >&2
+    exit 1
+fi
+
 VENV_PYTHON="$SCRIPT_DIR/.venv/bin/python"
 REQUIREMENTS_HASH_FILE="$SCRIPT_DIR/.venv/requirements.sha256"
 REQUIREMENTS_HASH="$(sha256sum "$SCRIPT_DIR/requirements.txt" | awk '{print $1}')"
