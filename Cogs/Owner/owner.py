@@ -184,7 +184,10 @@ class Owner(commands.Cog):
         await interaction.response_or_followup(file=cog_file)
 
     async def _colour(self, interaction: MartinInteraction, colour: str):
-        dc = discord.Colour.from_str(colour)
+        try:
+            dc = discord.Colour.from_str(colour)
+        except ValueError:
+            return await interaction.response_or_followup(content=f"Colour `'{colour}'` is not a valid hex code.")
         self.bot.global_hex_colour = str(dc)
         embed = discord.Embed(
             description=f"Successfully changed bot colour to {dc}.",
