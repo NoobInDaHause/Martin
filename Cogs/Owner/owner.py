@@ -199,7 +199,7 @@ class Owner(commands.Cog):
             try:
                 verified.append(await UserTransformer().transform(interaction, u))
             except BadArgument:
-                failed.append(f"Uknown User (`{u}`)")
+                failed.append(f"Unknown User (`{u}`)")
                 continue
 
         added_or_removed = []
@@ -236,7 +236,7 @@ class Owner(commands.Cog):
             try:
                 user = await self.bot.get_or_fetch_user(x)
             except discord.errors.NotFound:
-                blacklisted.append(f"**Unknown User** (`{x}`)")
+                user = None
 
             if user is None:
                 blacklisted.append(f"**Unknown User** (`{x}`)")

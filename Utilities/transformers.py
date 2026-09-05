@@ -11,22 +11,22 @@ if TYPE_CHECKING:
 
 class ParseBoolTransformer(app_commands.Transformer):
     async def transform(
-        self, interaction: "MartinInteraction", value: Union[str, int, bool]
+        self, _interaction: "MartinInteraction", value: Union[str, int, bool]
     ) -> bool:
         if isinstance(value, bool):
             return value
 
         s = str(value).strip().lower()
 
-        truthy = {"yes", "y", "1", "true", "t", "enable", "enabled", "on"}
-        falsy = {"no", "n", "0", "false", "f", "disable", "disabled", "off"}
+        truthy = {"yes", "y", "1", "true", "t", "enable", "enabled", "on", "yeah"}
+        falsy = {"no", "n", "0", "false", "f", "disable", "disabled", "off", "nah"}
 
         if s in truthy:
             return True
         if s in falsy:
             return False
 
-        raise app_commands.TransformerError(f"Cannot convert {value!r} to boolean.")
+        raise BadArgument(f"Cannot convert {value!r} to boolean.")
 
 
 class UserTransformer(app_commands.Transformer):

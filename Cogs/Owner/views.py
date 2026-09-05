@@ -48,7 +48,7 @@ class OwnerView(discord.ui.View):
         label="Execute a Command", style=discord.ButtonStyle.grey, emoji="📎"
     )
     async def execute_command_button(
-        self, interaction: MartinInteraction, button: discord.ui.Button
+        self, interaction: MartinInteraction, _button: discord.ui.Button
     ):
         cmdmodal = CommandModal(title="Input a command to execute.", timeout=60.0)
         await interaction.response.send_modal(cmdmodal)
@@ -122,7 +122,7 @@ class OwnerView(discord.ui.View):
 
     @discord.ui.button(emoji="✖️", style=discord.ButtonStyle.danger)
     async def close_button(
-        self, interaction: MartinInteraction, button: discord.ui.Button
+        self, interaction: MartinInteraction, _button: discord.ui.Button
     ):
         await interaction.response.defer()
         self.stop()

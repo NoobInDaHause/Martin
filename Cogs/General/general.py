@@ -120,7 +120,14 @@ class General(commands.Cog):
         ver = self.bot.__version__.removeprefix("v")
         update = await self.bot.get_updates()
         if update["status"] == "update_available":
-            update += f"\n[New version available: {update['latest_version'].removeprefix('v')}]({update['release_url']})"
+            embed.add_field(
+                name="Update available:",
+                value=(
+                    f"[Version {update['latest_version'].removeprefix('v')}]"
+                    f"({update['release_url']})"
+                ),
+                inline=False,
+            )
 
         embed.add_field(
             name="Martin Version:",

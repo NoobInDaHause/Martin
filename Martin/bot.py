@@ -108,7 +108,7 @@ class Martin(commands.AutoShardedBot):
             "release_url": release_url,
         }
 
-    async def on_message(self, message: discord.Message, /) -> None:
+    async def on_message(self, _message: discord.Message, /) -> None:
         return  # Martin will be full on slash command in v1.0.0
 
     async def setup_hook(self) -> None:

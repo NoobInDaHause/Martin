@@ -88,19 +88,19 @@ class PaginatorView(discord.ui.View):
 
     @discord.ui.button(label="⏮", style=discord.ButtonStyle.secondary)
     async def first_page_button(
-        self, interaction: "MartinInteraction", button: discord.ui.Button
+        self, interaction: "MartinInteraction", _button: discord.ui.Button
     ) -> None:
         await self.update_page(interaction, 0)
 
     @discord.ui.button(label="◀", style=discord.ButtonStyle.primary)
     async def previous_button(
-        self, interaction: "MartinInteraction", button: discord.ui.Button
+        self, interaction: "MartinInteraction", _button: discord.ui.Button
     ) -> None:
         await self.update_page(interaction, self.current_page - 1)
 
     @discord.ui.button(label="✖", style=discord.ButtonStyle.danger)
     async def close_button(
-        self, interaction: "MartinInteraction", button: discord.ui.Button
+        self, interaction: "MartinInteraction", _button: discord.ui.Button
     ) -> None:
         await interaction.response.defer()
         self.stop()
@@ -108,13 +108,13 @@ class PaginatorView(discord.ui.View):
 
     @discord.ui.button(label="▶", style=discord.ButtonStyle.primary)
     async def next_page_button(
-        self, interaction: "MartinInteraction", button: discord.ui.Button
+        self, interaction: "MartinInteraction", _button: discord.ui.Button
     ) -> None:
         await self.update_page(interaction, self.current_page + 1)
 
     @discord.ui.button(label="⏭", style=discord.ButtonStyle.secondary)
     async def last_page_button(
-        self, interaction: "MartinInteraction", button: discord.ui.Button
+        self, interaction: "MartinInteraction", _button: discord.ui.Button
     ) -> None:
         await self.update_page(interaction, len(self.pages) - 1)
 
