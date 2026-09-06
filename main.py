@@ -17,7 +17,7 @@ def setup_lopgging():
             logging.StreamHandler(),
             logging.FileHandler(Path(__file__).parent / "logs.log", "w"),
         ],
-        format="[{asctime}] [{levelname}] {name:<30}: {message}",
+        format="[{asctime}] [{levelname}] {name:<20}: {message}",
         datefmt="%Y-%m-%d %H:%M:%S",
         style="{",
     )
