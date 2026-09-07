@@ -25,7 +25,6 @@ def setup_lopgging():
 
 async def run_bot() -> None:
     setup_lopgging()
-
     load_dotenv(find_dotenv(raise_error_if_not_found=True))
     setattr(discord.Interaction, "response_or_followup", MartinInteraction.response_or_followup)
 
