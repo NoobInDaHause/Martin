@@ -27,8 +27,7 @@ async def run_bot() -> None:
     setup_lopgging()
 
     load_dotenv(find_dotenv(raise_error_if_not_found=True))
-
-    discord.Interaction.response_or_followup = response_or_followup  # Dirty way to add custom functions but it works and does its job
+    setattr(discord.Interaction, "response_or_followup", response_or_followup)
 
     settings = Settings.initialize()
     async with Martin(settings) as bot:
@@ -38,4 +37,5 @@ async def run_bot() -> None:
 
 if __name__ == "__main__":
     exit_code = asyncio.run(run_bot())
+    delattr(discord.Interaction, "response_or_followup")
     raise SystemExit(exit_code)
