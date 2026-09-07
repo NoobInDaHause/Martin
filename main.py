@@ -7,7 +7,7 @@ import discord
 from dotenv import find_dotenv, load_dotenv
 
 from Martin import Martin, Settings
-from Martin.interaction import response_or_followup
+from Martin.interaction import MartinInteraction
 
 
 def setup_lopgging():
@@ -27,7 +27,7 @@ async def run_bot() -> None:
     setup_lopgging()
 
     load_dotenv(find_dotenv(raise_error_if_not_found=True))
-    setattr(discord.Interaction, "response_or_followup", response_or_followup)
+    setattr(discord.Interaction, "response_or_followup", MartinInteraction.response_or_followup)
 
     settings = Settings.initialize()
     async with Martin(settings) as bot:
