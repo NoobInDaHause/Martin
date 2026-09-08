@@ -18,7 +18,7 @@ def get_dm_embed(
     action: Literal["ban", "unban", "tempban", "kick", "timeout", "untimeout"],
     until: datetime = None,
 ):
-    title = f"You have been [what] from {guild}."
+    title = f"You have been **[what]** from `{guild}`."
     embed = discord.Embed(
         title=title.replace(
             "[what]",
@@ -51,6 +51,6 @@ def get_dm_embed(
             value=f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)",
             inline=False,
         )
-    embed.add_field(name="Moderator:", value=moderator, inline=False)
+    embed.add_field(name="Moderator:", value=f"{moderator} ({moderator.id})", inline=False)
 
     return embed
