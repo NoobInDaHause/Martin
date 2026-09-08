@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Literal, Optional, Union
 import contextlib
 from datetime import datetime, timezone
 
@@ -22,6 +22,76 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         super().__init__()
         self.bot = bot
 
+    def _timeout_validation_message(
+        self,
+        interaction: MartinInteraction,
+        act: Literal["timeout", "untimeout"],
+        offender: discord.Member,
+        duration: TimeDeltaTransformer,
+    ) -> Optional[str]:
+        if offender.id in (interaction.user.id, self.bot.user.id):
+            return (
+                f"You can not {act} yourself idiot."
+                if offender.id == interaction.user.id
+                else f"I can not {act} myself idiot."
+            )
+
+        if act == "untimeout":
+            if not offender.is_timed_out():
+                return (
+                    f"Member {offender} (`{offender.id}`) is not timed out."
+                )
+            return
+
+        if offender.is_timed_out():
+            return f"Member {offender} (`{offender.id}`) is already timed out."
+        if duration is None:
+            return "You must provide a duration if you want to timeout a member."
+
+        seconds = int(duration.total_seconds())
+        if seconds < 60:
+            return "Duration must not be less than 1 minute."
+        if seconds > 604800 * 4:
+            return "Duration must not be longer than 28 days."
+
+    async def _apply_timeout(
+        self,
+        interaction: MartinInteraction,
+        act: Literal["timeout", "untimeout"],
+        offender: discord.Member,
+        duration: TimeDeltaTransformer,
+        reason: str = None,
+    ) -> None:
+        until = datetime.now(timezone.utc) + duration if act == "timeout" else None
+
+        with contextlib.suppress(
+            discord.errors.Forbidden, discord.errors.HTTPException
+        ):
+            await offender.send(
+                embed=get_dm_embed(
+                    interaction.user,
+                    interaction.guild,
+                    reason or "No reason was given.",
+                    act,
+                    until,
+                )
+            )
+
+        await offender.timeout(
+            until, reason=get_auditlog_reason(interaction.user, reason)
+        )
+
+        if act == "timeout":
+            content = (
+                f"Member {offender} (`{offender.id}`) has been timed out until "
+                f"<t:{int(until.timestamp())}:F> "
+                f"(<t:{int(until.timestamp())}:R>)"
+            )
+        else:
+            content = f"Member {offender} (`{offender.id}`) has been untimed out."
+
+        await interaction.response_or_followup(content=content)
+
     @app_commands.command(name="kick", description="Kick a member from this guild.")
     @bot_has_permissions(kick_members=True)
     @has_permissions(kick_members=True)
@@ -34,7 +104,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         interaction: MartinInteraction,
         offender: discord.Member,
         reason: str = None,
-    ):
+    ) -> None:
         """
         This command respects role hierarchy.
 
@@ -184,50 +254,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         if higher := await hierarchy_check(interaction, offender, act):
             return await interaction.response_or_followup(content=higher)
 
-        if act == "timeout":
-            yeah = ""
-            if offender.is_timed_out():
-                yeah += f"Member {offender} (`{offender.id}`) is already timed out."
-            elif duration is None:
-                yeah += "You must provide a duration if you want to add a timeout on a member."
-            elif int(duration.total_seconds()) < 60:
-                yeah += "Duration must not be less than 1 minute."
-            elif int(duration.total_seconds()) > (604800 * 4):  # 4 weeks or 28 days
-                yeah += "Duration must not be longer than 28 days."
-
-            if yeah:
-                return await interaction.response_or_followup(content=yeah)
-        elif not offender.is_timed_out():
-            return await interaction.response_or_followup(
-                content=f"Member {offender} (`{offender.id}`) is not timed out."
-            )
-
-        until = (datetime.now(timezone.utc) + duration) if act == "timeout" else None
-
-        with contextlib.suppress(
-            discord.errors.Forbidden, discord.errors.HTTPException
+        if message := self._timeout_validation_message(
+            interaction, act, offender, duration
         ):
-            await offender.send(
-                embed=get_dm_embed(
-                    interaction.user,
-                    interaction.guild,
-                    reason or "No reason was given.",
-                    act,
-                    until,
-                )
-            )
+            return await interaction.response_or_followup(content=message)
 
-        await offender.timeout(
-            until, reason=get_auditlog_reason(interaction.user, reason)
-        )
-
-        await interaction.response_or_followup(
-            content=(
-                (
-                    f"Member {offender} (`{offender.id}`) has been timed out until "
-                    f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)"
-                )
-                if act == "timeout"
-                else f"Member {offender} (`{offender.id}`) has been untimed out."
-            )
-        )
+        await self._apply_timeout(interaction, act, offender, duration, reason)
