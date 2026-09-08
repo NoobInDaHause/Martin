@@ -1,4 +1,7 @@
+# sourcery skip: assign-if-exp
 from typing import TYPE_CHECKING, Union
+from datetime import timedelta
+import re
 
 from discord import app_commands
 from discord.ext import commands
@@ -7,6 +10,25 @@ from Utilities.exceptions import BadArgument
 
 if TYPE_CHECKING:
     from Martin import MartinInteraction
+
+TIME_PATTERN = re.compile(
+    r"(?P<value>\d+)\s*"
+    r"(?P<unit>"
+    r"years?|yrs?|y|"
+    r"months?|mons?|mo|"
+    r"weeks?|w|"
+    r"days?|d|"
+    r"hours?|hrs?|h|"
+    r"minutes?|mins?|m|"
+    r"seconds?|secs?|s"
+    r")\b",
+    re.IGNORECASE,
+)
+
+if TYPE_CHECKING:
+    TimeDeltaTransformer = timedelta
+else:
+    TimeDeltaTransformer = _TimeDeltaTransformer
 
 
 class ParseBoolTransformer(app_commands.Transformer):
@@ -37,3 +59,55 @@ class UserTransformer(app_commands.Transformer):
             )
         except commands.BadArgument as e:
             raise BadArgument(str(e)) from e
+
+
+class _TimeDeltaTransformer(app_commands.Transformer):
+    async def transform(
+        self, interaction: "MartinInteraction", value: str
+    ) -> timedelta:
+        value = value.strip()
+
+        total = timedelta()
+        position = 0
+        found = False
+
+        for match in TIME_PATTERN.finditer(value):
+            if value[position : match.start()].strip():
+                raise BadArgument(
+                    f"'{value[position:match.start()].strip()!r}' is not a valid duration."
+                )
+
+            number = int(match.group("value"))
+            unit = match.group("unit").lower()
+
+            if unit.startswith(("year", "yr")) or unit == "y":
+                total += timedelta(days=number * 365)
+
+            elif unit.startswith(("month", "mon")) or unit == "mo":
+                total += timedelta(days=number * 30)
+
+            elif unit.startswith("week") or unit == "w":
+                total += timedelta(days=number * 7)
+
+            elif unit.startswith("day") or unit == "d":
+                total += timedelta(days=number)
+
+            elif unit.startswith(("hour", "hr")) or unit == "h":
+                total += timedelta(hours=number)
+
+            elif unit.startswith(("minute", "min")) or unit == "m":
+                total += timedelta(minutes=number)
+
+            elif unit.startswith(("second", "sec")) or unit == "s":
+                total += timedelta(seconds=number)
+
+            position = match.end()
+            found = True
+
+        if not found:
+            raise BadArgument(f"'{value!r}' is not a valid duration.")
+
+        if value[position:].strip():
+            raise ValueError(f"'{value[position:].strip()!r}' is not a valid duration.")
+
+        return total
