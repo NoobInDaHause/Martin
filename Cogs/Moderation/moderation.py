@@ -186,6 +186,10 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             return await interaction.response_or_followup(
                 content="Duration must not be less than 1 minute."
             )
+        if int(duration.total_seconds()) > (604800 * 4):  # 4 weeks or 28 days
+            return await interaction.response_or_followup(
+                content="Duration must not be longer than 28 days."
+            )
 
         until = datetime.now(timezone.utc) + duration
 

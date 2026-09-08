@@ -11,17 +11,22 @@ if TYPE_CHECKING:
     from Martin import MartinInteraction
 
 TIME_PATTERN = re.compile(
-    r"(?P<value>\d+)\s*"
-    r"(?P<unit>"
-    r"years?|yrs?|y|"
-    r"months?|mons?|mo|"
-    r"weeks?|w|"
-    r"days?|d|"
-    r"hours?|hrs?|h|"
-    r"minutes?|mins?|m|"
-    r"seconds?|secs?|s"
-    r")\b",
-    re.IGNORECASE,
+    r"""
+    \s*
+    (?P<value>\d+)
+    \s*
+    (?P<unit>
+        years?|yrs?|y|
+        months?|mons?|mo|
+        weeks?|w|
+        days?|d|
+        hours?|hrs?|h|
+        minutes?|mins?|m|
+        seconds?|secs?|s
+    )
+    \s*
+    """,
+    re.IGNORECASE | re.VERBOSE,
 )
 
 
@@ -68,32 +73,32 @@ class _TimeDeltaTransformer(app_commands.Transformer):
         for match in TIME_PATTERN.finditer(value):
             if value[position : match.start()].strip():
                 raise BadArgument(
-                    f"'{value[position:match.start()].strip()!r}' is not a valid duration."
+                    f"'{value[position:match.start()]!r}' is not a valid duration."
                 )
 
-            number = int(match.group("value"))
+            amount = int(match.group("value"))
             unit = match.group("unit").lower()
 
-            if unit.startswith(("year", "yr")) or unit == "y":
-                total += timedelta(days=number * 365)
+            if unit in {"y", "yr", "yrs", "year", "years"}:
+                total += timedelta(days=amount * 365)
 
-            elif unit.startswith(("month", "mon")) or unit == "mo":
-                total += timedelta(days=number * 30)
+            elif unit in {"mo", "mon", "mons", "month", "months"}:
+                total += timedelta(days=amount * 30)
 
-            elif unit.startswith("week") or unit == "w":
-                total += timedelta(days=number * 7)
+            elif unit in {"w", "week", "weeks"}:
+                total += timedelta(days=amount * 7)
 
-            elif unit.startswith("day") or unit == "d":
-                total += timedelta(days=number)
+            elif unit in {"d", "day", "days"}:
+                total += timedelta(days=amount)
 
-            elif unit.startswith(("hour", "hr")) or unit == "h":
-                total += timedelta(hours=number)
+            elif unit in {"h", "hr", "hrs", "hour", "hours"}:
+                total += timedelta(hours=amount)
 
-            elif unit.startswith(("minute", "min")) or unit == "m":
-                total += timedelta(minutes=number)
+            elif unit in {"m", "min", "mins", "minute", "minutes"}:
+                total += timedelta(minutes=amount)
 
-            elif unit.startswith(("second", "sec")) or unit == "s":
-                total += timedelta(seconds=number)
+            elif unit in {"s", "sec", "secs", "second", "seconds"}:
+                total += timedelta(seconds=amount)
 
             position = match.end()
             found = True
@@ -102,7 +107,7 @@ class _TimeDeltaTransformer(app_commands.Transformer):
             raise BadArgument(f"'{value!r}' is not a valid duration.")
 
         if value[position:].strip():
-            raise ValueError(f"'{value[position:].strip()!r}' is not a valid duration.")
+            raise BadArgument(f"'{value[position:]!r}' is not a valid duration.")
 
         return total
 
