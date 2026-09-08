@@ -1,4 +1,3 @@
-# sourcery skip: assign-if-exp
 from typing import TYPE_CHECKING, Union
 from datetime import timedelta
 import re
@@ -24,11 +23,6 @@ TIME_PATTERN = re.compile(
     r")\b",
     re.IGNORECASE,
 )
-
-if TYPE_CHECKING:
-    TimeDeltaTransformer = timedelta
-else:
-    TimeDeltaTransformer = _TimeDeltaTransformer
 
 
 class ParseBoolTransformer(app_commands.Transformer):
@@ -111,3 +105,10 @@ class _TimeDeltaTransformer(app_commands.Transformer):
             raise ValueError(f"'{value[position:].strip()!r}' is not a valid duration.")
 
         return total
+
+
+# sourcery skip: assign-if-exp
+if TYPE_CHECKING:
+    TimeDeltaTransformer = timedelta
+else:
+    TimeDeltaTransformer = _TimeDeltaTransformer
