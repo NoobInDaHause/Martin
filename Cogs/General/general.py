@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from Martin import Martin, MartinInteraction
+from Utilities.checks import bot_has_permissions, cooldown
 from Utilities.formatting import format_time
 
 from .general_data_manager import GeneralDB
@@ -33,8 +34,8 @@ class General(commands.Cog):
         return discord.Colour.yellow() if latency_ms < 250 else discord.Colour.red()
 
     @app_commands.command(name="ping", description="Pong.")
-    @app_commands.checks.bot_has_permissions(embed_links=True)
-    @app_commands.checks.cooldown(1, 5, key=lambda i: i.user.id)
+    @bot_has_permissions(embed_links=True)
+    @cooldown(1, 5, key=lambda i: i.user.id, owner_bypass=True)
     async def ping(self, interaction: MartinInteraction) -> None:
         send_started = perf_counter()
         initial_message = await interaction.response_or_followup(content="Pinging...")
@@ -87,7 +88,7 @@ class General(commands.Cog):
         await initial_message.edit(embed=result_embed)
 
     @app_commands.command(name="botinfo", description="Check info about the bot.")
-    @app_commands.checks.bot_has_permissions(embed_links=True)
+    @bot_has_permissions(embed_links=True)
     async def info(self, interaction: MartinInteraction) -> None:
         await interaction.response.defer(thinking=True)
 

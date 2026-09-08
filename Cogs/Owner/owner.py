@@ -8,7 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from Martin import Martin, MartinInteraction
-from Utilities.checks import is_owner
+from Utilities.checks import bot_has_permissions, is_owner
 from Utilities.exceptions import BadArgument
 from Utilities.formatting import pagify
 from Utilities.transformers import UserTransformer
@@ -252,7 +252,7 @@ class Owner(commands.Cog):
 
     @app_commands.command(name="owner", description="Owner only commands.")
     @is_owner()
-    @app_commands.checks.bot_has_permissions(attach_files=True, embed_links=True)
+    @bot_has_permissions(attach_files=True, embed_links=True)
     async def owner(self, interaction: MartinInteraction) -> None:
         """
         No peasants allowed.
