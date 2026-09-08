@@ -113,6 +113,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         offender="The offending member or user that you want to unban.",
         reason="The optional reason for the unban.",
     )
+    @app_commands.rename(offender="offender_id")
     async def moderation_unban(
         self,
         interaction: MartinInteraction,
