@@ -25,6 +25,7 @@ class Owner(commands.Cog):
     """
 
     def __init__(self, bot: Martin):
+        super().__init__()
         self.bot = bot
 
     @staticmethod

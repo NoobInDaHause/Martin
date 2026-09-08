@@ -1,7 +1,10 @@
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 from datetime import datetime, timezone
 
 import discord
+
+if TYPE_CHECKING:
+    from Martin import MartinInteraction
 
 
 def get_auditlog_reason(moderator: discord.Member, reason: str = None) -> str:
@@ -51,6 +54,22 @@ def get_dm_embed(
             value=f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)",
             inline=False,
         )
-    embed.add_field(name="Moderator:", value=f"{moderator} ({moderator.id})", inline=False)
+    embed.add_field(
+        name="Moderator:", value=f"{moderator} ({moderator.id})", inline=False
+    )
 
     return embed
+
+
+async def hierarchy_check(
+    interaction: MartinInteraction,
+    offender: discord.Member,
+    action: Literal["ban", "unban", "tempban", "kick", "timeout", "untimeout"],
+) -> str:
+    if (
+        offender.top_role >= interaction.user.top_role
+    ) and not await interaction.client.is_owner(interaction.user):
+        return f"You can not {action} this member due to role hierarchy."
+    if offender.top_role >= interaction.guild.me.top_role:
+        return f"I can not {action} this member due to role hierarchy."
+    return False

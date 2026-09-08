@@ -76,6 +76,7 @@ __all__ = (
     "cooldown",
     "dynamic_cooldown",
     "is_owner",
+    "role_hierarchy_check",
 )
 
 
@@ -570,7 +571,7 @@ def dynamic_cooldown(
 
 
 def is_owner():
-    async def predicate(interaction: MartinInteraction) -> bool:
+    async def predicate(interaction: "MartinInteraction") -> bool:
         is_owner = await interaction.client.is_owner(interaction.user)
         if not is_owner:
             raise UserIsNotOwner(

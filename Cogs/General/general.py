@@ -21,6 +21,7 @@ class General(commands.Cog):
     """
 
     def __init__(self, bot: Martin):
+        super().__init__()
         self.bot = bot
         self.db = GeneralDB(self.__class__.__name__)
 
