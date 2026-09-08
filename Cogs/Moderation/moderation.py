@@ -39,4 +39,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         embed = get_dm_embed(interaction.user, interaction.guild, reason or "No reason was given.", "kick")
         with contextlib.suppress(discord.errors.Forbidden, discord.errors.HTTPException):
             await offender.send(embed=embed)
+
         await interaction.guild.kick(offender, reason=get_auditlog_reason(interaction.user, reason))
+        await interaction.response_or_followup(content=f"Member {offender} has been kicked from the guild.")
