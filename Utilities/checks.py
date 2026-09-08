@@ -53,7 +53,7 @@ from discord.app_commands.errors import (
 from discord.permissions import Permissions
 from discord.utils import _human_join, get as utils_get, MISSING, maybe_coroutine
 
-from exceptions import UserIsNotOwner
+from Utilities.exceptions import UserIsNotOwner
 
 T = TypeVar("T")
 

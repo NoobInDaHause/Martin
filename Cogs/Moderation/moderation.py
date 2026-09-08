@@ -22,12 +22,19 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     async def moderation_kick(
         self, interaction: MartinInteraction, offender: discord.Member, reason: str = None
     ):
+        """
+        This command respects role hierarchy.
+
+        Except for bot owners LOL.
+        """
         if (offender.top_role >= interaction.user.top_role) and not await self.bot.is_owner(interaction.user):
             return await interaction.response_or_followup(
-                content="You can not kick a member that has a role higher than you."
+                content="You can not kick this member due to role hierarchy."
             )
         if (offender.top_role >= interaction.guild.me.top_role):
-            return await interaction.response_or_followup()
+            return await interaction.response_or_followup(
+                content="I can not kick this member due to role hierarchy."
+            )
 
         embed = get_dm_embed(interaction.user, interaction.guild, reason or "No reason was given.", "kick")
         with contextlib.suppress(discord.errors.Forbidden, discord.errors.HTTPException):
