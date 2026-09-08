@@ -81,6 +81,12 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             if higher := await hierarchy_check(interaction, offender, "ban"):
                 return await interaction.response_or_followup(content=higher)
 
+        with contextlib.suppress(discord.errors.NotFound):
+            await interaction.guild.fetch_ban(offender)
+            return await interaction.response_or_followup(
+                content=f"User **{offender}** (`{offender.id}`) is already banned."
+            )
+
         embed = get_dm_embed(
             interaction.user,
             interaction.guild,
