@@ -77,8 +77,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         Except for bot owners LOL.
         """
-        if higher := await hierarchy_check(interaction, offender, "ban"):
-            return await interaction.response_or_followup(content=higher)
+        if isinstance(offender, discord.Member):
+            if higher := await hierarchy_check(interaction, offender, "ban"):
+                return await interaction.response_or_followup(content=higher)
 
         embed = get_dm_embed(
             interaction.user,
