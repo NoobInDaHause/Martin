@@ -110,7 +110,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     @bot_has_permissions(ban_members=True)
     @has_permissions(ban_members=True)
     @app_commands.describe(
-        offender="The offending member or user that you want to unban.",
+        offender="The user that you want to unban.",
         reason="The optional reason for the unban.",
     )
     @app_commands.rename(offender="offender_id")
