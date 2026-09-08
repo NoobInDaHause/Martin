@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Literal, Union
 import contextlib
 from datetime import datetime, timezone
 
@@ -43,16 +43,17 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         if higher := await hierarchy_check(interaction, offender, "kick"):
             return await interaction.response_or_followup(content=higher)
 
-        embed = get_dm_embed(
-            interaction.user,
-            interaction.guild,
-            reason or "No reason was given.",
-            "kick",
-        )
         with contextlib.suppress(
             discord.errors.Forbidden, discord.errors.HTTPException
         ):
-            await offender.send(embed=embed)
+            await offender.send(
+                embed=get_dm_embed(
+                    interaction.user,
+                    interaction.guild,
+                    reason or "No reason was given.",
+                    "kick",
+                )
+            )
 
         await interaction.guild.kick(
             offender, reason=get_auditlog_reason(interaction.user, reason)
@@ -89,16 +90,17 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 content=f"User **{offender}** (`{offender.id}`) is already banned from this guild."
             )
 
-        embed = get_dm_embed(
-            interaction.user,
-            interaction.guild,
-            reason or "No reason was given.",
-            "ban",
-        )
         with contextlib.suppress(
             discord.errors.Forbidden, discord.errors.HTTPException
         ):
-            await offender.send(embed=embed)
+            await offender.send(
+                embed=get_dm_embed(
+                    interaction.user,
+                    interaction.guild,
+                    reason or "No reason was given.",
+                    "ban",
+                )
+            )
 
         await interaction.guild.ban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
@@ -134,16 +136,17 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 content=f"User **{offender}** (`{offender.id}`) is not banned from this guild."
             )
 
-        embed = get_dm_embed(
-            interaction.user,
-            interaction.guild,
-            reason or "No reason was given.",
-            "unban",
-        )
         with contextlib.suppress(
             discord.errors.Forbidden, discord.errors.HTTPException
         ):
-            await offender.send(embed=embed)
+            await offender.send(
+                embed=get_dm_embed(
+                    interaction.user,
+                    interaction.guild,
+                    reason or "No reason was given.",
+                    "unban",
+                )
+            )
 
         await interaction.guild.unban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
@@ -153,20 +156,24 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         )
 
     @app_commands.command(
-        name="timeout", description="Timeout a naughty member from this guild."
+        name="timeout",
+        description="Timeout or untimeout a naughty member from this guild.",
     )
     @bot_has_permissions(moderate_members=True)
     @has_permissions(moderate_members=True)
     @app_commands.describe(
-        offender="The offending member that you want to timeout.",
+        act="Timeout or untimeout.",
+        offender="The offending member that you want to timeout/untimeout.",
         duration="The duration of the timeout. Example: `1h25m30s` -> 1 hour, 25 minutes and 30 seconds.",
-        reason="The optional reason for the timeout.",
+        reason="The optional reason for the timeout/untimeout.",
     )
+    @app_commands.rename(act="action")
     async def moderation_timeout(
         self,
         interaction: MartinInteraction,
+        act: Literal["timeout", "untimeout"],
         offender: discord.Member,
-        duration: TimeDeltaTransformer,
+        duration: TimeDeltaTransformer = None,
         reason: str = None,
     ) -> None:
         """
@@ -174,43 +181,53 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         Except for bot owners LOL.
         """
-        if higher := await hierarchy_check(interaction, offender, "timeout"):
+        if higher := await hierarchy_check(interaction, offender, act):
             return await interaction.response_or_followup(content=higher)
 
-        if offender.is_timed_out():
+        if act == "timeout":
+            yeah = ""
+            if offender.is_timed_out():
+                yeah += f"Member {offender} (`{offender.id}`) is already timed out."
+            elif duration is None:
+                yeah += "You must provide a duration if you want to add a timeout on a member."
+            elif int(duration.total_seconds()) < 60:
+                yeah += "Duration must not be less than 1 minute."
+            elif int(duration.total_seconds()) > (604800 * 4):  # 4 weeks or 28 days
+                yeah += "Duration must not be longer than 28 days."
+
+            if yeah:
+                return await interaction.response_or_followup(content=yeah)
+        elif not offender.is_timed_out():
             return await interaction.response_or_followup(
-                content=f"Member {offender} (`{offender.id}`) is already timed out."
+                content=f"Member {offender} (`{offender.id}`) is not timed out."
             )
 
-        if int(duration.total_seconds()) < 60:
-            return await interaction.response_or_followup(
-                content="Duration must not be less than 1 minute."
-            )
-        if int(duration.total_seconds()) > (604800 * 4):  # 4 weeks or 28 days
-            return await interaction.response_or_followup(
-                content="Duration must not be longer than 28 days."
-            )
-
-        until = datetime.now(timezone.utc) + duration
-
-        embed = get_dm_embed(
-            interaction.user,
-            interaction.guild,
-            reason or "No reason was given.",
-            "timeout",
-            until,
-        )
+        until = (datetime.now(timezone.utc) + duration) if act == "timeout" else None
 
         with contextlib.suppress(
             discord.errors.Forbidden, discord.errors.HTTPException
         ):
-            await offender.send(embed=embed)
+            await offender.send(
+                embed=get_dm_embed(
+                    interaction.user,
+                    interaction.guild,
+                    reason or "No reason was given.",
+                    act,
+                    until,
+                )
+            )
 
         await offender.timeout(
             until, reason=get_auditlog_reason(interaction.user, reason)
         )
 
         await interaction.response_or_followup(
-            content=f"Member {offender} (`{offender.id}`) has been timed out until "
-            f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)"
+            content=(
+                (
+                    f"Member {offender} (`{offender.id}`) has been timed out until "
+                    f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)"
+                )
+                if act == "timeout"
+                else f"Member {offender} (`{offender.id}`) has been untimed out."
+            )
         )
