@@ -84,7 +84,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         with contextlib.suppress(discord.errors.NotFound):
             await interaction.guild.fetch_ban(offender)
             return await interaction.response_or_followup(
-                content=f"User **{offender}** (`{offender.id}`) is already banned."
+                content=f"User **{offender}** (`{offender.id}`) is already banned from this guild."
             )
 
         embed = get_dm_embed(
@@ -104,4 +104,47 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.response_or_followup(
             content=f"{'Member' if isinstance(offender, discord.Member) else 'User'} **{offender}** "
             f"(`{offender.id}`) has been banned from the guild."
+        )
+
+    @app_commands.command(name="unban", description="Unban a user from this guild.")
+    @bot_has_permissions(ban_members=True)
+    @has_permissions(ban_members=True)
+    @app_commands.describe(
+        offender="The offending member or user that you want to unban.",
+        reason="The optional reason for the unban.",
+    )
+    async def moderation_unban(
+        self,
+        interaction: MartinInteraction,
+        offender: discord.User,
+        reason: str = None,
+    ):
+        """
+        This command respects role hierarchy.
+
+        Except for bot owners LOL.
+        """
+        try:
+            await interaction.guild.fetch_ban(offender)
+        except discord.errors.NotFound:
+            return await interaction.response_or_followup(
+                content=f"User **{offender}** (`{offender.id}`) is not banned from this guild."
+            )
+
+        embed = get_dm_embed(
+            interaction.user,
+            interaction.guild,
+            reason or "No reason was given.",
+            "unban",
+        )
+        with contextlib.suppress(
+            discord.errors.Forbidden, discord.errors.HTTPException
+        ):
+            await offender.send(embed=embed)
+
+        await interaction.guild.unban(
+            offender, reason=get_auditlog_reason(interaction.user, reason)
+        )
+        await interaction.response_or_followup(
+            content=f"User **{offender}** (`{offender.id}`) has been unbanned from the guild."
         )

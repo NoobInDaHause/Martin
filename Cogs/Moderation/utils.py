@@ -64,7 +64,7 @@ def get_dm_embed(
 async def hierarchy_check(
     interaction: MartinInteraction,
     offender: discord.Member,
-    action: Literal["ban", "unban", "tempban", "kick", "timeout", "untimeout"],
+    action: Literal["ban", "tempban", "kick", "timeout", "untimeout"],
 ) -> str:
     if (
         offender.top_role >= interaction.user.top_role
