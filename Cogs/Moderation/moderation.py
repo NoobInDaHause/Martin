@@ -316,7 +316,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     @app_commands.describe(
         offender="The offending member or user.",
         duration="The duration of the tempban. (minimum 10s)",
-        reason="The optional reason for the tempban."
+        reason="The optional reason for the tempban.",
     )
     async def moderation_tempban(
         self,
@@ -334,10 +334,12 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             if higher := await hierarchy_check(interaction, offender, "ban"):
                 return await interaction.response_or_followup(content=higher)
 
+        u = "User" if isinstance(offender, discord.User) else "Member"
+
         with contextlib.suppress(discord.errors.NotFound):
             await interaction.guild.fetch_ban(offender)
             return await interaction.response_or_followup(
-                content=f"Member or User **{offender}** (`{offender.id}`) is already banned from this guild."
+                content=f"{u} **{offender}** (`{offender.id}`) is already banned from this guild."
             )
 
         if int(duration.total_seconds()) < 10:
@@ -369,5 +371,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         cache = self.tempban_cache.setdefault(interaction.guild.id, {})
         cache |= {offender.id: until}
         await interaction.response_or_followup(
-            content=f"User **{offender}** (`{offender.id}`) has been unbanned from the guild."
+            content=f"{u} **{offender}** (`{offender.id}`) has been temporarily banned from the guild till "
+            f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)"
         )
