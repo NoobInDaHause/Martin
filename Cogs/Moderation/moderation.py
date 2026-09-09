@@ -1,6 +1,6 @@
 from typing import Dict, Literal, Optional, Union
 import contextlib
-from copy import copy
+from copy import deepcopy
 from datetime import datetime, timezone
 import logging
 
@@ -52,7 +52,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         if not self.initialized:
             return
 
-        copied = copy(self.tempban_cache)
+        copied = deepcopy(self.tempban_cache)
         for g_id, tempbans in copied.items():
             if guild := self.bot.get_guild(g_id):
                 for o_id, bui in tempbans.items():
