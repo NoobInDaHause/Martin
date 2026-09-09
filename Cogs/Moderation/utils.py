@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Optional
 from datetime import datetime, timezone
 
 import discord
@@ -21,10 +21,8 @@ def get_dm_embed(
     action: Literal["ban", "unban", "tempban", "kick", "timeout", "untimeout"],
     until: datetime = None,
 ):
-    title = f"You have been **[what]** from `{guild}`."
     embed = discord.Embed(
-        title=title.replace(
-            "[what]",
+        title="You have been **{}** from `{}`.".format(
             (
                 "banned"
                 if action == "ban"
@@ -42,6 +40,7 @@ def get_dm_embed(
                     )
                 )
             ),
+            guild,
         ),
         description=reason,
         colour=moderator.colour,
@@ -64,12 +63,11 @@ def get_dm_embed(
 async def hierarchy_check(
     interaction: MartinInteraction,
     offender: discord.Member,
-    action: Literal["ban", "tempban", "kick", "timeout", "untimeout"],
-) -> str:
+    action: Literal["ban", "kick", "timeout", "untimeout"],
+) -> Optional[str]:
     if (
         offender.top_role >= interaction.user.top_role
     ) and not await interaction.client.is_owner(interaction.user):
         return f"You can not {action} this member due to role hierarchy."
     if offender.top_role >= interaction.guild.me.top_role:
         return f"I can not {action} this member due to role hierarchy."
-    return False
