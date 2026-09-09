@@ -313,6 +313,11 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     @app_commands.command(name="tempban", description="Temporarily bans an offender.")
     @bot_has_permissions(ban_members=True)
     @has_permissions(ban_members=True)
+    @app_commands.describe(
+        offender="The offending member or user.",
+        duration="The duration of the tempban. (minimum 10s)",
+        reason="The optional reason for the tempban."
+    )
     async def moderation_tempban(
         self,
         interaction: MartinInteraction,
@@ -325,8 +330,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         Except for bot owners LOL.
         """
-        if higher := await hierarchy_check(interaction, offender, "ban"):
-            return await interaction.response_or_followup(content=higher)
+        if isinstance(offender, discord.Member):
+            if higher := await hierarchy_check(interaction, offender, "ban"):
+                return await interaction.response_or_followup(content=higher)
 
         with contextlib.suppress(discord.errors.NotFound):
             await interaction.guild.fetch_ban(offender)
