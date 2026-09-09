@@ -360,7 +360,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 )
             )
 
-        await interaction.guild.unban(
+        await interaction.guild.ban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
         await self.db.insert_tempban(
