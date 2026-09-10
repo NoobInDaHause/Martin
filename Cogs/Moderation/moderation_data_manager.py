@@ -48,7 +48,7 @@ class ModerationDataBase(DataManager):
     async def get_all_tempbans(self) -> tuple:
         all_guilds = await self.execute(
             """
-            SELECT *
+            SELECT name
             FROM sqlite_master
             WHERE type = 'table'
             AND name NOT LIKE 'sqlite_%'
@@ -60,7 +60,7 @@ class ModerationDataBase(DataManager):
         data = []
 
         for guild_id in all_guilds:
-            all_tempbans = await self.get_all_tempbans_from_guild(int(guild_id))
-            data.append((int(guild_id), all_tempbans[0], all_tempbans[1]))
+            all_tempbans = await self.get_all_tempbans_from_guild(int(guild_id[0]))
+            data.append((int(guild_id[0]), all_tempbans[0], all_tempbans[1]))
 
         return data
