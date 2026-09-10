@@ -21,7 +21,7 @@ class ModerationDataBase(DataManager):
     ) -> None:
         await self.execute(
             f'INSERT INTO "{guild_id}" (offender_id, banned_until_timestamp) VALUES (?, ?)',
-            (guild_id, offender_id, banned_until_timestamp),
+            (offender_id, banned_until_timestamp),
         )
 
     async def get_or_delete_tempban(
@@ -30,12 +30,12 @@ class ModerationDataBase(DataManager):
         if delete:
             await self.execute(
                 f'DELETE FROM "{guild_id}" WHERE offender_id = ?',
-                (guild_id, offender_id),
+                (offender_id,),
             )
         else:
             custom_info = await self.execute(
                 f'SELECT banned_until_timestamp FROM "{guild_id}" WHERE offender_id = ?',
-                (guild_id, offender_id),
+                (offender_id,),
                 select=True,
             )
             return custom_info[0]
