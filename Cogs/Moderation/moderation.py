@@ -37,7 +37,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         self.initialized = True
 
     async def cog_load(self) -> None:
-        await self.db.initialize()
         await self.init_tempbans()
         self.tempban_loop.start()
         self.log.info("Tempban task loop started.")
@@ -62,7 +61,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                             await guild.unban(offender, reason="Tempban expired.")
                         except discord.errors.NotFound:
                             self.tempban_cache[g_id].pop(o_id, None)
-                        except discord.errors.Forbidden:
+                        except (discord.errors.Forbidden, discord.errors.HTTPException):
                             continue
                         await self.db.get_or_delete_tempban(True, g_id, o_id)
 
@@ -365,6 +364,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.guild.ban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
+        await self.db.initialize_guild(interaction.guild.id)
         await self.db.insert_tempban(
             interaction.guild.id, offender.id, int(until.timestamp())
         )
