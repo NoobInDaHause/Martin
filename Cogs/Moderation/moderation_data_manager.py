@@ -60,7 +60,7 @@ class ModerationDataBase(DataManager):
         data = []
 
         for guild_id in all_guilds:
-            all_tempbans = await self.get_all_tempbans_from_guild(int(guild_id[0]))
-            data.append((int(guild_id[0]), all_tempbans[0], all_tempbans[1]))
+            if all_tempbans := await self.get_all_tempbans_from_guild(int(guild_id[0])):
+                data.append((int(guild_id[0]), all_tempbans[0], all_tempbans[1]))
 
         return data
