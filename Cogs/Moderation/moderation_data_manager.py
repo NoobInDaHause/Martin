@@ -35,12 +35,12 @@ class ModerationDataBase(DataManager):
                 (offender_id,),
             )
         else:
-            custom_info = await self.execute(
-                f"SELECT banned_until_timestamp, moderator_id FROM tempbans_{guild_id} WHERE offender_id = ?",
+            tban = await self.execute(
+                f"SELECT * FROM tempbans_{guild_id} WHERE offender_id = ?",
                 (offender_id,),
                 select=True,
             )
-            return custom_info[0]
+            return tban[0]
 
     async def get_all_tempbans_from_guild(self, guild_id: int) -> List[tuple]:
         return await self.execute(
