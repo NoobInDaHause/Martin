@@ -9,19 +9,21 @@ class ModerationDataBase(DataManager):
 
     async def initialize_guild(self, guild_id: int) -> None:
         sql = (
-            f'CREATE TABLE IF NOT EXISTS "{guild_id}" ('
+            f"CREATE TABLE IF NOT EXISTS tempbans_{guild_id} ("
             "    offender_id INTEGER NOT NULL,"
-            "    banned_until_timestamp INTEGER NOT NULL"
+            "    banned_until_timestamp INTEGER NOT NULL,"
+            "    moderator_id INTEGER NOT NULL"
             ")"
         )
         await self.execute(sql)
 
     async def insert_tempban(
-        self, guild_id: int, offender_id: int, banned_until_timestamp: int
+        self, guild_id: int, offender_id: int, banned_until_timestamp: int, moderator_id: int
     ) -> None:
+        await self.initialize_guild(guild_id)
         await self.execute(
-            f'INSERT INTO "{guild_id}" (offender_id, banned_until_timestamp) VALUES (?, ?)',
-            (offender_id, banned_until_timestamp),
+            f"INSERT INTO tempbans_{guild_id} (offender_id, banned_until_timestamp, moderator_id) VALUES (?, ?, ?)",
+            (offender_id, banned_until_timestamp, moderator_id),
         )
 
     async def get_or_delete_tempban(
@@ -29,12 +31,12 @@ class ModerationDataBase(DataManager):
     ) -> Optional[int]:
         if delete:
             await self.execute(
-                f'DELETE FROM "{guild_id}" WHERE offender_id = ?',
+                f"DELETE FROM tempbans_{guild_id} WHERE offender_id = ?",
                 (offender_id,),
             )
         else:
             custom_info = await self.execute(
-                f'SELECT banned_until_timestamp FROM "{guild_id}" WHERE offender_id = ?',
+                f"SELECT banned_until_timestamp, moderator_id FROM tempbans_{guild_id} WHERE offender_id = ?",
                 (offender_id,),
                 select=True,
             )
@@ -42,7 +44,7 @@ class ModerationDataBase(DataManager):
 
     async def get_all_tempbans_from_guild(self, guild_id: int) -> List[tuple]:
         return await self.execute(
-            f'SELECT * FROM "{guild_id}"', select=True, one_all="all"
+            f"SELECT * FROM tempbans_{guild_id}", select=True, one_all="all"
         )
 
     async def get_all_tempbans(self) -> tuple:
@@ -60,6 +62,7 @@ class ModerationDataBase(DataManager):
         data = []
 
         for guild_id in all_guilds:
-            if all_tempbans := await self.get_all_tempbans_from_guild(int(guild_id[0])):
-                data.extend((int(guild_id[0]), o_id, bui) for o_id, bui in all_tempbans)
+            guild_id = int(guild_id[0].removeprefix("tempbans_"))
+            if all_tempbans := await self.get_all_tempbans_from_guild(guild_id):
+                data.extend([(guild_id, o_id, bui, m_id) for o_id, bui, m_id in all_tempbans])
         return data

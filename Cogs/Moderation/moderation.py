@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Optional, Union
+from typing import Dict, Literal, Optional, Tuple, Union
 import contextlib
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -25,15 +25,15 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         super().__init__()
         self.bot = bot
         self.db = ModerationDataBase(self.__class__.__name__)
-        self.tempban_cache: Dict[int, Dict[int, datetime]] = {}
+        self.tempban_cache: Dict[int, Dict[int, Tuple[datetime, int]]] = {}
         self.log = logging.getLogger(f"Martin.{self.__class__.__name__}")
         self.initialized = False
 
     async def init_tempbans(self) -> None:
         naughty_users = await self.db.get_all_tempbans()
-        for g_id, o_id, bui in naughty_users:
+        for g_id, o_id, bui, m_id in naughty_users:
             cache = self.tempban_cache.setdefault(g_id, {})
-            cache |= {o_id: datetime.fromtimestamp(bui, tz=timezone.utc)}
+            cache |= {o_id: (datetime.fromtimestamp(bui, tz=timezone.utc), m_id)}
         self.initialized = True
 
     async def cog_load(self) -> None:
@@ -54,11 +54,15 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         copied = deepcopy(self.tempban_cache)
         for g_id, tempbans in copied.items():
             if guild := self.bot.get_guild(g_id):
-                for o_id, bui in tempbans.items():
+                for o_id, (bui, m_id) in tempbans.items():
                     if bui < datetime.now(timezone.utc):
                         try:
                             offender = await self.bot.get_or_fetch_user(o_id)
-                            await guild.unban(offender, reason="Tempban expired.")
+                            moderator = await self.bot.get_or_fetch_user(m_id)
+                            await guild.unban(
+                                offender,
+                                reason=f"Tempban issued by {moderator} ({moderator.id}) has expired.",
+                            )
                         except discord.errors.NotFound:
                             self.tempban_cache[g_id].pop(o_id, None)
                         except (discord.errors.Forbidden, discord.errors.HTTPException):
@@ -364,12 +368,11 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.guild.ban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
-        await self.db.initialize_guild(interaction.guild.id)
         await self.db.insert_tempban(
-            interaction.guild.id, offender.id, int(until.timestamp())
+            interaction.guild.id, offender.id, int(until.timestamp()), interaction.user.id
         )
         cache = self.tempban_cache.setdefault(interaction.guild.id, {})
-        cache |= {offender.id: until}
+        cache |= {offender.id: (until, interaction.user.id)}
         await interaction.response_or_followup(
             content=f"{u} **{offender}** (`{offender.id}`) has been temporarily banned from the guild till "
             f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)"

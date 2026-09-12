@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional
+from typing import List, Literal, Optional, Tuple, Union
 
 import aiosqlite
 import discord
@@ -29,7 +29,7 @@ class DataManager:
         args: tuple = None,
         select: bool = False,
         one_all: Literal["one", "all"] = "one",
-    ) -> Optional[Any]:
+    ) -> Optional[List[Tuple[Union[str, int]]]]:
         """Execute a SQL command.
 
         Parameters
