@@ -4,66 +4,80 @@ from Utilities.data_manager import DataManager
 
 
 class ModerationDataBase(DataManager):
-    def __init__(self, cog_name):
+    def __init__(self, cog_name: str):
         super().__init__(cog_name)
 
-    # --------------------------- Tempbans -------------------------------
-    async def initialize_tempban_guild(self, guild_id: int) -> None:
-        sql = (
-            f"CREATE TABLE IF NOT EXISTS tempbans_{guild_id} ("
-            "    offender_id INTEGER NOT NULL,"
-            "    banned_until_timestamp INTEGER NOT NULL,"
-            "    moderator_id INTEGER NOT NULL"
-            ")"
+    async def initialize(self) -> None:
+        """Create the shared tempban table if it does not exist."""
+        await self.execute(
+            """
+            CREATE TABLE IF NOT EXISTS tempbans (
+                guild_id INTEGER NOT NULL,
+                offender_id INTEGER NOT NULL,
+                banned_until_timestamp INTEGER NOT NULL,
+                moderator_id INTEGER,
+                PRIMARY KEY (guild_id, offender_id)
+            )
+            """
         )
-        await self.execute(sql)
 
     async def insert_tempban(
         self, guild_id: int, offender_id: int, banned_until_timestamp: int, moderator_id: int
     ) -> None:
-        await self.initialize_tempban_guild(guild_id)
+        await self.initialize()
         await self.execute(
-            f"INSERT INTO tempbans_{guild_id} (offender_id, banned_until_timestamp, moderator_id) VALUES (?, ?, ?)",
-            (offender_id, banned_until_timestamp, moderator_id),
+            """
+            INSERT INTO tempbans
+                (guild_id, offender_id, banned_until_timestamp, moderator_id)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT (guild_id, offender_id) DO UPDATE SET
+                banned_until_timestamp = excluded.banned_until_timestamp,
+                moderator_id = excluded.moderator_id
+            """,
+            (guild_id, offender_id, banned_until_timestamp, moderator_id),
         )
 
-    async def get_or_delete_tempban(
-        self, delete: bool, guild_id: int = None, offender_id: int = None
-    ) -> Optional[int]:
-        if delete:
-            await self.execute(
-                f"DELETE FROM tempbans_{guild_id} WHERE offender_id = ?",
-                (offender_id,),
-            )
-        else:
-            tban = await self.execute(
-                f"SELECT * FROM tempbans_{guild_id} WHERE offender_id = ?",
-                (offender_id,),
-                select=True,
-            )
-            return tban[0]
+    async def get_tempban(self, guild_id: int, offender_id: int) -> Optional[tuple]:
+        await self.initialize()
+        return await self.execute(
+            """
+            SELECT banned_until_timestamp, moderator_id
+            FROM tempbans
+            WHERE guild_id = ? AND offender_id = ?
+            """,
+            (guild_id, offender_id),
+            select=True,
+        )
+
+    async def delete_tempban(self, guild_id: int, offender_id: int) -> None:
+        await self.initialize()
+        await self.execute(
+            "DELETE FROM tempbans WHERE guild_id = ? AND offender_id = ?",
+            (guild_id, offender_id),
+        )
 
     async def get_all_tempbans_from_guild(self, guild_id: int) -> List[tuple]:
+        await self.initialize()
         return await self.execute(
-            f"SELECT * FROM tempbans_{guild_id}", select=True, one_all="all"
-        )
-
-    async def get_all_tempbans(self) -> tuple:
-        all_guilds = await self.execute(
             """
-            SELECT name
-            FROM sqlite_master
-            WHERE type = 'table'
-            AND name NOT LIKE 'sqlite_%'
+            SELECT offender_id, banned_until_timestamp, moderator_id
+            FROM tempbans
+            WHERE guild_id = ?
+            ORDER BY offender_id
             """,
+            (guild_id,),
             select=True,
             one_all="all",
         )
 
-        data = []
-
-        for guild_id in all_guilds:
-            guild_id = int(guild_id[0].removeprefix("tempbans_"))
-            if all_tempbans := await self.get_all_tempbans_from_guild(guild_id):
-                data.extend([(guild_id, o_id, bui, m_id) for o_id, bui, m_id in all_tempbans])
-        return data
+    async def get_all_tempbans(self) -> List[tuple]:
+        await self.initialize()
+        return await self.execute(
+            """
+            SELECT guild_id, offender_id, banned_until_timestamp, moderator_id
+            FROM tempbans
+            ORDER BY guild_id, offender_id
+            """,
+            select=True,
+            one_all="all",
+        )

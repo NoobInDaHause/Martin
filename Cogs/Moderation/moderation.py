@@ -91,11 +91,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                     except discord.errors.NotFound:
                         pass
 
-                    await self.db.get_or_delete_tempban(
-                        True,
-                        obj.guild.id,
-                        obj.offender.id,
-                    )
+                    await self.db.delete_tempban(obj.guild.id, obj.offender.id)
                     return
 
                 await asyncio.sleep(
@@ -321,7 +317,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         if task := self.tempban_tasks.get((interaction.guild.id, offender.id)):
             task.cancel()
 
-        await self.db.get_or_delete_tempban(True, interaction.guild.id, offender.id)
+        await self.db.delete_tempban(interaction.guild.id, offender.id)
 
         await interaction.response_or_followup(
             content=f"User **{offender}** (`{offender.id}`) has been unbanned from the guild."
