@@ -1,4 +1,4 @@
-from typing import Literal, List, Optional, Union
+from typing import Dict, Literal, Tuple, Optional, Union
 import asyncio
 import contextlib
 from datetime import datetime, timezone
@@ -29,7 +29,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         self.db = ModerationDataBase(self.__class__.__name__)
         self.log = logging.getLogger(f"Martin.{self.__class__.__name__}")
         self.initialized = False
-        self.tempban_tasks: List[asyncio.Task] = []
+        self.tempban_tasks: Dict[Tuple[int, int], asyncio.Task] = {}
 
     async def init_tempbans(self) -> None:
         await self.bot.wait_until_ready()
@@ -37,88 +37,84 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         naughty_users = await self.db.get_all_tempbans()
 
         for g_id, o_id, bui, m_id in naughty_users:
-            if guild := self.bot.get_guild(g_id):
-                try:
-                    off = await self.bot.get_or_fetch_user(o_id)
-                    mod = await self.bot.get_or_fetch_user(m_id)
-                except discord.errors.NotFound:
-                    continue
-                else:
-                    self.tempban_tasks.append(
-                        self.bot.loop.create_task(
-                            self.tempban_loop(
-                                TempbanObject(
-                                    moderator=mod,
-                                    offender=off,
-                                    guild=guild,
-                                    timestamp=bui,
-                                )
-                            )
+            try:
+                guild = await self.bot.get_or_fetch_guild(g_id)
+                off = await self.bot.get_or_fetch_user(o_id)
+                mod = await self.bot.get_or_fetch_user(m_id)
+            except discord.errors.NotFound:
+                continue
+            else:
+                self.tempban_tasks[(guild.id, off.id)] = self.bot.loop.create_task(
+                    self.tempban_loop(
+                        TempbanObject(
+                            offender=off,
+                            moderator=mod,
+                            guild=guild,
+                            timestamp=bui,
                         )
                     )
+                )
         self.initialized = True
 
     async def cog_load(self) -> None:
         self.bot.loop.create_task(self.init_tempbans())
 
     async def cog_unload(self):
-        for task in self.tempban_tasks:
+        for _, task in self.tempban_tasks.items():
             task.cancel()
 
     async def tempban_loop(self, obj: TempbanObject):
-        while True:
-            if not self.initialized:
-                await asyncio.sleep(5)
-                continue
+        try:
+            while True:
+                if not self.initialized:
+                    await asyncio.sleep(5)
+                    continue
 
-            seconds_left = int((obj.until - datetime.now(timezone.utc)).total_seconds())
+                seconds_left = (obj.until - datetime.now(timezone.utc)).total_seconds()
 
-            if seconds_left <= 0:
-                try:
-                    await obj.guild.unban(
-                        obj.offender,
-                        reason=(
-                            f"Tempban issued by {obj.moderator} "
-                            f"({obj.moderator.id}) has expired."
-                        ),
-                    )
-                except discord.Forbidden:
-                    self.log.warning(
-                        f"Could not unban {obj.offender} from {obj.guild} "
-                        "due to missing permissions."
-                    )
-                except discord.NotFound:
-                    pass
-                finally:
+                if seconds_left <= 0:
+                    with contextlib.suppress(discord.errors.NotFound):
+                        await obj.guild.unban(
+                            obj.offender,
+                            reason=(
+                                f"Tempban issued by {obj.moderator} "
+                                f"({obj.moderator.id}) has expired."
+                            ),
+                        )
                     await self.db.get_or_delete_tempban(
                         True,
                         obj.guild.id,
                         obj.offender.id,
                     )
+                    return
 
-                return
-
-            elif seconds_left <= 60:
-                await asyncio.sleep(seconds_left)
-            else:
                 await asyncio.sleep(
-                    min(seconds_left, 600)
-                )  # don't sleep for more than 10 minutes
+                    min(seconds_left, 300)
+                )  # dont sleep for more than 5 minutes
+
+        except asyncio.CancelledError:
+            raise
+
+        finally:
+            self.tempban_tasks.pop(
+                (obj.guild.id, obj.offender.id),
+                None,
+            )
+
+    def suicide(self, action: str, offender_id: int, user_id: int) -> Optional[str]:
+        if offender_id in (user_id, self.bot.user.id):
+            return (
+                f"You can not {action} yourself idiot."
+                if offender_id == user_id
+                else f"I can not {action} myself idiot."
+            )
 
     def _timeout_validation_message(
         self,
-        interaction: MartinInteraction,
         act: Literal["timeout", "untimeout"],
         offender: discord.Member,
         duration: TimeDeltaTransformer,
     ) -> Optional[str]:
-        if offender.id in (interaction.user.id, self.bot.user.id):
-            return (
-                f"You can not {act} yourself idiot."
-                if offender.id == interaction.user.id
-                else f"I can not {act} myself idiot."
-            )
-
         if act == "untimeout":
             if not offender.is_timed_out():
                 return f"Member {offender} (`{offender.id}`) is not timed out."
@@ -191,6 +187,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         Except for bot owners LOL.
         """
+        if s := self.suicide("kick", offender.id, interaction.user.id):
+            return await interaction.response_or_followup(content=s)
+
         if higher := await hierarchy_check(interaction, offender, "kick"):
             return await interaction.response_or_followup(content=higher)
 
@@ -231,6 +230,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         Except for bot owners LOL.
         """
+        if s := self.suicide("ban", offender.id, interaction.user.id):
+            return await interaction.response_or_followup(content=s)
+
         if isinstance(offender, discord.Member):
             if higher := await hierarchy_check(interaction, offender, "ban"):
                 return await interaction.response_or_followup(content=higher)
@@ -280,6 +282,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         Except for bot owners LOL.
         """
+        if s := self.suicide("unban", offender.id, interaction.user.id):
+            return await interaction.response_or_followup(content=s)
+
         try:
             await interaction.guild.fetch_ban(offender)
         except discord.errors.NotFound:
@@ -303,8 +308,10 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
         await self.db.get_or_delete_tempban(True, interaction.guild.id, offender.id)
-        if g_id := self.tempban_cache.get(interaction.guild.id):
-            g_id.pop(offender.id, None)
+
+        if task := self.tempban_tasks.get((interaction.guild.id, offender.id)):
+            task.cancel()
+
         await interaction.response_or_followup(
             content=f"User **{offender}** (`{offender.id}`) has been unbanned from the guild."
         )
@@ -335,12 +342,13 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         Except for bot owners LOL.
         """
+        if s := self.suicide(act, offender.id, interaction.user.id):
+            return await interaction.response_or_followup(content=s)
+
         if higher := await hierarchy_check(interaction, offender, act):
             return await interaction.response_or_followup(content=higher)
 
-        if message := self._timeout_validation_message(
-            interaction, act, offender, duration
-        ):
+        if message := self._timeout_validation_message(act, offender, duration):
             return await interaction.response_or_followup(content=message)
 
         await self._apply_timeout(interaction, act, offender, duration, reason)
@@ -365,6 +373,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         Except for bot owners LOL.
         """
+        if s := self.suicide("tempban", offender.id, interaction.user.id):
+            return await interaction.response_or_followup(content=s)
+
         if isinstance(offender, discord.Member):
             if higher := await hierarchy_check(interaction, offender, "ban"):
                 return await interaction.response_or_followup(content=higher)
@@ -407,7 +418,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             timestamp,
             interaction.user.id,
         )
-        self.tempban_tasks.append(
+        self.tempban_tasks[(interaction.guild.id, offender.id)] = (
             self.bot.loop.create_task(
                 self.tempban_loop(
                     TempbanObject(

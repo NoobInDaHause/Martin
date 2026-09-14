@@ -1,10 +1,19 @@
+from dataclasses import dataclass
 from datetime import datetime, timezone
+
 import discord
 
 
+@dataclass
 class TempbanObject:
-    def __init__(self, **kwargs):
-        self.offender: discord.User = kwargs.get("offender")
-        self.moderator: discord.User = kwargs.get("moderator")
-        self.guild: discord.Guild = kwargs.get("guild")
-        self.until = datetime.fromtimestamp(kwargs.get("timestamp"), tz=timezone.utc)
+    offender: discord.User
+    moderator: discord.User
+    guild: discord.Guild
+    timestamp: int
+
+    @property
+    def until(self) -> datetime:
+        return datetime.fromtimestamp(
+            self.timestamp,
+            tz=timezone.utc,
+        )
