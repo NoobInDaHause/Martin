@@ -1,6 +1,7 @@
 from typing import Dict, Literal, Tuple, Optional, Union
 import asyncio
 import contextlib
+from copy import deepcopy
 from datetime import datetime, timezone
 import logging
 
@@ -60,7 +61,8 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         self.bot.loop.create_task(self.init_tempbans())
 
     async def cog_unload(self):
-        for _, task in self.tempban_tasks.items():
+        copied = deepcopy(self.tempban_tasks)
+        for _, task in copied.items():
             task.cancel()
 
     async def tempban_loop(self, obj: TempbanObject):
