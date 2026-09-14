@@ -62,8 +62,8 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
     async def cog_unload(self):
         copied = deepcopy(self.tempban_tasks)
-        for _, task in copied.items():
-            task.cancel()
+        for t in copied:
+            self.tempban_tasks[t].cancel()
 
     async def tempban_loop(self, obj: TempbanObject):
         try:
