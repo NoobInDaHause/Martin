@@ -1,14 +1,15 @@
-from typing import Dict, Literal, Optional, Tuple, Union
+from typing import Literal, List, Optional, Union
+import asyncio
 import contextlib
-from copy import deepcopy
 from datetime import datetime, timezone
 import logging
 
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord import app_commands
 
 from .moderation_data_manager import ModerationDataBase
+from .objects import TempbanObject
 from .utils import get_auditlog_reason, get_dm_embed, hierarchy_check
 
 from Martin import Martin, MartinInteraction
@@ -26,53 +27,83 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         super().__init__()
         self.bot = bot
         self.db = ModerationDataBase(self.__class__.__name__)
-        self.tempban_cache: Dict[int, Dict[int, Tuple[datetime, int]]] = {}
         self.log = logging.getLogger(f"Martin.{self.__class__.__name__}")
         self.initialized = False
+        self.tempban_tasks: List[asyncio.Task] = []
 
     async def init_tempbans(self) -> None:
+        await self.bot.wait_until_ready()
+
         naughty_users = await self.db.get_all_tempbans()
+
         for g_id, o_id, bui, m_id in naughty_users:
-            cache = self.tempban_cache.setdefault(g_id, {})
-            cache |= {o_id: (datetime.fromtimestamp(bui, tz=timezone.utc), m_id)}
+            if guild := self.bot.get_guild(g_id):
+                try:
+                    off = await self.bot.get_or_fetch_user(o_id)
+                    mod = await self.bot.get_or_fetch_user(m_id)
+                except discord.errors.NotFound:
+                    continue
+                else:
+                    self.tempban_tasks.append(
+                        self.bot.loop.create_task(
+                            self.tempban_loop(
+                                TempbanObject(
+                                    moderator=mod,
+                                    offender=off,
+                                    guild=guild,
+                                    timestamp=bui,
+                                )
+                            )
+                        )
+                    )
         self.initialized = True
 
     async def cog_load(self) -> None:
-        await self.init_tempbans()
-        self.tempban_loop.start()
-        self.log.info("Tempban task loop started.")
+        self.bot.loop.create_task(self.init_tempbans())
 
     async def cog_unload(self):
-        self.tempban_cache = {}
-        self.tempban_loop.stop()
-        self.log.info("Tempban task loop stopped.")
+        for task in self.tempban_tasks:
+            task.cancel()
 
-    @tasks.loop(seconds=5.0)
-    async def tempban_loop(self):
-        if not self.initialized:
-            return
+    async def tempban_loop(self, obj: TempbanObject):
+        while True:
+            if not self.initialized:
+                await asyncio.sleep(5)
+                continue
 
-        copied = deepcopy(self.tempban_cache)
-        for g_id, tempbans in copied.items():
-            if guild := self.bot.get_guild(g_id):
-                for o_id, (bui, m_id) in tempbans.items():
-                    if bui < datetime.now(timezone.utc):
-                        try:
-                            offender = await self.bot.get_or_fetch_user(o_id)
-                            moderator = await self.bot.get_or_fetch_user(m_id)
-                            await guild.unban(
-                                offender,
-                                reason=f"Tempban issued by {moderator} ({moderator.id}) has expired.",
-                            )
-                        except discord.errors.NotFound:
-                            self.tempban_cache[g_id].pop(o_id, None)
-                        except (discord.errors.Forbidden, discord.errors.HTTPException):
-                            continue
-                        await self.db.get_or_delete_tempban(True, g_id, o_id)
+            seconds_left = int((obj.until - datetime.now(timezone.utc)).total_seconds())
 
-    @tempban_loop.before_loop
-    async def before_tempban_loop(self):
-        await self.bot.wait_until_ready()
+            if seconds_left <= 0:
+                try:
+                    await obj.guild.unban(
+                        obj.offender,
+                        reason=(
+                            f"Tempban issued by {obj.moderator} "
+                            f"({obj.moderator.id}) has expired."
+                        ),
+                    )
+                except discord.Forbidden:
+                    self.log.warning(
+                        f"Could not unban {obj.offender} from {obj.guild} "
+                        "due to missing permissions."
+                    )
+                except discord.NotFound:
+                    pass
+                finally:
+                    await self.db.get_or_delete_tempban(
+                        True,
+                        obj.guild.id,
+                        obj.offender.id,
+                    )
+
+                return
+
+            elif seconds_left <= 60:
+                await asyncio.sleep(seconds_left)
+            else:
+                await asyncio.sleep(
+                    min(seconds_left, 600)
+                )  # don't sleep for more than 10 minutes
 
     def _timeout_validation_message(
         self,
@@ -369,14 +400,25 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.guild.ban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
+        timestamp = int(until.timestamp())
         await self.db.insert_tempban(
             interaction.guild.id,
             offender.id,
-            int(until.timestamp()),
+            timestamp,
             interaction.user.id,
         )
-        cache = self.tempban_cache.setdefault(interaction.guild.id, {})
-        cache |= {offender.id: (until, interaction.user.id)}
+        self.tempban_tasks.append(
+            self.bot.loop.create_task(
+                self.tempban_loop(
+                    TempbanObject(
+                        offender=offender,
+                        moderator=interaction.user,
+                        guild=interaction.guild,
+                        timestamp=timestamp,
+                    )
+                )
+            )
+        )
         await interaction.response_or_followup(
             content=f"{u} **{offender}** (`{offender.id}`) has been temporarily banned from the guild till "
             f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)"
