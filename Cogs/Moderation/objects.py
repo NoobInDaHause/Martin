@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import discord
 
 
-@dataclass
+@dataclass(slots=True)
 class TempbanObject:
     offender: discord.User
     moderator: discord.User
