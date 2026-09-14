@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 
 def get_auditlog_reason(moderator: discord.Member, reason: str = None) -> str:
-    audit_reason = f"Authoried by {moderator} ({moderator.id})."
+    audit_reason = f"Authorized by {moderator} ({moderator.id})."
     if reason:
         audit_reason += f" Reason: {reason}"
     return f"{audit_reason[:509]}..." if len(audit_reason) > 512 else audit_reason
@@ -68,7 +68,7 @@ def get_dm_embed(
 
 
 async def hierarchy_check(
-    interaction: MartinInteraction,
+    interaction: "MartinInteraction",
     offender: discord.Member,
     action: Literal["ban", "kick", "timeout", "untimeout"],
 ) -> Optional[str]:

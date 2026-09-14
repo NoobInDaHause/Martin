@@ -9,8 +9,7 @@ class ModerationDataBase(DataManager):
 
     async def initialize(self) -> None:
         """Create the shared tempban table if it does not exist."""
-        await self.execute(
-            """
+        await self.execute("""
             CREATE TABLE IF NOT EXISTS tempbans (
                 guild_id INTEGER NOT NULL,
                 offender_id INTEGER NOT NULL,
@@ -18,11 +17,14 @@ class ModerationDataBase(DataManager):
                 moderator_id INTEGER,
                 PRIMARY KEY (guild_id, offender_id)
             )
-            """
-        )
+            """)
 
     async def insert_tempban(
-        self, guild_id: int, offender_id: int, banned_until_timestamp: int, moderator_id: int
+        self,
+        guild_id: int,
+        offender_id: int,
+        banned_until_timestamp: int,
+        moderator_id: int,
     ) -> None:
         await self.initialize()
         await self.execute(

@@ -1,7 +1,6 @@
 from typing import Dict, Literal, Tuple, Optional, Union
 import asyncio
 import contextlib
-from copy import deepcopy
 from datetime import datetime, timezone
 import logging
 
@@ -90,6 +89,13 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                         return
                     except discord.errors.NotFound:
                         pass
+                    except discord.errors.HTTPException as e:
+                        self.log.warning(
+                            f"Could not unban {obj.offender} from {obj.guild}: "
+                            f"{e}. Retrying in 5 minutes."
+                        )
+                        await asyncio.sleep(300)
+                        continue
 
                     await self.db.delete_tempban(obj.guild.id, obj.offender.id)
                     return
