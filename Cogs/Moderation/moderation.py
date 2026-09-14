@@ -61,9 +61,8 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         self.bot.loop.create_task(self.init_tempbans())
 
     async def cog_unload(self):
-        copied = deepcopy(self.tempban_tasks)
-        for t in copied:
-            self.tempban_tasks[t].cancel()
+        for task in self.tempban_tasks.values():
+            task.cancel()
 
     async def tempban_loop(self, obj: TempbanObject):
         try:
@@ -309,10 +308,11 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.guild.unban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
-        await self.db.get_or_delete_tempban(True, interaction.guild.id, offender.id)
 
         if task := self.tempban_tasks.get((interaction.guild.id, offender.id)):
             task.cancel()
+
+        await self.db.get_or_delete_tempban(True, interaction.guild.id, offender.id)
 
         await interaction.response_or_followup(
             content=f"User **{offender}** (`{offender.id}`) has been unbanned from the guild."
