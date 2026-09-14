@@ -74,7 +74,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 seconds_left = (obj.until - datetime.now(timezone.utc)).total_seconds()
 
                 if seconds_left <= 0:
-                    with contextlib.suppress(discord.errors.NotFound):
+                    try:
                         await obj.guild.unban(
                             obj.offender,
                             reason=(
@@ -82,6 +82,15 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                                 f"({obj.moderator.id}) has expired."
                             ),
                         )
+                    except discord.errors.Forbidden:
+                        self.log.warning(
+                            f"Could not unban {obj.offender} from {obj.guild} "
+                            "due to missing permissions."
+                        )
+                        return
+                    except discord.errors.NotFound:
+                        pass
+
                     await self.db.get_or_delete_tempban(
                         True,
                         obj.guild.id,
