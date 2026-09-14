@@ -18,43 +18,50 @@ def get_dm_embed(
     moderator: discord.Member,
     guild: discord.Guild,
     reason: str,
-    action: Literal["ban", "unban", "tempban", "kick", "timeout", "untimeout"],
-    until: datetime = None,
-):
+    action: Literal[
+        "ban",
+        "unban",
+        "tempban",
+        "kick",
+        "timeout",
+        "untimeout",
+        "warn",
+        "unwarn",
+    ],
+    until: Optional[datetime] = None,
+) -> discord.Embed:
+    action_descriptions = {
+        "ban": "banned",
+        "unban": "unbanned",
+        "tempban": "temporarily banned",
+        "kick": "kicked",
+        "timeout": "timed out",
+        "untimeout": "untimed out",
+        "warn": "warned",
+        "unwarn": "unwarned",
+    }
+
     embed = discord.Embed(
-        title="You have been **{}** from `{}`.".format(
-            (
-                "banned"
-                if action == "ban"
-                else (
-                    "unbanned"
-                    if action == "unban"
-                    else (
-                        "temporarily banned"
-                        if action == "tempban"
-                        else (
-                            "kicked"
-                            if action == "kick"
-                            else "timed out" if action == "timeout" else "untimed out"
-                        )
-                    )
-                )
-            ),
-            guild,
-        ),
+        title=f"You have been **{action_descriptions[action]}** from `{guild}`.",
         description=reason,
         colour=moderator.colour,
         timestamp=datetime.now(timezone.utc),
     )
+
     embed.set_thumbnail(url=guild.icon)
-    if until:
+
+    if until is not None:
+        timestamp = int(until.timestamp())
         embed.add_field(
             name="Until:",
-            value=f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)",
+            value=f"<t:{timestamp}:F> (<t:{timestamp}:R>)",
             inline=False,
         )
+
     embed.add_field(
-        name="Moderator:", value=f"{moderator} ({moderator.id})", inline=False
+        name="Moderator:",
+        value=f"{moderator} ({moderator.id})",
+        inline=False,
     )
 
     return embed

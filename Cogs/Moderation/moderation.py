@@ -16,6 +16,7 @@ from Utilities.checks import bot_has_permissions, has_permissions
 from Utilities.transformers import TimeDeltaTransformer
 
 
+@app_commands.guild_only()
 class Moderation(commands.GroupCog, group_name="moderation"):
     """
     Moderation cog.
@@ -369,7 +370,10 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
         await self.db.insert_tempban(
-            interaction.guild.id, offender.id, int(until.timestamp()), interaction.user.id
+            interaction.guild.id,
+            offender.id,
+            int(until.timestamp()),
+            interaction.user.id,
         )
         cache = self.tempban_cache.setdefault(interaction.guild.id, {})
         cache |= {offender.id: (until, interaction.user.id)}

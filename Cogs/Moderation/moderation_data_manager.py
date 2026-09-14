@@ -7,7 +7,8 @@ class ModerationDataBase(DataManager):
     def __init__(self, cog_name):
         super().__init__(cog_name)
 
-    async def initialize_guild(self, guild_id: int) -> None:
+    # --------------------------- Tempbans -------------------------------
+    async def initialize_tempban_guild(self, guild_id: int) -> None:
         sql = (
             f"CREATE TABLE IF NOT EXISTS tempbans_{guild_id} ("
             "    offender_id INTEGER NOT NULL,"
@@ -20,7 +21,7 @@ class ModerationDataBase(DataManager):
     async def insert_tempban(
         self, guild_id: int, offender_id: int, banned_until_timestamp: int, moderator_id: int
     ) -> None:
-        await self.initialize_guild(guild_id)
+        await self.initialize_tempban_guild(guild_id)
         await self.execute(
             f"INSERT INTO tempbans_{guild_id} (offender_id, banned_until_timestamp, moderator_id) VALUES (?, ?, ?)",
             (offender_id, banned_until_timestamp, moderator_id),
