@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Literal, Optional
 from datetime import datetime, timezone
 
@@ -68,7 +70,7 @@ def get_dm_embed(
 
 
 async def hierarchy_check(
-    interaction: "MartinInteraction",
+    interaction: MartinInteraction,
     offender: discord.Member,
     action: Literal["ban", "kick", "timeout", "untimeout"],
 ) -> Optional[str]:

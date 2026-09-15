@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import discord
@@ -6,7 +8,7 @@ if TYPE_CHECKING:
     from .bot import Martin
 
 
-class MartinInteraction(discord.Interaction["Martin"]):
+class MartinInteraction(discord.Interaction[Martin]):
     async def response_or_followup(self, *args, **kwargs) -> discord.InteractionMessage:
         if self.response.is_done():
             return await self.followup.send(*args, **kwargs)

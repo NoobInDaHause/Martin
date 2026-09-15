@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
 import logging
@@ -13,10 +15,10 @@ if TYPE_CHECKING:
     from .bot import Martin
 
 
-class MartinTree(app_commands.CommandTree["Martin"]):
+class MartinTree(app_commands.CommandTree[Martin]):
     def __init__(
         self,
-        client: "Martin",
+        client: Martin,
         *,
         fallback_to_global: bool = True,
         allowed_contexts: app_commands.AppCommandContext = discord.utils.MISSING,

@@ -26,11 +26,22 @@ def setup_lopgging():
 async def run_bot() -> None:
     setup_lopgging()
     load_dotenv(find_dotenv(raise_error_if_not_found=True))
-    setattr(discord.Interaction, "response_or_followup", MartinInteraction.response_or_followup)
+    setattr(
+        discord.Interaction,
+        "response_or_followup",
+        MartinInteraction.response_or_followup,
+    )
 
     settings = Settings.initialize()
     async with Martin(settings) as bot:
-        await bot.start(token=os.getenv("TOKEN"))
+        try:
+            await bot.start(token=os.getenv("TOKEN"))
+        except discord.errors.LoginFailure as L:
+            bot.log.critical(
+                "Error logging in. Might have wrong token please double check.",
+                exc_info=(type(L), L, L.__traceback__),
+            )
+
         return bot.exit_code
 
 

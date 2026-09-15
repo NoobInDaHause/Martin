@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Union
 from datetime import timedelta
 import re
@@ -32,7 +34,7 @@ TIME_PATTERN = re.compile(
 
 class ParseBoolTransformer(app_commands.Transformer):
     async def transform(
-        self, _interaction: "MartinInteraction", value: Union[str, int, bool]
+        self, _interaction: MartinInteraction, value: Union[str, int, bool]
     ) -> bool:
         if isinstance(value, bool):
             return value
@@ -51,7 +53,7 @@ class ParseBoolTransformer(app_commands.Transformer):
 
 
 class UserTransformer(app_commands.Transformer):
-    async def transform(self, interaction: "MartinInteraction", value: str):
+    async def transform(self, interaction: MartinInteraction, value: str):
         try:
             return await commands.UserConverter().convert(
                 await interaction.client.get_context(interaction.message), value
@@ -62,7 +64,7 @@ class UserTransformer(app_commands.Transformer):
 
 class _TimeDeltaTransformer(app_commands.Transformer):
     async def transform(
-        self, interaction: "MartinInteraction", value: str
+        self, interaction: MartinInteraction, value: str
     ) -> timedelta:
         value = value.strip()
 

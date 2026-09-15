@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextlib
 from typing import TYPE_CHECKING, List, Optional, Union
 
@@ -12,7 +14,7 @@ class PaginatorView(discord.ui.View):
 
     def __init__(
         self,
-        interaction: "MartinInteraction",
+        interaction: MartinInteraction,
         pages: List[Union[str, discord.Embed]],
         timeout: float = 30.0,
     ):
@@ -77,7 +79,7 @@ class PaginatorView(discord.ui.View):
             last_page_button.disabled = self.current_page >= len(self.pages) - 1
 
     async def update_page(
-        self, interaction: "MartinInteraction", page_index: int
+        self, interaction: MartinInteraction, page_index: int
     ) -> None:
         if not self.pages:
             return
@@ -88,19 +90,19 @@ class PaginatorView(discord.ui.View):
 
     @discord.ui.button(label="⏮", style=discord.ButtonStyle.secondary)
     async def first_page_button(
-        self, interaction: "MartinInteraction", _button: discord.ui.Button
+        self, interaction: MartinInteraction, _button: discord.ui.Button
     ) -> None:
         await self.update_page(interaction, 0)
 
     @discord.ui.button(label="◀", style=discord.ButtonStyle.primary)
     async def previous_button(
-        self, interaction: "MartinInteraction", _button: discord.ui.Button
+        self, interaction: MartinInteraction, _button: discord.ui.Button
     ) -> None:
         await self.update_page(interaction, self.current_page - 1)
 
     @discord.ui.button(label="✖", style=discord.ButtonStyle.danger)
     async def close_button(
-        self, interaction: "MartinInteraction", _button: discord.ui.Button
+        self, interaction: MartinInteraction, _button: discord.ui.Button
     ) -> None:
         await interaction.response.defer()
         self.stop()
@@ -108,17 +110,17 @@ class PaginatorView(discord.ui.View):
 
     @discord.ui.button(label="▶", style=discord.ButtonStyle.primary)
     async def next_page_button(
-        self, interaction: "MartinInteraction", _button: discord.ui.Button
+        self, interaction: MartinInteraction, _button: discord.ui.Button
     ) -> None:
         await self.update_page(interaction, self.current_page + 1)
 
     @discord.ui.button(label="⏭", style=discord.ButtonStyle.secondary)
     async def last_page_button(
-        self, interaction: "MartinInteraction", _button: discord.ui.Button
+        self, interaction: MartinInteraction, _button: discord.ui.Button
     ) -> None:
         await self.update_page(interaction, len(self.pages) - 1)
 
-    async def interaction_check(self, interaction: "MartinInteraction") -> bool:
+    async def interaction_check(self, interaction: MartinInteraction) -> bool:
         if not interaction.user:
             await interaction.response_or_followup(
                 content="Hmmm no interaction user found... This interaction is now timed out.",
@@ -150,7 +152,7 @@ class ConfirmationView(discord.ui.View):
 
     def __init__(
         self,
-        interaction: "MartinInteraction",
+        interaction: MartinInteraction,
         confirmed_content: str = "Action confirmed.",
         confirmed_embed: Optional[discord.Embed] = None,
         timeout: float = 30.0,
@@ -167,7 +169,7 @@ class ConfirmationView(discord.ui.View):
 
     @discord.ui.button(emoji="✔️", style=discord.ButtonStyle.success)
     async def confirm_button(
-        self, interaction: "MartinInteraction", button: discord.ui.Button
+        self, interaction: MartinInteraction, button: discord.ui.Button
     ) -> None:
         self.value = True
         self.reject_button.style = discord.ButtonStyle.grey
@@ -180,7 +182,7 @@ class ConfirmationView(discord.ui.View):
 
     @discord.ui.button(emoji="✖️", style=discord.ButtonStyle.danger)
     async def reject_button(
-        self, interaction: "MartinInteraction", button: discord.ui.Button
+        self, interaction: MartinInteraction, button: discord.ui.Button
     ) -> None:
         self.value = False
         self.confirm_button.style = discord.ButtonStyle.grey
@@ -191,7 +193,7 @@ class ConfirmationView(discord.ui.View):
         )
         self.stop()
 
-    async def interaction_check(self, interaction: "MartinInteraction") -> bool:
+    async def interaction_check(self, interaction: MartinInteraction) -> bool:
         if not interaction.user:
             await interaction.response_or_followup(
                 content="Hmmm no interaction user found... This interaction is now timed out.",

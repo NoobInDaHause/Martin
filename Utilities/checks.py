@@ -224,7 +224,7 @@ def has_role(item: Union[int, str], /) -> Callable[[T], T]:
         The name or ID of the role to check.
     """
 
-    async def predicate(interaction: "MartinInteraction") -> bool:
+    async def predicate(interaction: MartinInteraction) -> bool:
         if isinstance(interaction.user, discord.User):
             raise NoPrivateMessage()
 
@@ -279,7 +279,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
             await interaction.response.send_message('You are cool indeed')
     """
 
-    async def predicate(interaction: "MartinInteraction") -> bool:
+    async def predicate(interaction: MartinInteraction) -> bool:
         if isinstance(interaction.user, discord.User):
             raise NoPrivateMessage()
 
@@ -343,7 +343,7 @@ def has_permissions(**perms: Unpack[_PermissionsKwargs]) -> Callable[[T], T]:
     if invalid:
         raise TypeError(f'Invalid permission(s): {_human_join(invalid, final="and")}')
 
-    async def predicate(interaction: "MartinInteraction") -> bool:
+    async def predicate(interaction: MartinInteraction) -> bool:
         # always return true if owner
         if await interaction.client.is_owner(interaction.user):
             return True
@@ -376,7 +376,7 @@ def bot_has_permissions(**perms: Unpack[_PermissionsKwargs]) -> Callable[[T], T]
     if invalid:
         raise TypeError(f'Invalid permission(s): {_human_join(invalid, final="and")}')
 
-    def predicate(interaction: "MartinInteraction") -> bool:
+    def predicate(interaction: MartinInteraction) -> bool:
         permissions = interaction.app_permissions
         missing = [
             perm for perm, value in perms.items() if getattr(permissions, perm) != value
@@ -396,7 +396,7 @@ def _create_cooldown_decorator(
     mapping: Dict[Any, Cooldown] = {}
 
     async def get_bucket(
-        interaction: "MartinInteraction",
+        interaction: MartinInteraction,
         *,
         mapping: Dict[Any, Cooldown] = mapping,
         key: CooldownFunction[Hashable] = key,
@@ -417,7 +417,7 @@ def _create_cooldown_decorator(
 
         return bucket
 
-    async def predicate(interaction: "MartinInteraction") -> bool:
+    async def predicate(interaction: MartinInteraction) -> bool:
 
         bucket = await get_bucket(interaction)
         if bucket is None:
@@ -484,7 +484,7 @@ def cooldown(
         cooldown. If ``None`` is passed then it is interpreted as a "global" cooldown.
     """
 
-    def func(interaction: "MartinInteraction"):
+    def func(interaction: MartinInteraction):
         return interaction.user.id
 
     if key is MISSING:
@@ -557,7 +557,7 @@ def dynamic_cooldown(
         cooldown. If ``None`` is passed then it is interpreted as a "global" cooldown.
     """
 
-    def func(interaction: "MartinInteraction"):
+    def func(interaction: MartinInteraction):
         return interaction.user.id
 
     if key is MISSING:
@@ -571,7 +571,7 @@ def dynamic_cooldown(
 
 
 def is_owner():
-    async def predicate(interaction: "MartinInteraction") -> bool:
+    async def predicate(interaction: MartinInteraction) -> bool:
         is_owner = await interaction.client.is_owner(interaction.user)
         if not is_owner:
             raise UserIsNotOwner(
