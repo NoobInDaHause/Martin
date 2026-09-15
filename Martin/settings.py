@@ -14,7 +14,7 @@ class Settings:
 
     @classmethod
     def initialize(cls) -> "Settings":
-        with (PROJECT_ROOT / "config.json").open(encoding="utf-8") as config_file:
+        with open(PROJECT_ROOT / "config.json", "r", encoding="utf-8") as config_file:
             data: dict = json.load(config_file)
             data.pop(
                 "__version__", None

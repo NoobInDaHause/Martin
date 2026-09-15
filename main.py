@@ -32,8 +32,7 @@ async def run_bot() -> None:
         MartinInteraction.response_or_followup,
     )
 
-    settings = Settings.initialize()
-    async with Martin(settings) as bot:
+    async with Martin(Settings.initialize()) as bot:
         try:
             await bot.start(token=os.getenv("TOKEN"))
         except discord.errors.LoginFailure as L:

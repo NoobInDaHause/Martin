@@ -7,7 +7,7 @@ class ModerationDataBase(DataManager):
     def __init__(self, cog_name: str):
         super().__init__(cog_name)
 
-    async def initialize(self) -> None:
+    async def initialize_tempbans(self) -> None:
         """Create the shared tempban table if it does not exist."""
         await self.execute("""
             CREATE TABLE IF NOT EXISTS tempbans (
@@ -26,7 +26,6 @@ class ModerationDataBase(DataManager):
         banned_until_timestamp: int,
         moderator_id: int,
     ) -> None:
-        await self.initialize()
         await self.execute(
             """
             INSERT INTO tempbans
@@ -40,7 +39,6 @@ class ModerationDataBase(DataManager):
         )
 
     async def get_tempban(self, guild_id: int, offender_id: int) -> Optional[tuple]:
-        await self.initialize()
         return await self.execute(
             """
             SELECT banned_until_timestamp, moderator_id
@@ -52,14 +50,12 @@ class ModerationDataBase(DataManager):
         )
 
     async def delete_tempban(self, guild_id: int, offender_id: int) -> None:
-        await self.initialize()
         await self.execute(
             "DELETE FROM tempbans WHERE guild_id = ? AND offender_id = ?",
             (guild_id, offender_id),
         )
 
     async def get_all_tempbans_from_guild(self, guild_id: int) -> List[tuple]:
-        await self.initialize()
         return await self.execute(
             """
             SELECT offender_id, banned_until_timestamp, moderator_id
@@ -73,7 +69,6 @@ class ModerationDataBase(DataManager):
         )
 
     async def get_all_tempbans(self) -> List[tuple]:
-        await self.initialize()
         return await self.execute(
             """
             SELECT guild_id, offender_id, banned_until_timestamp, moderator_id

@@ -56,7 +56,7 @@ class UserTransformer(app_commands.Transformer):
     async def transform(self, interaction: MartinInteraction, value: str):
         try:
             return await commands.UserConverter().convert(
-                await interaction.client.get_context(interaction.message), value
+                await commands.Context.from_interaction(interaction), value
             )
         except commands.BadArgument as e:
             raise BadArgument(str(e)) from e

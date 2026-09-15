@@ -57,6 +57,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         self.initialized = True
 
     async def cog_load(self) -> None:
+        await self.db.initialize_tempbans()
         self.bot.loop.create_task(self.init_tempbans())
 
     async def cog_unload(self):
