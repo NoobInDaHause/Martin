@@ -7,7 +7,6 @@ from Martin import MartinInteraction
 
 if TYPE_CHECKING:
     from .owner import Owner
-    from Cogs.General import General
 
 
 class CommandModal(discord.ui.Modal):
@@ -97,20 +96,8 @@ class OwnerView(discord.ui.View):
                     return
 
                 if command == "custominfo":
-                    if cog := interaction.client.get_cog("General"):
-                        cog: "General" = cog
-                        if not argument:
-                            await cog.db.get_or_delete_custom_info(True)
-                        elif await cog.db.get_or_delete_custom_info(False):
-                            await cog.db.insert_or_update_custom_info(True, argument)
-                        else:
-                            await cog.db.insert_or_update_custom_info(False, argument)
-
-                        await interaction.response_or_followup(content="Done.")
-                    else:
-                        await interaction.response_or_followup(
-                            content="General cog must be loaded to add/create/remove the custom info."
-                        )
+                    interaction.client.custom_info = argument or None
+                    await interaction.response_or_followup(content="Done.")
                     return
             except ValueError as e:
                 await interaction.response_or_followup(content=str(e))

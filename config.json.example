@@ -1,4 +1,5 @@
 {
     "global_hex_colour": "#276a8a",
-    "blacklisted_user_ids": []
+    "blacklisted_user_ids": [],
+    "custom_info": null
 }

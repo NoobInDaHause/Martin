@@ -15,6 +15,11 @@ from .tree import MartinTree
 
 GITHUB_REPOSITORY = "NoobInDaHause/Martin"
 
+INTENTS = discord.Intents.default()
+INTENTS.message_content = True
+INTENTS.presences = True
+INTENTS.members = True
+
 
 class Martin(commands.AutoShardedBot):
     """
@@ -25,15 +30,15 @@ class Martin(commands.AutoShardedBot):
 
     def __init__(self, settings: Settings):
         super().__init__(
-            command_prefix="m.",
-            intents=discord.Intents.all(),
-            help_command=None,
+            command_prefix=commands.when_mentioned,
+            intents=INTENTS,
             description="A Discord bot/app written in Python.",
             tree_cls=MartinTree,
         )
         self.blacklisted_user_ids = settings.blacklisted_user_ids
         self.global_hex_colour = settings.global_hex_colour
         self.uptime = datetime.now(timezone.utc)
+        self.custom_info = settings.custom_info
         self.log = logging.getLogger("Martin")
         self.exit_code = 0
 
@@ -107,9 +112,6 @@ class Martin(commands.AutoShardedBot):
             "latest_version": latest_version,
             "release_url": release_url,
         }
-
-    async def on_message(self, _message: discord.Message, /) -> None:
-        return  # Martin will be full on slash command in v1.0.0
 
     async def setup_hook(self) -> None:
         await super().setup_hook()
@@ -222,6 +224,7 @@ class Martin(commands.AutoShardedBot):
             data = {
                 "global_hex_colour": self.global_hex_colour,
                 "blacklisted_user_ids": self.blacklisted_user_ids,
+                "custom_info": self.custom_info,
             }
             json.dump(data, conf, indent=4)
             self.log.info("Settings successfully saved.")

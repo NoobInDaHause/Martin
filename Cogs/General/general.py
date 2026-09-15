@@ -8,8 +8,6 @@ from discord.ext import commands
 from Martin import Martin, MartinInteraction
 from Utilities.checks import bot_has_permissions, cooldown
 
-from .general_data_manager import GeneralDB
-
 
 class General(commands.Cog):
     """
@@ -21,10 +19,6 @@ class General(commands.Cog):
     def __init__(self, bot: Martin):
         super().__init__()
         self.bot = bot
-        self.db = GeneralDB(self.__class__.__name__)
-
-    async def cog_load(self) -> None:
-        await self.db.initialize()
 
     @staticmethod
     def latency_colour(latency_ms: float) -> discord.Colour:
@@ -64,27 +58,9 @@ class General(commands.Cog):
         await initial_message.edit(content="", embed=measuring_embed)
         edit_latency = (perf_counter() - edit_started) * 1000
 
-        heartbeat_latency = self.bot.latency * 1000
-        result_embed = discord.Embed(
-            title=":ping_pong: Pong!",
-            colour=self.latency_colour(heartbeat_latency),
-        )
-        result_embed.add_field(
-            name=f"{self.bot.user} latency",
-            value=f"{heartbeat_latency:.2f} ms",
-            inline=True,
-        )
-        result_embed.add_field(
-            name="Message latency",
-            value=f"{send_latency:.2f} ms",
-            inline=True,
-        )
-        result_embed.add_field(
-            name="Message edit latency",
-            value=f"{edit_latency:.2f} ms",
-            inline=True,
-        )
-        await initial_message.edit(embed=result_embed)
+        measuring_embed.fields[2].value =f"{edit_latency:.2f} ms"
+
+        await initial_message.edit(embed=measuring_embed)
 
     @app_commands.command(name="botinfo", description="Check info about the bot.")
     @bot_has_permissions(embed_links=True)
@@ -104,8 +80,8 @@ class General(commands.Cog):
             timestamp=self.bot.user.created_at,
             colour=self.bot.colour,
         )
-        if c_i := await self.db.get_or_delete_custom_info(False):
-            embed.add_field(name="Custom Info:", value=c_i, inline=False)
+        if self.bot.custom_info:
+            embed.add_field(name="Custom Info:", value=self.bot.custom_info, inline=False)
 
         embed.set_thumbnail(
             url=app_info.team.icon if app_info.team else app_info.owner.display_avatar
