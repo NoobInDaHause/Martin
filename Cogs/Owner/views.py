@@ -97,6 +97,7 @@ class OwnerView(discord.ui.View):
 
                 if command == "custominfo":
                     interaction.client.custom_info = argument or None
+                    interaction.client.save_settings()
                     await interaction.response_or_followup(content="Done.")
                     return
             except ValueError as e:
