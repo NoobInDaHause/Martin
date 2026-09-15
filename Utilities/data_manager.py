@@ -1,9 +1,9 @@
+from pathlib import Path
 from typing import List, Literal, Optional, Tuple, Union
 
 import aiosqlite
 import discord
 
-from Martin.settings import COGS_DATA_PATH
 from Utilities.exceptions import DataManagerException
 
 
@@ -21,7 +21,7 @@ class DataManager:
         cog_name : str
             The name of the cog for which the database is created.
         """
-        self.path = COGS_DATA_PATH / f"{cog_name}.db"
+        self.path = Path(__file__).parents[1] / "cogs_data" / f"{cog_name}.db"
 
     async def execute(
         self,
