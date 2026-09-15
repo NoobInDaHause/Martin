@@ -8,7 +8,9 @@ if TYPE_CHECKING:
     from .bot import Martin
 
 
-class MartinInteraction(discord.Interaction[Martin]):
+class MartinInteraction(discord.Interaction):
+    client: Martin
+
     async def response_or_followup(self, *args, **kwargs) -> discord.InteractionMessage:
         if self.response.is_done():
             return await self.followup.send(*args, **kwargs)

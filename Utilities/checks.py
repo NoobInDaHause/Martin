@@ -64,8 +64,8 @@ if TYPE_CHECKING:
     from Martin import MartinInteraction
 
     CooldownFunction = Union[
-        Callable[[MartinInteraction[Any]], Coroutine[Any, Any, T]],
-        Callable[[MartinInteraction[Any]], T],
+        Callable[[MartinInteraction], Coroutine[Any, Any, T]],
+        Callable[[MartinInteraction], T],
     ]
 
 __all__ = (

@@ -15,7 +15,9 @@ if TYPE_CHECKING:
     from .bot import Martin
 
 
-class MartinTree(app_commands.CommandTree[Martin]):
+class MartinTree(app_commands.CommandTree):
+    client: Martin
+
     def __init__(
         self,
         client: Martin,
