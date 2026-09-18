@@ -122,7 +122,14 @@ class Martin(commands.AutoShardedBot):
         cogs_path = Path(__file__).parents[1] / "Cogs"
         for cog_folder in cogs_path.iterdir():
             if cog_folder.is_dir() and (cog_folder / "__init__.py").is_file():
-                await self.load_extension(f"Cogs.{cog_folder.name}")
+                try:
+                    await self.load_extension(f"Cogs.{cog_folder.name}")
+                except commands.ExtensionFailed as e:
+                    self.log.exception(
+                        "Error loading cog: %s",
+                        cog_folder.name,
+                        exc_info=(type(e), e, e.__traceback__),
+                    )
 
         if cog_names := list(self.cogs):
             plural = "s" if len(cog_names) > 1 else ""
