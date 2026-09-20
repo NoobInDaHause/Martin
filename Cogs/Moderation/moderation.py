@@ -147,6 +147,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
     @commands.Cog.listener("on_member_remove")
     async def log_kicks(self, member: discord.Member):
+        if (member.guild.id, member.id) in self.kick_targets:
+            return
+
         await asyncio.sleep(1)
 
         async for entry in member.guild.audit_logs(
