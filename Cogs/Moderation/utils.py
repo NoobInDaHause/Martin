@@ -92,7 +92,7 @@ def get_modlog_embed(
     act = action_dict[action]
     embed = discord.Embed(
         title=f"{act[0]} | {action.title()}",
-        description=f"Case #{case_id}",
+        description=f"```python\nCase #{case_id}\n```",
         colour=act[1],
         timestamp=datetime.now(timezone.utc),
     )
