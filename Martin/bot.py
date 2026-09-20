@@ -171,6 +171,10 @@ class Martin(commands.AutoShardedBot):
         else:
             self.log.info("Martin is up to date.")
 
+    async def on_message(self, message: discord.Message):
+        if await self.is_owner(message.author):
+            return await super().on_message(message)
+
     async def get_or_fetch_user(self, user_id: int) -> discord.User:
         return self.get_user(user_id) or await self.fetch_user(user_id)
 
