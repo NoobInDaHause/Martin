@@ -259,7 +259,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                             obj.moderator.id,
                             "Temporay ban has expired.",
                         )
-                        self.tempban_targets.discard((obj.guild.id, obj.offender.id))
 
                         with contextlib.suppress(
                             discord.errors.Forbidden, discord.errors.NotFound
@@ -272,12 +271,12 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                                 obj.moderator,
                                 "Temporary ban has expired.",
                             )
-                        self.unban_targets.discard((obj.guild.id, obj.offender.id))
                     except discord.errors.Forbidden:
                         self.log.warning(
                             f"Could not unban {obj.offender} from {obj.guild} "
                             "due to missing permissions."
                         )
+                        self.unban_targets.discard((obj.guild.id, obj.offender.id))
                         return
                     except discord.errors.NotFound:
                         pass
@@ -286,8 +285,11 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                             f"Could not unban {obj.offender} from {obj.guild}: "
                             f"{e}. Retrying in 5 minutes."
                         )
+                        self.unban_targets.discard((obj.guild.id, obj.offender.id))
                         await asyncio.sleep(300)
                         continue
+
+                    self.unban_targets.discard((obj.guild.id, obj.offender.id))
 
                     await self.db.delete_tempban(obj.guild.id, obj.offender.id)
                     return
