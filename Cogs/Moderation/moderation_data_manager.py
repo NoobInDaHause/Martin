@@ -246,7 +246,7 @@ class ModerationDataBase(DataManager):
         await self.execute(
             """
             INSERT INTO modlogs
-                (guild_id, action, offender_id, moderator_id, reason, until)
+                (guild_id, case_id, action, offender_id, moderator_id, reason, until)
             VALUES (
                 ?,
                 (SELECT COALESCE(MAX(case_id), 0) + 1 FROM modlogs WHERE guild_id = ?),
