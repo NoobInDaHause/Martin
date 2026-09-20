@@ -193,17 +193,13 @@ class ModerationDataBase(DataManager):
                     "Argument 'guild_id' and 'channel_id' are required for inserting modlog."
                 )
             case "get":
-                if all([guild_id, channel_id]):
-                    return await self.execute(
-                        """
-                        SELECT channel_id FROM modlog_channel WHERE guild_id = ?
-                        """,
-                        (guild_id,),
-                        select=True,
-                        one_all="all",
-                    )
-                raise TypeError(
-                    "Argument 'guild_id' and 'channel_id' are required for getting modlog."
+                return await self.execute(
+                    """
+                    SELECT channel_id FROM modlog_channel WHERE guild_id = ?
+                    """,
+                    (guild_id,),
+                    select=True,
+                    one_all="all",
                 )
             case "delete":
                 if guild_id:
