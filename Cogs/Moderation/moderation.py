@@ -14,7 +14,9 @@ from .utils import get_auditlog_reason, get_dm_embed, hierarchy_check
 
 from Martin import Martin, MartinInteraction
 from Utilities.checks import bot_has_permissions, has_permissions
+from Utilities.formatting import pagify
 from Utilities.transformers import TimeDeltaTransformer
+from Utilities.views import PaginatorView
 
 
 @app_commands.guild_only()
@@ -447,4 +449,89 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.response_or_followup(
             content=f"{u} **{offender}** (`{offender.id}`) has been temporarily banned from the guild till "
             f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)"
+        )
+
+    @app_commands.command(name="warning", description="Warn a member.")
+    @has_permissions(manage_messages=True)
+    @app_commands.describe(
+        action="The action that you want to perform.",
+        offender="The offending member.",
+        reason="The optional reason.",
+    )
+    async def moderation_tempban(
+        self,
+        interaction: MartinInteraction,
+        action: Literal["add", "remove", "list"],
+        offender: discord.Member,
+        reason: str = None,
+    ) -> None:
+        """
+        This command respects role hierarchy.
+
+        Except for bot owners LOL.
+        """
+        await interaction.response.defer(thinking=True)
+        act = "warn" if action == "add" else "unwarn"
+        if s := self.suicide(act, offender.id, interaction.user.id):
+            return await interaction.response_or_followup(content=s)
+
+        if higher := await hierarchy_check(interaction, offender, act):
+            return await interaction.response_or_followup(content=higher)
+
+        match action:
+            case "add":
+                await self.db.insert_warning(
+                    interaction.guild.id, offender.id, interaction.user.id, reason
+                )
+            case "remove":
+                exists = await self.db.get_all_warnings_from_offender(
+                    interaction.guild.id, offender.id
+                )
+                if not exists:
+                    return await interaction.response_or_followup(
+                        content="This member has no warnings."
+                    )
+                await self.db.delete_warning(
+                    interaction.guild.id, max(i[1] for i in exists)
+                )
+            case "list":
+                exists = await self.db.get_all_warnings_from_offender(
+                    interaction.guild.id, offender.id
+                )
+                if not exists:
+                    return await interaction.response_or_followup(
+                        content="This member has no warnings."
+                    )
+                pagified = pagify(
+                    "".join(
+                        f"#{w_id}\nModerator: <@{m_id}>\nReason: {r}\n\n"
+                        for _, w_id, _, m_id, r in exists
+                    ),
+                    "\n\n",
+                )
+                embeds = []
+                for index, page in enumerate(pagified, 1):
+                    embed = discord.Embed(
+                        title=f"Warnings for **{offender}** (`{offender.id}`)",
+                        description=page,
+                        colour=offender.colour,
+                    )
+                    embed.set_footer(text=f"Page ({index}/{len(pagified)})")
+                    embeds.append(embed)
+                return await PaginatorView(interaction, embeds).start()
+
+        with contextlib.suppress(
+            discord.errors.Forbidden, discord.errors.HTTPException
+        ):
+            await offender.send(
+                embed=get_dm_embed(
+                    interaction.user,
+                    interaction.guild,
+                    reason or "No reason was given.",
+                    act,
+                )
+            )
+
+        await interaction.response_or_followup(
+            content=f"Member **{offender}** (`{offender.id}`) has been {act}ed."
         )

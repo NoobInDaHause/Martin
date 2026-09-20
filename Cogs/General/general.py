@@ -72,10 +72,12 @@ class General(commands.Cog):
             title=f"Instance owned by `{f'Team {app_info.team.name}' if app_info.team else app_info.owner}`",
             description=(
                 "This bot is a custom instance of [Martin](https://github.com/NoobInDaHause/Martin), "
-                "an open-source Discord ~~BOT~~ APP built with Python & `discord.py`.\n\n"
+                "an open-source Discord ~~BOT~~ APP built with [Python](https://www.python.org/) & "
+                "[discord.py](https://pypi.org/project/discord.py/).\n\n"
                 "• **Source:** [GitHub](https://github.com/NoobInDaHause/Martin)\n"
-                "• **License:** MIT\n\n"
-                "Want your own copy? Check out the repo to host or build one yourself!"
+                "• **License:** MIT\n"
+                "• **Community:** [discord server](https://discord.com/invite/8vPBQ3UJQQ)\n\n"
+                "Want your own copy? Check out the repo to host one yourself!"
             ),
             timestamp=self.bot.user.created_at,
             colour=self.bot.colour,

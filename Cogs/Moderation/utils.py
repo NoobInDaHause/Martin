@@ -33,20 +33,21 @@ def get_dm_embed(
     until: Optional[datetime] = None,
 ) -> discord.Embed:
     action_descriptions = {
-        "ban": "banned",
-        "unban": "unbanned",
-        "tempban": "temporarily banned",
-        "kick": "kicked",
-        "timeout": "timed out",
-        "untimeout": "untimed out",
-        "warn": "warned",
-        "unwarn": "unwarned",
+        "ban": ("banned", discord.Colour.red()),
+        "unban": ("unbanned", discord.Colour.green()),
+        "tempban": ("temporarily banned", discord.Colour.dark_orange()),
+        "kick": ("kicked", discord.Colour.magenta()),
+        "timeout": ("timed out", discord.Colour.light_grey()),
+        "untimeout": ("untimed out", discord.Colour.blurple()),
+        "warn": ("warned", discord.Colour.purple()),
+        "unwarn": ("unwarned", discord.Colour.default()),
     }
 
+    act = action_descriptions[action]
     embed = discord.Embed(
-        title=f"You have been **{action_descriptions[action]}** from `{guild}`.",
+        title=f"You have been **{act[0]}** from `{guild}`.",
         description=reason,
-        colour=moderator.colour,
+        colour=act[1],
         timestamp=datetime.now(timezone.utc),
     )
 
@@ -72,7 +73,7 @@ def get_dm_embed(
 async def hierarchy_check(
     interaction: MartinInteraction,
     offender: discord.Member,
-    action: Literal["ban", "kick", "timeout", "untimeout"],
+    action: Literal["ban", "kick", "timeout", "untimeout", "warn", "unwarn"],
 ) -> Optional[str]:
     if (
         offender.top_role >= interaction.user.top_role
