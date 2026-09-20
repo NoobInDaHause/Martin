@@ -76,7 +76,7 @@ def get_modlog_embed(
     offender: discord.User,
     moderator: discord.Member,
     reason: str = None,
-    until: datetime = None,
+    until_timestamp: int = None,
 ) -> discord.Embed:
     action_dict = {
         "ban": ("🔨", discord.Colour.red()),
@@ -102,11 +102,10 @@ def get_modlog_embed(
         value=f"{moderator} ({moderator.id})",
         inline=False,
     )
-    if until:
-        timestamp = int(until.timestamp())
+    if until_timestamp:
         embed.add_field(
             name="Until:",
-            value=f"<t:{timestamp}:F> (<t:{timestamp}:R>)",
+            value=f"<t:{until_timestamp}:F> (<t:{until_timestamp}:R>)",
             inline=False,
         )
     if reason:
