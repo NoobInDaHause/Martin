@@ -58,10 +58,27 @@ class General(commands.Cog):
         await initial_message.edit(content="", embed=measuring_embed)
         edit_latency = (perf_counter() - edit_started) * 1000
 
-        new_embed = discord.Embed.from_dict(measuring_embed.to_dict())
-        new_embed.fields[2].value = f"{edit_latency:.2f} ms"
-
-        await initial_message.edit(embed=new_embed)
+        heartbeat_latency = self.bot.latency * 1000
+        result_embed = discord.Embed(
+            title=":ping_pong: Pong!",
+            colour=self.latency_colour(heartbeat_latency),
+        )
+        result_embed.add_field(
+            name=f"{self.bot.user} latency",
+            value=f"{heartbeat_latency:.2f} ms",
+            inline=True,
+        )
+        result_embed.add_field(
+            name="Message latency",
+            value=f"{send_latency:.2f} ms",
+            inline=True,
+        )
+        result_embed.add_field(
+            name="Message edit latency",
+            value=f"{edit_latency:.2f} ms",
+            inline=True,
+        )
+        await initial_message.edit(embed=result_embed)
 
     @app_commands.command(name="botinfo", description="Check info about the bot.")
     @bot_has_permissions(embed_links=True)
