@@ -32,6 +32,141 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         self.log = logging.getLogger(f"Martin.{self.__class__.__name__}")
         self.initialized = asyncio.Event()
         self.tempban_tasks: Dict[Tuple[int, int], asyncio.Task] = {}
+        self.tempban_targets = set()
+
+    @commands.Cog.listener("on_member_ban")
+    async def log_bans(self, guild: discord.Guild, user: discord.User):
+        if (guild.id, user.id) in self.tempban_targets:
+            return
+
+        async for entry in guild.audit_logs(limit=5, action=discord.AuditLogAction.ban):
+            if entry.target.id == user.id:
+                moderator = entry.user
+                reason = entry.reason
+
+                case_id = await self.db.insert_modlog(
+                    guild.id,
+                    "ban",
+                    user.id,
+                    moderator.id,
+                    reason,
+                )
+
+                with contextlib.suppress(
+                    discord.errors.Forbidden, discord.errors.NotFound
+                ):
+                    await self.send_to_modlog(
+                        guild.id,
+                        "ban",
+                        case_id,
+                        user,
+                        moderator,
+                        reason,
+                    )
+                break
+
+    @commands.Cog.listener("on_raw_member_remove")
+    async def log_unban(self, payload: discord.RawMemberRemoveEvent):
+        if guild := await self.bot.get_or_fetch_guild(payload.guild_id):
+            async for entry in guild.audit_logs(
+                limit=5, action=discord.AuditLogAction.unban
+            ):
+                if entry.target.id == payload.user.id:
+                    moderator = entry.user
+                    reason = entry.reason
+
+                    case_id = await self.db.insert_modlog(
+                        guild.id,
+                        "unban",
+                        payload.user.id,
+                        moderator.id,
+                        reason,
+                    )
+
+                    with contextlib.suppress(
+                        discord.errors.Forbidden, discord.errors.NotFound
+                    ):
+                        await self.send_to_modlog(
+                            guild.id,
+                            "ban",
+                            case_id,
+                            payload.user,
+                            moderator,
+                            reason,
+                        )
+                    break
+
+    @commands.Cog.listener("on_member_update")
+    async def log_timeouts(self, before: discord.Member, after: discord.Member):
+        was_timed_out = before.is_timed_out()
+        is_timed_out = after.is_timed_out()
+        guild = before.guild
+
+        if not was_timed_out and is_timed_out:
+            action = "timeout"
+        elif was_timed_out and not is_timed_out:
+            action = "untimeout"
+        else:
+            return
+
+        async for entry in after.guild.audit_logs(
+            limit=10, action=discord.AuditLogAction.member_update
+        ):
+            if entry.target.id == after.id:
+                moderator = entry.user
+                reason = entry.reason
+
+                case_id = await self.db.insert_modlog(
+                    guild.id,
+                    action,
+                    after.id,
+                    moderator.id,
+                    reason,
+                )
+
+                with contextlib.suppress(
+                    discord.errors.Forbidden, discord.errors.NotFound
+                ):
+                    await self.send_to_modlog(
+                        guild.id,
+                        action,
+                        case_id,
+                        after,
+                        moderator,
+                        reason,
+                    )
+                break
+
+    @commands.Cog.listener("on_member_remove")
+    async def log_kicks(self, member: discord.Member):
+        await asyncio.sleep(1)
+
+        async for entry in member.guild.audit_logs(
+            limit=5,
+            action=discord.AuditLogAction.kick
+        ):
+            if entry.target.id == member.id:
+                moderator = entry.user
+                reason = entry.reason
+
+                case_id = await self.db.insert_modlog(
+                    member.guild.id,
+                    "kick",
+                    member.id,
+                    moderator.id,
+                    reason,
+                )
+        
+                with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+                    await self.send_to_modlog(
+                        member.guild.id,
+                        "kick",
+                        case_id,
+                        member,
+                        moderator,
+                        reason,
+                    )
+                break
 
     async def send_to_modlog(
         self,
@@ -190,31 +325,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             until, reason=get_auditlog_reason(interaction.user, reason)
         )
 
-        timestamp = int(until.timestamp()) if until else None
-        case_id = await self.db.insert_modlog(
-            interaction.guild.id,
-            act,
-            offender.id,
-            interaction.user.id,
-            reason,
-            timestamp,
-        )
-
-        try:
-            await self.send_to_modlog(
-                interaction.guild.id,
-                act,
-                case_id,
-                offender,
-                interaction.user,
-                reason,
-                timestamp,
-            )
-        except discord.errors.Forbidden, discord.errors.NotFound:
-            await interaction.channel.send(
-                content="Could not send log to modlog channel, it is either deleted or missing permission."
-            )
-
         if act == "timeout":
             content = (
                 f"Member {offender} (`{offender.id}`) has been timed out until "
@@ -266,28 +376,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
 
-        case_id = await self.db.insert_modlog(
-            interaction.guild.id,
-            "kick",
-            offender.id,
-            interaction.user.id,
-            reason,
-        )
-
-        try:
-            await self.send_to_modlog(
-                interaction.guild.id,
-                "kick",
-                case_id,
-                offender,
-                interaction.user,
-                reason,
-            )
-        except discord.errors.Forbidden, discord.errors.NotFound:
-            await interaction.channel.send(
-                content="Could not send log to modlog channel, it is either deleted or missing permission."
-            )
-
         await interaction.response_or_followup(
             content=f"Member **{offender}** (`{offender.id}`) has been kicked from the guild."
         )
@@ -338,28 +426,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.guild.ban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
-
-        case_id = await self.db.insert_modlog(
-            interaction.guild.id,
-            "ban",
-            offender.id,
-            interaction.user.id,
-            reason,
-        )
-
-        try:
-            await self.send_to_modlog(
-                interaction.guild.id,
-                "ban",
-                case_id,
-                offender,
-                interaction.user,
-                reason,
-            )
-        except discord.errors.Forbidden, discord.errors.NotFound:
-            await interaction.channel.send(
-                content="Could not send log to modlog channel, it is either deleted or missing permission."
-            )
 
         await interaction.response_or_followup(
             content=f"{'Member' if isinstance(offender, discord.Member) else 'User'} **{offender}** "
@@ -415,28 +481,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             task.cancel()
 
         await self.db.delete_tempban(interaction.guild.id, offender.id)
-
-        case_id = await self.db.insert_modlog(
-            interaction.guild.id,
-            "unban",
-            offender.id,
-            interaction.user.id,
-            reason,
-        )
-
-        try:
-            await self.send_to_modlog(
-                interaction.guild.id,
-                "unban",
-                case_id,
-                offender,
-                interaction.user,
-                reason,
-            )
-        except discord.errors.Forbidden, discord.errors.NotFound:
-            await interaction.channel.send(
-                content="Could not send log to modlog channel, it is either deleted or missing permission."
-            )
 
         await interaction.response_or_followup(
             content=f"User **{offender}** (`{offender.id}`) has been unbanned from the guild."
@@ -534,6 +578,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 )
             )
 
+        self.tempban_targets.add((interaction.guild.id, offender.id))
         await interaction.guild.ban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
@@ -565,6 +610,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             reason,
             timestamp,
         )
+        self.tempban_targets.discard((interaction.guild.id, offender.id))
 
         try:
             await self.send_to_modlog(
