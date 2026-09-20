@@ -150,8 +150,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await asyncio.sleep(1)
 
         async for entry in member.guild.audit_logs(
-            limit=5,
-            action=discord.AuditLogAction.kick
+            limit=5, action=discord.AuditLogAction.kick
         ):
             if entry.target.id == member.id:
                 moderator = entry.user
@@ -164,8 +163,10 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                     moderator.id,
                     reason,
                 )
-        
-                with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+
+                with contextlib.suppress(
+                    discord.errors.Forbidden, discord.errors.NotFound
+                ):
                     await self.send_to_modlog(
                         member.guild.id,
                         "kick",
@@ -341,9 +342,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             reason,
         )
 
-        with contextlib.suppress(
-            discord.errors.Forbidden, discord.errors.NotFound
-        ):
+        with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
             await self.send_to_modlog(
                 interaction.guild.id,
                 act,
@@ -413,12 +412,10 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             reason,
         )
 
-        with contextlib.suppress(
-            discord.errors.Forbidden, discord.errors.NotFound
-        ):
+        with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
             await self.send_to_modlog(
                 interaction.guild.id,
-                "unban",
+                "kick",
                 case_id,
                 offender,
                 interaction.user,
@@ -485,9 +482,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             reason,
         )
 
-        with contextlib.suppress(
-            discord.errors.Forbidden, discord.errors.NotFound
-        ):
+        with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
             await self.send_to_modlog(
                 interaction.guild.id,
                 "ban",
@@ -557,9 +552,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             reason,
         )
 
-        with contextlib.suppress(
-            discord.errors.Forbidden, discord.errors.NotFound
-        ):
+        with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
             await self.send_to_modlog(
                 interaction.guild.id,
                 "unban",
