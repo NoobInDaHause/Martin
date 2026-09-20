@@ -241,13 +241,34 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
                 if seconds_left <= 0:
                     try:
+                        self.unban_targets.add((obj.guild.id, obj.offender.id))
+                        reason = (
+                            f"Tempban issued by {obj.moderator} "
+                            f"({obj.moderator.id}) has expired."
+                        )
                         await obj.guild.unban(
                             obj.offender,
-                            reason=(
-                                f"Tempban issued by {obj.moderator} "
-                                f"({obj.moderator.id}) has expired."
-                            ),
+                            reason=reason,
                         )
+                        case_id = await self.db.insert_modlog(
+                            obj.guild.id,
+                            "unban",
+                            obj.offender.id,
+                            obj.moderator.id,
+                            reason
+                        )
+                        self.tempban_targets.discard((obj.guild.id, obj.offender.id))
+                
+                        with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+                            await self.send_to_modlog(
+                                obj.guild.id,
+                                "unban",
+                                case_id,
+                                obj.offender,
+                                obj.moderator,
+                                reason,
+                            )
+                        self.unban_targets.discard((obj.guild.id, obj.offender.id))
                     except discord.errors.Forbidden:
                         self.log.warning(
                             f"Could not unban {obj.offender} from {obj.guild} "
