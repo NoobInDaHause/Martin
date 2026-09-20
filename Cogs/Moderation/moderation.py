@@ -65,36 +65,35 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                     )
                 break
 
-    @commands.Cog.listener("on_raw_member_remove")
-    async def log_unban(self, payload: discord.RawMemberRemoveEvent):
-        if guild := await self.bot.get_or_fetch_guild(payload.guild_id):
-            async for entry in guild.audit_logs(
-                limit=5, action=discord.AuditLogAction.unban
-            ):
-                if entry.target.id == payload.user.id:
-                    moderator = entry.user
-                    reason = entry.reason
+    @commands.Cog.listener("on_member_unban")
+    async def log_unban(self, guild: discord.Guild, user: discord.User):
+        async for entry in guild.audit_logs(
+            limit=5, action=discord.AuditLogAction.unban
+        ):
+            if entry.target.id == user.id:
+                moderator = entry.user
+                reason = entry.reason
 
-                    case_id = await self.db.insert_modlog(
+                case_id = await self.db.insert_modlog(
+                    guild.id,
+                    "unban",
+                    user.id,
+                    moderator.id,
+                    reason,
+                )
+
+                with contextlib.suppress(
+                    discord.errors.Forbidden, discord.errors.NotFound
+                ):
+                    await self.send_to_modlog(
                         guild.id,
                         "unban",
-                        payload.user.id,
-                        moderator.id,
+                        case_id,
+                        user,
+                        moderator,
                         reason,
                     )
-
-                    with contextlib.suppress(
-                        discord.errors.Forbidden, discord.errors.NotFound
-                    ):
-                        await self.send_to_modlog(
-                            guild.id,
-                            "ban",
-                            case_id,
-                            payload.user,
-                            moderator,
-                            reason,
-                        )
-                    break
+                break
 
     @commands.Cog.listener("on_member_update")
     async def log_timeouts(self, before: discord.Member, after: discord.Member):
