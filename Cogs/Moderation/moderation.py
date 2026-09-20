@@ -60,6 +60,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
     async def cog_load(self) -> None:
         await self.db.initialize_tempbans()
+        await self.db.initialize_warnings()
         self.bot.loop.create_task(self.init_tempbans())
 
     async def cog_unload(self):
