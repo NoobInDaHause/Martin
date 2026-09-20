@@ -182,6 +182,12 @@ class Martin(commands.AutoShardedBot):
     async def get_or_fetch_guild(self, guild_id: int) -> discord.Guild:
         return self.get_guild(guild_id) or await self.fetch_guild(guild_id)
 
+    async def get_or_fetch_channel(
+        self, guild_id: int, channel_id: int
+    ) -> discord.TextChannel:
+        guild = await self.get_or_fetch_guild(guild_id)
+        return guild.get_channel(channel_id) or await guild.fetch_channel(channel_id)
+
     async def send_to_owners(self, *args, **kwargs) -> None:
         for o_id in self.owner_ids:
             with contextlib.suppress(

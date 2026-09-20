@@ -10,7 +10,7 @@ from discord import app_commands
 
 from .moderation_data_manager import ModerationDataBase
 from .objects import TempbanObject
-from .utils import get_auditlog_reason, get_dm_embed, hierarchy_check
+from .utils import get_auditlog_reason, get_dm_embed, get_modlog_embed, hierarchy_check
 
 from Martin import Martin, MartinInteraction
 from Utilities.checks import bot_has_permissions, has_permissions
@@ -30,8 +30,26 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         self.bot = bot
         self.db = ModerationDataBase(self.__class__.__name__)
         self.log = logging.getLogger(f"Martin.{self.__class__.__name__}")
-        self.initialized = False
+        self.initialized = asyncio.Event()
         self.tempban_tasks: Dict[Tuple[int, int], asyncio.Task] = {}
+
+    async def send_to_modlog(
+        self,
+        guild_id: int,
+        action: str,
+        case_id: int,
+        offender: discord.User,
+        moderator: discord.Member,
+        reason: str = None,
+        until_timestamp: int = None,
+    ) -> None:
+        if exists := await self.db.modlog_channel("get", guild_id):
+            if channel := await self.bot.get_or_fetch_channel(guild_id, exists[0][0]):
+                await channel.send(
+                    embed=get_modlog_embed(
+                        action, case_id, offender, moderator, reason, until_timestamp
+                    )
+                )
 
     async def init_tempbans(self) -> None:
         await self.bot.wait_until_ready()
@@ -56,24 +74,22 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                         )
                     )
                 )
-        self.initialized = True
+        self.initialized.set()
 
     async def cog_load(self) -> None:
-        await self.db.initialize_tempbans()
-        await self.db.initialize_warnings()
+        await self.db.initialize()
         self.bot.loop.create_task(self.init_tempbans())
 
     async def cog_unload(self):
         for task in self.tempban_tasks.values():
             task.cancel()
+        self.initialized.clear()
 
     async def tempban_loop(self, obj: TempbanObject):
+        await self.initialized.wait()
+
         try:
             while True:
-                if not self.initialized:
-                    await asyncio.sleep(5)
-                    continue
-
                 seconds_left = (obj.until - datetime.now(timezone.utc)).total_seconds()
 
                 if seconds_left <= 0:
@@ -174,6 +190,31 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             until, reason=get_auditlog_reason(interaction.user, reason)
         )
 
+        timestamp = int(until.timestamp())
+        case_id = await self.db.insert_modlog(
+            interaction.guild.id,
+            act,
+            offender.id,
+            interaction.user.id,
+            reason,
+            timestamp,
+        )
+
+        try:
+            await self.send_to_modlog(
+                interaction.guild.id,
+                act,
+                case_id,
+                offender,
+                interaction.user,
+                reason,
+                timestamp,
+            )
+        except discord.errors.Forbidden, discord.errors.NotFound:
+            await interaction.channel.send(
+                content="Could not send log to modlog channel, it is either deleted or missing permission."
+            )
+
         if act == "timeout":
             content = (
                 f"Member {offender} (`{offender.id}`) has been timed out until "
@@ -224,6 +265,29 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.guild.kick(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
+
+        case_id = await self.db.insert_modlog(
+            interaction.guild.id,
+            "kick",
+            offender.id,
+            interaction.user.id,
+            reason,
+        )
+
+        try:
+            await self.send_to_modlog(
+                interaction.guild.id,
+                "kick",
+                case_id,
+                offender,
+                interaction.user,
+                reason,
+            )
+        except discord.errors.Forbidden, discord.errors.NotFound:
+            await interaction.channel.send(
+                content="Could not send log to modlog channel, it is either deleted or missing permission."
+            )
+
         await interaction.response_or_followup(
             content=f"Member **{offender}** (`{offender.id}`) has been kicked from the guild."
         )
@@ -274,6 +338,29 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.guild.ban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
+
+        case_id = await self.db.insert_modlog(
+            interaction.guild.id,
+            "ban",
+            offender.id,
+            interaction.user.id,
+            reason,
+        )
+
+        try:
+            await self.send_to_modlog(
+                interaction.guild.id,
+                "ban",
+                case_id,
+                offender,
+                interaction.user,
+                reason,
+            )
+        except discord.errors.Forbidden, discord.errors.NotFound:
+            await interaction.channel.send(
+                content="Could not send log to modlog channel, it is either deleted or missing permission."
+            )
+
         await interaction.response_or_followup(
             content=f"{'Member' if isinstance(offender, discord.Member) else 'User'} **{offender}** "
             f"(`{offender.id}`) has been banned from the guild."
@@ -328,6 +415,28 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             task.cancel()
 
         await self.db.delete_tempban(interaction.guild.id, offender.id)
+
+        case_id = await self.db.insert_modlog(
+            interaction.guild.id,
+            "unban",
+            offender.id,
+            interaction.user.id,
+            reason,
+        )
+
+        try:
+            await self.send_to_modlog(
+                interaction.guild.id,
+                "unban",
+                case_id,
+                offender,
+                interaction.user,
+                reason,
+            )
+        except discord.errors.Forbidden, discord.errors.NotFound:
+            await interaction.channel.send(
+                content="Could not send log to modlog channel, it is either deleted or missing permission."
+            )
 
         await interaction.response_or_followup(
             content=f"User **{offender}** (`{offender.id}`) has been unbanned from the guild."
@@ -447,6 +556,31 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 )
             )
         )
+
+        case_id = await self.db.insert_modlog(
+            interaction.guild.id,
+            "tempban",
+            offender.id,
+            interaction.user.id,
+            reason,
+            timestamp,
+        )
+
+        try:
+            await self.send_to_modlog(
+                interaction.guild.id,
+                "tempban",
+                case_id,
+                offender,
+                interaction.user,
+                reason,
+                timestamp,
+            )
+        except discord.errors.Forbidden, discord.errors.NotFound:
+            await interaction.channel.send(
+                content="Could not send log to modlog channel, it is either deleted or missing permission."
+            )
+
         await interaction.response_or_followup(
             content=f"{u} **{offender}** (`{offender.id}`) has been temporarily banned from the guild till "
             f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)"
@@ -533,6 +667,64 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 )
             )
 
+        case_id = await self.db.insert_modlog(
+            interaction.guild.id, act, offender.id, interaction.user.id, reason
+        )
+
+        try:
+            await self.send_to_modlog(
+                interaction.guild.id, act, case_id, offender, interaction.user, reason
+            )
+        except discord.errors.Forbidden, discord.errors.NotFound:
+            await interaction.channel.send(
+                content="Could not send log to modlog channel, it is either deleted or missing permission."
+            )
+
         await interaction.response_or_followup(
             content=f"Member **{offender}** (`{offender.id}`) has been {act}ed."
         )
+
+    @app_commands.command(
+        name="modlog", description="Set the logging channel for mod actions."
+    )
+    @has_permissions(manage_channels=True)
+    @app_commands.describe(
+        action="Action to perform.", channel="The channel that you want to set."
+    )
+    async def moderation_tempban(
+        self,
+        interaction: MartinInteraction,
+        action: Literal["set", "remove", "view"],
+        channel: discord.TextChannel = None,
+    ) -> None:
+        """
+        This command respects role hierarchy.
+
+        Except for bot owners LOL.
+        """
+        exist = await self.db.modlog_channel("get", interaction.guild.id, channel.id)
+
+        to_send = ""
+        match action:
+            case "set":
+                if channel is None or not isinstance(channel, discord.TextChannel):
+                    return await interaction.response_or_followup(
+                        content="Channel is required or channel must only be text channel for setting modlog."
+                    )
+                if not channel.permissions_for(interaction.guild.me).send_messages:
+                    return await interaction.response_or_followup(
+                        content=f"I can not send messages to {channel.mention} please check my permissions."
+                    )
+                await self.db.modlog_channel(
+                    "update" if exist else "insert",
+                    interaction.guild.id,
+                    channel.id,
+                )
+                to_send += f"{channel.mention} has been set as the modlog channel."
+            case "remove":
+                await self.db.modlog_channel("delete")
+                to_send += "The modlog channel has been cleared."
+            case "view":
+                to_send += f"<#{exist[0][0]}> is the set modlog channel."
+
+        await interaction.response_or_followup(content=to_send)

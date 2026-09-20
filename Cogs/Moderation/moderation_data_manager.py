@@ -1,4 +1,6 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
+
+import discord
 
 from Utilities.data_manager import DataManager
 
@@ -8,7 +10,7 @@ class ModerationDataBase(DataManager):
         super().__init__(cog_name)
 
     # -------------------------------------------- tempbans -------------------------------------------------------
-    async def initialize_tempbans(self) -> None:
+    async def initialize(self) -> None:
         await self.execute("""
             CREATE TABLE IF NOT EXISTS tempbans (
                 guild_id INTEGER NOT NULL,
@@ -16,6 +18,31 @@ class ModerationDataBase(DataManager):
                 banned_until_timestamp INTEGER NOT NULL,
                 moderator_id INTEGER,
                 PRIMARY KEY (guild_id, offender_id)
+            )
+
+            CREATE TABLE IF NOT EXISTS warnings (
+                guild_id INTEGER NOT NULL,
+                warn_id INTEGER NOT NULL,
+                offender_id INTEGER NOT NULL,
+                moderator_id INTEGER,
+                reason TEXT,
+                PRIMARY KEY (guild_id, warn_id)
+            )
+
+            CREATE TABLE IF NOT EXISTS modlog_channel (
+                guild_id INTEGER PRIMARY KEY NOT NULL,
+                channel_id INTEGER
+            )
+
+            CREATE TABLE IF NOT EXISTS modlogs (
+                guild_id INTEGER NOT NULL,
+                case_id INTEGER NOT NULL,
+                action TEXT NOT NULL,
+                offender_id INTEGER NOT NULL,
+                moderator_id INTEGER,
+                reason TEXT,
+                until INTEGER,
+                PRIMARY KEY (guild_id, case_id)
             )
             """)
 
@@ -78,17 +105,6 @@ class ModerationDataBase(DataManager):
         )
 
     # -------------------------------------------- warnings -------------------------------------
-    async def initialize_warnings(self):
-        await self.execute("""
-            CREATE TABLE IF NOT EXISTS warnings (
-                guild_id INTEGER NOT NULL,
-                warn_id INTEGER NOT NULL,
-                offender_id INTEGER NOT NULL,
-                moderator_id INTEGER,
-                reason TEXT,
-                PRIMARY KEY (guild_id, warn_id)
-            )
-            """)
 
     async def insert_warning(
         self,
@@ -126,6 +142,7 @@ class ModerationDataBase(DataManager):
             (guild_id, warn_id),
         )
 
+    # reserved
     async def get_all_warnings_from_guild(self, guild_id: int) -> List[tuple]:
         return await self.execute(
             "SELECT * FROM warnings WHERE guild_id = ?",
@@ -134,7 +151,9 @@ class ModerationDataBase(DataManager):
             one_all="all",
         )
 
-    async def get_all_warnings_from_offender(self, guild_id: int, offender_id: int) -> List[tuple]:
+    async def get_all_warnings_from_offender(
+        self, guild_id: int, offender_id: int
+    ) -> List[tuple]:
         return await self.execute(
             "SELECT * FROM warnings WHERE guild_id = ? AND offender_id = ?",
             (guild_id, offender_id),
@@ -149,6 +168,122 @@ class ModerationDataBase(DataManager):
             SELECT * FROM warnings
             ORDER BY guild_id, warn_id
             """,
+            select=True,
+            one_all="all",
+        )
+
+    # ---------------------------------------- modlog channel -----------------------------------
+    async def modlog_channel(
+        self,
+        action: Literal["insert", "get", "delete", "update"],
+        guild_id: int = None,
+        channel_id: int = None,
+    ) -> Optional[List[tuple]]:
+        match action:
+            case "insert":
+                if all([guild_id, channel_id]):
+                    await self.execute(
+                        """
+                        INSERT INTO modlog_channel (guild_id, channel_id) VALUES (?, ?)
+                        """,
+                        (guild_id, channel_id),
+                    )
+                    return
+                raise TypeError(
+                    "Argument 'guild_id' and 'channel_id' are required for inserting modlog."
+                )
+            case "get":
+                if all([guild_id, channel_id]):
+                    return await self.execute(
+                        """
+                        SELECT channel_id FROM modlog_channel WHERE guild_id = ?
+                        """,
+                        (guild_id,),
+                        select=True,
+                        one_all="all",
+                    )
+                raise TypeError(
+                    "Argument 'guild_id' and 'channel_id' are required for getting modlog."
+                )
+            case "delete":
+                if guild_id:
+                    await self.execute(
+                        """
+                        DELETE FROM modlog_channel WHERE guild_id = ?
+                        """,
+                        (guild_id,),
+                    )
+                    return
+                raise TypeError("Argument 'guild_id' is required for deleting modlog.")
+            case "update":
+                if all([guild_id, channel_id]):
+                    await self.execute(
+                        """
+                        UPDATE modlog_channel SET channel_id = ? WHERE guild_id = ?
+                        """,
+                        (channel_id, guild_id),
+                    )
+                    return
+                raise TypeError(
+                    "Argument 'guild_id' and 'channel_id' are required for inserting modlog."
+                )
+            case _:
+                ACTIONS = ["insert", "get", "delete", "update"]
+                raise TypeError(
+                    f"Argument 'action' must only be {discord.utils._human_join(ACTIONS)}."
+                )
+
+    # ------------------------------------------ modlogs -------------------------------------------
+    async def insert_modlog(
+        self,
+        guild_id: int,
+        action: str,
+        offender_id: int,
+        moderator_id: int,
+        reason: str = None,
+        until_timestamp: int = None,
+    ) -> int:
+        await self.execute(
+            """
+            INSERT INTO modlogs
+                (guild_id, action, offender_id, moderator_id, reason, until)
+            VALUES (
+                ?,
+                (SELECT COALESCE(MAX(case_id), 0) + 1 FROM modlogs WHERE guild_id = ?),
+                ?,
+                ?,
+                ?,
+                ?,
+                ?
+            )
+            """,
+            (
+                guild_id,
+                guild_id,
+                action,
+                offender_id,
+                moderator_id,
+                reason,
+                until_timestamp,
+            ),
+        )
+        return await self.get_current_case_id(guild_id)
+
+    async def get_current_case_id(self, guild_id: int) -> int:
+        l = await self.execute(
+            """
+            SELECT COALESCE(MAX(case_id), 0) + 1 FROM modlogs WHERE guild_id = ?
+            """,
+            (guild_id,),
+            select=True,
+            one_all="all",
+        )
+        return l[0][0]
+
+    async def get_all_modlogs_from_guild(self, guild_id: int) -> List[tuple]:
+        return await self.execute(
+            "SELECT * FROM modlogs WHERE guild_id = ?",
+            (guild_id,),
             select=True,
             one_all="all",
         )

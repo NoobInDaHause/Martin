@@ -39,7 +39,7 @@ def get_dm_embed(
         "kick": ("kicked", discord.Colour.magenta()),
         "timeout": ("timed out", discord.Colour.light_grey()),
         "untimeout": ("untimed out", discord.Colour.blurple()),
-        "warn": ("warned", discord.Colour.purple()),
+        "warn": ("warned", discord.Colour.yellow()),
         "unwarn": ("unwarned", discord.Colour.default()),
     }
 
@@ -67,6 +67,50 @@ def get_dm_embed(
         inline=False,
     )
 
+    return embed
+
+
+def get_modlog_embed(
+    action: str,
+    case_id: int,
+    offender: discord.User,
+    moderator: discord.Member,
+    reason: str = None,
+    until: datetime = None,
+) -> discord.Embed:
+    action_dict = {
+        "ban": ("🔨", discord.Colour.red()),
+        "unban": ("📜", discord.Colour.green()),
+        "tempban": ("🔨⌛", discord.Colour.dark_orange()),
+        "kick": ("👢", discord.Colour.magenta()),
+        "timeout": ("🔇", discord.Colour.light_grey()),
+        "untimeout": ("🔊", discord.Colour.blurple()),
+        "warn": ("⚠️", discord.Colour.yellow()),
+        "unwarn": ("🔃", discord.Colour.default()),
+    }
+
+    act = action_dict[action]
+    embed = discord.Embed(
+        title=f"{act[0]} | {action.title()}",
+        description=f"Case #{case_id}",
+        colour=act[1],
+        timestamp=datetime.now(timezone.utc),
+    )
+    embed.add_field(name="Offender:", value=f"{offender} ({offender.id})", inline=False)
+    embed.add_field(
+        name="Responsible Moderator:",
+        value=f"{moderator} ({moderator.id})",
+        inline=False,
+    )
+    if until:
+        timestamp = int(until.timestamp())
+        embed.add_field(
+            name="Until:",
+            value=f"<t:{timestamp}:F> (<t:{timestamp}:R>)",
+            inline=False,
+        )
+    if reason:
+        embed.add_field(name="Reason:", value=reason, inline=False)
     return embed
 
 
