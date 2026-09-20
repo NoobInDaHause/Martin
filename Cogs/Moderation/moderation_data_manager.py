@@ -18,7 +18,7 @@ class ModerationDataBase(DataManager):
                 banned_until_timestamp INTEGER NOT NULL,
                 moderator_id INTEGER,
                 PRIMARY KEY (guild_id, offender_id)
-            )
+            );
 
             CREATE TABLE IF NOT EXISTS warnings (
                 guild_id INTEGER NOT NULL,
@@ -27,12 +27,12 @@ class ModerationDataBase(DataManager):
                 moderator_id INTEGER,
                 reason TEXT,
                 PRIMARY KEY (guild_id, warn_id)
-            )
+            );
 
             CREATE TABLE IF NOT EXISTS modlog_channel (
                 guild_id INTEGER PRIMARY KEY NOT NULL,
                 channel_id INTEGER
-            )
+            );
 
             CREATE TABLE IF NOT EXISTS modlogs (
                 guild_id INTEGER NOT NULL,
@@ -43,7 +43,7 @@ class ModerationDataBase(DataManager):
                 reason TEXT,
                 until INTEGER,
                 PRIMARY KEY (guild_id, case_id)
-            )
+            );
             """)
 
     async def insert_tempban(
