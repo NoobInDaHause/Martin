@@ -58,9 +58,10 @@ class General(commands.Cog):
         await initial_message.edit(content="", embed=measuring_embed)
         edit_latency = (perf_counter() - edit_started) * 1000
 
-        measuring_embed.fields[2].value =f"{edit_latency:.2f} ms"
+        new_embed = discord.Embed.from_dict(measuring_embed.to_dict())
+        new_embed.fields[2].value = f"{edit_latency:.2f} ms"
 
-        await initial_message.edit(embed=measuring_embed)
+        await initial_message.edit(embed=new_embed)
 
     @app_commands.command(name="botinfo", description="Check info about the bot.")
     @bot_has_permissions(embed_links=True)
@@ -83,7 +84,9 @@ class General(commands.Cog):
             colour=self.bot.colour,
         )
         if self.bot.custom_info:
-            embed.add_field(name="Custom Info:", value=self.bot.custom_info, inline=False)
+            embed.add_field(
+                name="Custom Info:", value=self.bot.custom_info, inline=False
+            )
 
         embed.set_thumbnail(
             url=app_info.team.icon if app_info.team else app_info.owner.display_avatar
