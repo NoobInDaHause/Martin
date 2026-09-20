@@ -728,7 +728,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         offender="The offending member.",
         reason="The optional reason.",
     )
-    async def moderation_tempban(
+    async def moderation_warning(
         self,
         interaction: MartinInteraction,
         action: Literal["add", "remove", "list"],
@@ -826,7 +826,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     @app_commands.describe(
         action="Action to perform.", channel="The channel that you want to set."
     )
-    async def moderation_tempban(
+    async def moderation_modlog(
         self,
         interaction: MartinInteraction,
         action: Literal["set", "remove", "view"],
