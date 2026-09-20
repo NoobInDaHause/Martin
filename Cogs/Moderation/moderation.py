@@ -77,6 +77,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             limit=5, action=discord.AuditLogAction.unban
         ):
             if entry.target.id == user.id:
+                if task := self.tempban_tasks.get((guild.id, user.id)):
+                    task.cancel()
+
                 moderator = entry.user
                 reason = entry.reason
 
