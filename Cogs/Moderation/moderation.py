@@ -190,7 +190,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             until, reason=get_auditlog_reason(interaction.user, reason)
         )
 
-        timestamp = int(until.timestamp())
+        timestamp = int(until.timestamp()) if until else None
         case_id = await self.db.insert_modlog(
             interaction.guild.id,
             act,
