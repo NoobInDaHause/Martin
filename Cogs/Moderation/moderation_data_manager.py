@@ -11,7 +11,7 @@ class ModerationDataBase(DataManager):
 
     # -------------------------------------------- tempbans -------------------------------------------------------
     async def initialize(self) -> None:
-        await self.execute("""
+        await self.executescript("""
             CREATE TABLE IF NOT EXISTS tempbans (
                 guild_id INTEGER NOT NULL,
                 offender_id INTEGER NOT NULL,
