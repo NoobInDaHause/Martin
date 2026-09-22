@@ -98,15 +98,15 @@ def get_modlog_embed(
     )
     embed.add_field(name="Offender:", value=f"{offender} ({offender.id})", inline=False)
     embed.add_field(
-        name="Responsible Moderator:",
+        name="Moderator:",
         value=f"{moderator} ({moderator.id})",
-        inline=False,
+        inline=False
     )
     if until_timestamp:
         embed.add_field(
             name="Until:",
             value=f"<t:{until_timestamp}:F> (<t:{until_timestamp}:R>)",
-            inline=False,
+            inline=False
         )
     if reason:
         embed.add_field(name="Reason:", value=reason, inline=False)
