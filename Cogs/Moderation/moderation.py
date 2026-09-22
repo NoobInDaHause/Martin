@@ -870,10 +870,8 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         to_send = ""
         match action:
             case "set":
-                if channel is None or not isinstance(channel, discord.TextChannel):
-                    to_send += (
-                        "Channel is required and must be a text channel to set modlog."
-                    )
+                if channel is None:
+                    to_send += "Channel is required to set modlog."
                 elif not channel.permissions_for(interaction.guild.me).send_messages:
                     to_send += f"I cannot send messages to {channel.mention}. Please check my permissions."
                 else:
