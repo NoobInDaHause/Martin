@@ -864,7 +864,11 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         Except for bot owners LOL.
         """
-        exist = await self.db.modlog_channel("get", interaction.guild.id, channel.id)
+        exist = (
+            await self.db.modlog_channel("get", interaction.guild.id, channel.id)
+            if channel
+            else []
+        )
 
         to_send = ""
         match action:
@@ -887,6 +891,10 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 await self.db.modlog_channel("delete")
                 to_send += "The modlog channel has been cleared."
             case "view":
-                to_send += f"<#{exist[0][0]}> is the set modlog channel."
+                to_send += (
+                    f"<#{exist[0][0]}> is the set modlog channel."
+                    if exist
+                    else "No modlog channel has been set."
+                )
 
         await interaction.response_or_followup(content=to_send)
