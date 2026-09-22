@@ -738,7 +738,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 reason,
                 timestamp,
             )
-        except discord.errors.Forbidden, discord.errors.NotFound:
+        except (discord.errors.Forbidden, discord.errors.NotFound):
             await interaction.channel.send(
                 content="Could not send log to modlog channel, it is either deleted or missing permission."
             )
@@ -837,7 +837,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             await self.send_to_modlog(
                 interaction.guild.id, act, case_id, offender, interaction.user, reason
             )
-        except discord.errors.Forbidden, discord.errors.NotFound:
+        except (discord.errors.Forbidden, discord.errors.NotFound):
             await interaction.channel.send(
                 content="Could not send log to modlog channel, it is either deleted or missing permission."
             )
