@@ -174,7 +174,7 @@ class Owner(commands.Cog):
         markdown = (
             "# Cogs\n\n"
             f"## Loaded ({len(loaded)})\n\n"
-            f"{"\n".join(f'- `{l}`' for l in loaded) or '- None'}\n\n"
+            f"{'\n'.join(f'- `{l}`' for l in loaded) or '- None'}\n\n"
             f"## Unloaded ({len(unloaded)})\n\n"
             f"{"\n".join(f'- `{ul}`' for ul in unloaded) or '- None'}\n"
         )
