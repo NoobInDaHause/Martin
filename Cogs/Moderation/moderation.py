@@ -866,7 +866,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         """
         exist = (
             await self.db.modlog_channel("get", interaction.guild.id, channel.id)
-            if channel and action != "get"
+            if channel and action != "view"
             else []
         )
 
