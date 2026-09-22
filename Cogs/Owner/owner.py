@@ -171,13 +171,15 @@ class Owner(commands.Cog):
         ]
         unloaded = [cog_name for cog_name in cog_names if cog_name not in loaded]
 
-        markdown = (
-            "# Cogs\n\n"
-            f"## Loaded ({len(loaded)})\n\n"
-            f"{'\n'.join(f'- `{l}`' for l in loaded) or '- None'}\n\n"
-            f"## Unloaded ({len(unloaded)})\n\n"
-            f"{'\n'.join(f'- `{ul}`' for ul in unloaded) or '- None'}\n"
-        )
+        loaded_list = "\n".join(f"- `{l}`" for l in loaded) or "- None"  
+        unloaded_list = "\n".join(f"- `{ul}`" for ul in unloaded) or "- None"  
+        markdown = (  
+            "# Cogs\n\n"  
+            f"## Loaded ({len(loaded)})\n\n"  
+            f"{loaded_list}\n\n"  
+            f"## Unloaded ({len(unloaded)})\n\n"  
+            f"{unloaded_list}\n"  
+        )  
         cog_file = discord.File(BytesIO(markdown.encode("utf-8")), filename="cogs.md")
         await interaction.response_or_followup(file=cog_file)
 
