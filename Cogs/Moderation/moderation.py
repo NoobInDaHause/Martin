@@ -851,7 +851,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     )
     @has_permissions(manage_channels=True)
     @app_commands.describe(
-        action="Action to perform.", channel="The channel that you want to set."
+        action="Action to perform.", channel="The channel that you want to  or remove."
     )
     async def moderation_modlog(
         self,
