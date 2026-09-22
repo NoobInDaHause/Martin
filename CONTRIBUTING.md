@@ -111,7 +111,7 @@ When contributing:
 * Keep asynchronous code asynchronous.
 * Avoid introducing unnecessary dependencies.
 
-Martin uses **Ruff** for linting and code quality checks.
+Martin uses **Black Formatter** for checks.
 
 ---
 
