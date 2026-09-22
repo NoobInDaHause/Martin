@@ -769,10 +769,10 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         """
         await interaction.response.defer(thinking=True)
         act = "warn" if action == "add" else "unwarn"
-        if s := self.suicide(act, offender.id, interaction.user.id):
+        if s := self.suicide(act, offender.id, interaction.user.id) and action != "list":
             return await interaction.response_or_followup(content=s)
 
-        if higher := await hierarchy_check(interaction, offender, act):
+        if higher := await hierarchy_check(interaction, offender, act) and action != "list":
             return await interaction.response_or_followup(content=higher)
 
         match action:
@@ -865,7 +865,8 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         Except for bot owners LOL.
         """
         channel_id = channel.id if channel else None
-        exist = await self.db.modlog_channel("get", interaction.guild.id, channel_id)
+        guild_id = interaction.guild.id
+        exist = await self.db.modlog_channel("get", guild_id, channel_id)
 
         to_send = ""
         match action:
@@ -877,8 +878,8 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 else:
                     await self.db.modlog_channel(
                         "update" if exist else "insert",
-                        interaction.guild.id,
-                        channel.id,
+                        guild_id,
+                        channel_id,
                     )
                     to_send += f"{channel.mention} has been set as the modlog channel."
 
@@ -886,7 +887,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 if not exist:
                     to_send += "There is no modlog channel currently set to remove."
                 else:
-                    await self.db.modlog_channel("delete", interaction.guild.id)
+                    await self.db.modlog_channel("delete", guild_id)
                     to_send += "The modlog channel has been cleared."
 
             case "view":
