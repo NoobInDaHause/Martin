@@ -864,22 +864,19 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         Except for bot owners LOL.
         """
-        exist = (
-            await self.db.modlog_channel("get", interaction.guild.id, channel.id)
-            if channel and action != "view"
-            else []
-        )
+        channel_id = channel.id if channel else None
+        exist = await self.db.modlog_channel("get", interaction.guild.id, channel_id)
 
         to_send = ""
         match action:
             case "set":
                 if channel is None or not isinstance(channel, discord.TextChannel):
                     return await interaction.response_or_followup(
-                        content="Channel is required or channel must only be text channel for setting modlog."
+                        content="Channel is required and must be a text channel to set modlog."
                     )
                 if not channel.permissions_for(interaction.guild.me).send_messages:
                     return await interaction.response_or_followup(
-                        content=f"I can not send messages to {channel.mention} please check my permissions."
+                        content=f"I cannot send messages to {channel.mention}. Please check my permissions."
                     )
                 await self.db.modlog_channel(
                     "update" if exist else "insert",
@@ -887,9 +884,15 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                     channel.id,
                 )
                 to_send += f"{channel.mention} has been set as the modlog channel."
+
             case "remove":
-                await self.db.modlog_channel("delete")
+                if not exist:
+                    return await interaction.response_or_followup(
+                        content="There is no modlog channel currently set to remove."
+                    )
+                await self.db.modlog_channel("delete", interaction.guild.id)
                 to_send += "The modlog channel has been cleared."
+
             case "view":
                 to_send += (
                     f"<#{exist[0][0]}> is the set modlog channel."
