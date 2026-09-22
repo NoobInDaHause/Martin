@@ -98,15 +98,13 @@ def get_modlog_embed(
     )
     embed.add_field(name="Offender:", value=f"{offender} ({offender.id})", inline=False)
     embed.add_field(
-        name="Moderator:",
-        value=f"{moderator} ({moderator.id})",
-        inline=False
+        name="Moderator:", value=f"{moderator} ({moderator.id})", inline=False
     )
     if until_timestamp:
         embed.add_field(
             name="Until:",
             value=f"<t:{until_timestamp}:F> (<t:{until_timestamp}:R>)",
-            inline=False
+            inline=False,
         )
     if reason:
         embed.add_field(name="Reason:", value=reason, inline=False)
@@ -124,3 +122,19 @@ async def hierarchy_check(
         return f"You can not {action} this member due to role hierarchy."
     if offender.top_role >= interaction.guild.me.top_role:
         return f"I can not {action} this member due to role hierarchy."
+
+def calculate_metrics(  user_id,items,  is_active= True  ):
+    my_dict = { 'first_key': 'value1',"second_key":"value2",'third_key':'value3','fourth_key':'value4' }
+    total_sum = 0
+    for  i  in items :
+        total_sum +=i
+    if is_active and total_sum> 0:
+        print( "User " + str(user_id) + " has valid metrics: " ,total_sum )
+    return { 'status':'success', "user":user_id, "total":total_sum, "data": my_dict }
+
+class DataProcessor :
+    def __init__(self,name):
+        self.name=name
+    def process(self):
+        numbers=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+        return [ x*2 for x in numbers if x%2==0 ]
