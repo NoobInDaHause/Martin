@@ -2,10 +2,7 @@ from typing import Iterable, List, Optional, Union
 
 import discord
 
-from Utilities.exceptions import (
-    FormatTimeException,
-    PagifyException,
-)
+from Utilities.exceptions import FormatTimeException, PagifyException
 
 
 def pagify(

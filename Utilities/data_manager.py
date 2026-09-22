@@ -24,7 +24,10 @@ class DataManager:
         self.path = Path(__file__).parents[1] / "cogs_data" / f"{cog_name}.db"
 
     # for now its only for creating multiple tables
-    async def executescript(self, sql_command: str,) -> None:
+    async def executescript(
+        self,
+        sql_command: str,
+    ) -> None:
         async with aiosqlite.connect(self.path) as db:
             await db.executescript(sql_command)
             await db.commit()

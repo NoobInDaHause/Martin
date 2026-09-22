@@ -1,6 +1,6 @@
-from .moderation import Moderation
-
 from Martin import Martin
+
+from .moderation import Moderation
 
 
 async def setup(bot: Martin):

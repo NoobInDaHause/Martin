@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union
-from datetime import timedelta
 import re
+from datetime import timedelta
+from typing import TYPE_CHECKING, Union
 
 from discord import app_commands
 from discord.ext import commands
@@ -63,9 +63,7 @@ class UserTransformer(app_commands.Transformer):
 
 
 class _TimeDeltaTransformer(app_commands.Transformer):
-    async def transform(
-        self, interaction: MartinInteraction, value: str
-    ) -> timedelta:
+    async def transform(self, interaction: MartinInteraction, value: str) -> timedelta:
         value = value.strip()
 
         total = timedelta()
