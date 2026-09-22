@@ -176,7 +176,7 @@ class Owner(commands.Cog):
             f"## Loaded ({len(loaded)})\n\n"
             f"{'\n'.join(f'- `{l}`' for l in loaded) or '- None'}\n\n"
             f"## Unloaded ({len(unloaded)})\n\n"
-            f"{"\n".join(f'- `{ul}`' for ul in unloaded) or '- None'}\n"
+            f"{'\n'.join(f'- `{ul}`' for ul in unloaded) or '- None'}\n"
         )
         cog_file = discord.File(BytesIO(markdown.encode("utf-8")), filename="cogs.md")
         await interaction.response_or_followup(file=cog_file)
