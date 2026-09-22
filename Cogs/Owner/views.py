@@ -1,5 +1,5 @@
-from typing import TYPE_CHECKING, List, Union
 import contextlib
+from typing import TYPE_CHECKING, List, Union
 
 import discord
 
