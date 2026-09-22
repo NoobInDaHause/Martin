@@ -871,27 +871,23 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         match action:
             case "set":
                 if channel is None or not isinstance(channel, discord.TextChannel):
-                    return await interaction.response_or_followup(
-                        content="Channel is required and must be a text channel to set modlog."
+                    to_send += "Channel is required and must be a text channel to set modlog."
+                elif not channel.permissions_for(interaction.guild.me).send_messages:
+                    to_send += f"I cannot send messages to {channel.mention}. Please check my permissions."
+                else:
+                    await self.db.modlog_channel(
+                        "update" if exist else "insert",
+                        interaction.guild.id,
+                        channel.id,
                     )
-                if not channel.permissions_for(interaction.guild.me).send_messages:
-                    return await interaction.response_or_followup(
-                        content=f"I cannot send messages to {channel.mention}. Please check my permissions."
-                    )
-                await self.db.modlog_channel(
-                    "update" if exist else "insert",
-                    interaction.guild.id,
-                    channel.id,
-                )
-                to_send += f"{channel.mention} has been set as the modlog channel."
+                    to_send += f"{channel.mention} has been set as the modlog channel."
 
             case "remove":
                 if not exist:
-                    return await interaction.response_or_followup(
-                        content="There is no modlog channel currently set to remove."
-                    )
-                await self.db.modlog_channel("delete", interaction.guild.id)
-                to_send += "The modlog channel has been cleared."
+                    to_send += "There is no modlog channel currently set to remove."
+                else:
+                    await self.db.modlog_channel("delete", interaction.guild.id)
+                    to_send += "The modlog channel has been cleared."
 
             case "view":
                 to_send += (
