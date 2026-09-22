@@ -769,10 +769,16 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         """
         await interaction.response.defer(thinking=True)
         act = "warn" if action == "add" else "unwarn"
-        if s := self.suicide(act, offender.id, interaction.user.id) and action != "list":
+        if (
+            s := self.suicide(act, offender.id, interaction.user.id)
+            and action != "list"
+        ):
             return await interaction.response_or_followup(content=s)
 
-        if higher := await hierarchy_check(interaction, offender, act) and action != "list":
+        if (
+            higher := await hierarchy_check(interaction, offender, act)
+            and action != "list"
+        ):
             return await interaction.response_or_followup(content=higher)
 
         match action:
