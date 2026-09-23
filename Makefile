@@ -1,4 +1,4 @@
-.PHONY: style-reformat check-syntax install-dependencies install-dev-tools
+.PHONY: install-dependencies install-reformat-tools style-reformat check-syntax
 
 install-dependencies:
 	python -m pip install --upgrade pip
