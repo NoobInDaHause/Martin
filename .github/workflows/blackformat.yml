@@ -31,4 +31,4 @@ jobs:
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Style Reformatting: This style is ass. Auto-formatted code."
+          commit_message: "This style is ass. Style Reformatted."
