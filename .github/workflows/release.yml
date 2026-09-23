@@ -13,36 +13,35 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: make install-dependencies
 
       - name: Create release package
         run: |
-          mkdir Martin
-          cp -r Cogs Martin/
-          cp -r Martin Martin/
-          cp -r Utilities Martin/
-          cp -r cogs_data Martin/
-          cp main.py Martin/
-          cp requirements.txt Martin/
-          cp version.txt Martin/
-          cp README.md Martin/
-          cp LICENSE Martin/
-          cp start_bot.bat Martin/
-          cp star_bot.sh Martin/
-          cp config.json.example Martin/
-          cp .env.example Martin/
+          mkdir release_build
+          cp -r Cogs release_build/
+          cp -r Martin release_build/
+          cp -r Utilities release_build/
+          cp -r cogs_data release_build/
+          cp main.py release_build/
+          cp requirements.txt release_build/
+          cp version.txt release_build/
+          cp README.md release_build/
+          cp LICENSE release_build/
+          cp start_bot.bat release_build/
+          cp star_bot.sh release_build/
+          cp config.json.example release_build/
+          cp .env.example release_build/
 
-          zip -r Martin-${{ github.event.release.tag_name }}.zip Martin/
+          mv release_build Martin
+          zip -r "Martin-${{ github.event.release.tag_name }}.zip" Martin/
 
       - name: Upload release asset
         env:
