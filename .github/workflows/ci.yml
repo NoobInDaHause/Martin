@@ -2,12 +2,9 @@ name: CI
 
 on:
   push:
-    branches:
-      - master
-
+    branches: [ master ]
   pull_request:
-    branches:
-      - master
+    branches: [ master ]
 
 permissions:
   contents: read
@@ -34,9 +31,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-
-      - name: Install dependencies
-        run: make install-dependencies
 
       - name: Check Python syntax
         run: make check-syntax

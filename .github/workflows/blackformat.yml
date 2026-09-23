@@ -22,11 +22,8 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install requirements
-        run: make install-black
-
       - name: Style reformatting
-        run: make reformat
+        run: make style-reformat
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
