@@ -1,4 +1,4 @@
-.PHONY: reformat check-syntax install-dependencies, install-black
+.PHONY: reformat check-syntax install-dependencies install-black
 
 reformat:
 	autoflake --remove-all-unused-imports --recursive --in-place .
