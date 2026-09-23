@@ -37,6 +37,10 @@ jobs:
           cp version.txt Martin/
           cp README.md Martin/
           cp LICENSE Martin/
+          cp start_bot.bat Martin/
+          cp star_bot.sh Martin/
+          cp config.json.example Martin/
+          cp .env.example Martin/
 
           zip -r Martin-${{ github.event.release.tag_name }}.zip Martin/
 
