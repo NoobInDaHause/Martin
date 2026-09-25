@@ -47,21 +47,12 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 moderator = entry.user
                 reason = entry.reason
 
-                case_id = await self.db.insert_modlog(
-                    guild.id,
-                    "ban",
-                    user.id,
-                    moderator.id,
-                    reason,
-                )
-
                 with contextlib.suppress(
                     discord.errors.Forbidden, discord.errors.NotFound
                 ):
                     await self.send_to_modlog(
                         guild.id,
                         "ban",
-                        case_id,
                         user,
                         moderator,
                         reason,
@@ -83,21 +74,12 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 moderator = entry.user
                 reason = entry.reason
 
-                case_id = await self.db.insert_modlog(
-                    guild.id,
-                    "unban",
-                    user.id,
-                    moderator.id,
-                    reason,
-                )
-
                 with contextlib.suppress(
                     discord.errors.Forbidden, discord.errors.NotFound
                 ):
                     await self.send_to_modlog(
                         guild.id,
                         "unban",
-                        case_id,
                         user,
                         moderator,
                         reason,
@@ -127,21 +109,12 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 moderator = entry.user
                 reason = entry.reason
 
-                case_id = await self.db.insert_modlog(
-                    guild.id,
-                    action,
-                    after.id,
-                    moderator.id,
-                    reason,
-                )
-
                 with contextlib.suppress(
                     discord.errors.Forbidden, discord.errors.NotFound
                 ):
                     await self.send_to_modlog(
                         guild.id,
                         action,
-                        case_id,
                         after,
                         moderator,
                         reason,
@@ -162,21 +135,12 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 moderator = entry.user
                 reason = entry.reason
 
-                case_id = await self.db.insert_modlog(
-                    member.guild.id,
-                    "kick",
-                    member.id,
-                    moderator.id,
-                    reason,
-                )
-
                 with contextlib.suppress(
                     discord.errors.Forbidden, discord.errors.NotFound
                 ):
                     await self.send_to_modlog(
                         member.guild.id,
                         "kick",
-                        case_id,
                         member,
                         moderator,
                         reason,
@@ -187,7 +151,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         self,
         guild_id: int,
         action: str,
-        case_id: int,
         offender: discord.User,
         moderator: discord.Member,
         reason: str = None,
@@ -195,6 +158,13 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     ) -> None:
         if exists := await self.db.modlog_channel("get", guild_id):
             if channel := await self.bot.get_or_fetch_channel(guild_id, exists[0][0]):
+                case_id = await self.db.insert_modlog(
+                    guild_id,
+                    action,
+                    offender.id,
+                    moderator.id,
+                    reason,
+                )
                 await channel.send(
                     embed=get_modlog_embed(
                         action, case_id, offender, moderator, reason, until_timestamp
@@ -252,13 +222,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                                 f"({obj.moderator.id}) has expired."
                             ),
                         )
-                        case_id = await self.db.insert_modlog(
-                            obj.guild.id,
-                            "unban",
-                            obj.offender.id,
-                            obj.moderator.id,
-                            "Temporay ban has expired.",
-                        )
 
                         with contextlib.suppress(
                             discord.errors.Forbidden, discord.errors.NotFound
@@ -266,7 +229,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                             await self.send_to_modlog(
                                 obj.guild.id,
                                 "unban",
-                                case_id,
                                 obj.offender,
                                 obj.moderator,
                                 "Temporary ban has expired.",
@@ -364,22 +326,18 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await offender.timeout(
             until, reason=get_auditlog_reason(interaction.user, reason)
         )
-        case_id = await self.db.insert_modlog(
-            interaction.guild.id,
-            act,
-            offender.id,
-            interaction.user.id,
-            reason,
-        )
 
-        with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+        try:
             await self.send_to_modlog(
                 interaction.guild.id,
                 act,
-                case_id,
                 offender,
                 interaction.user,
                 reason,
+            )
+        except (discord.errors.Forbidden, discord.errors.NotFound):
+            await interaction.channel.send(
+                content="Could not send log to modlog channel, it is either deleted or missing permission."
             )
         self.timeout_targets.discard((interaction.guild.id, offender.id))
 
@@ -434,22 +392,18 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.guild.kick(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
-        case_id = await self.db.insert_modlog(
-            interaction.guild.id,
-            "kick",
-            offender.id,
-            interaction.user.id,
-            reason,
-        )
 
-        with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+        try:
             await self.send_to_modlog(
                 interaction.guild.id,
                 "kick",
-                case_id,
                 offender,
                 interaction.user,
                 reason,
+            )
+        except (discord.errors.Forbidden, discord.errors.NotFound):
+            await interaction.channel.send(
+                content="Could not send log to modlog channel, it is either deleted or missing permission."
             )
         self.kick_targets.discard((interaction.guild.id, offender.id))
 
@@ -504,22 +458,18 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await interaction.guild.ban(
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
-        case_id = await self.db.insert_modlog(
-            interaction.guild.id,
-            "ban",
-            offender.id,
-            interaction.user.id,
-            reason,
-        )
 
-        with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+        try:
             await self.send_to_modlog(
                 interaction.guild.id,
                 "ban",
-                case_id,
                 offender,
                 interaction.user,
                 reason,
+            )
+        except (discord.errors.Forbidden, discord.errors.NotFound):
+            await interaction.channel.send(
+                content="Could not send log to modlog channel, it is either deleted or missing permission."
             )
         self.tempban_targets.discard((interaction.guild.id, offender.id))
 
@@ -574,22 +524,17 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             offender, reason=get_auditlog_reason(interaction.user, reason)
         )
 
-        case_id = await self.db.insert_modlog(
-            interaction.guild.id,
-            "unban",
-            offender.id,
-            interaction.id,
-            reason,
-        )
-
-        with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+        try:
             await self.send_to_modlog(
                 interaction.guild.id,
                 "unban",
-                case_id,
                 offender,
                 interaction.user,
                 reason,
+            )
+        except (discord.errors.Forbidden, discord.errors.NotFound):
+            await interaction.channel.send(
+                content="Could not send log to modlog channel, it is either deleted or missing permission."
             )
         self.unban_targets.discard((interaction.guild.id, offender.id))
 
@@ -717,22 +662,12 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 )
             )
         )
-
-        case_id = await self.db.insert_modlog(
-            interaction.guild.id,
-            "tempban",
-            offender.id,
-            interaction.user.id,
-            reason,
-            timestamp,
-        )
         self.tempban_targets.discard((interaction.guild.id, offender.id))
 
         try:
             await self.send_to_modlog(
                 interaction.guild.id,
                 "tempban",
-                case_id,
                 offender,
                 interaction.user,
                 reason,

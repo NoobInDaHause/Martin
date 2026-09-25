@@ -179,55 +179,45 @@ class ModerationDataBase(DataManager):
         guild_id: int = None,
         channel_id: int = None,
     ) -> Optional[List[tuple]]:
-        match action:
-            case "insert":
-                if all([guild_id, channel_id]):
-                    await self.execute(
-                        """
-                        INSERT INTO modlog_channel (guild_id, channel_id) VALUES (?, ?)
-                        """,
-                        (guild_id, channel_id),
-                    )
-                    return
-                raise TypeError(
-                    "Argument 'guild_id' and 'channel_id' are required for inserting modlog."
-                )
-            case "get":
+        if action == "insert":
+            if all([guild_id, channel_id]):
                 return await self.execute(
                     """
-                    SELECT channel_id FROM modlog_channel WHERE guild_id = ?
+                    INSERT INTO modlog_channel (guild_id, channel_id) VALUES (?, ?)
+                    """,
+                    (guild_id, channel_id),
+                )
+            raise TypeError(
+                "Argument 'guild_id' and 'channel_id' are required for inserting modlog."
+            )
+        elif action in {"get", "delete"}:
+            if guild_id:
+                cmd = "SELECT channel_id FROM" if action == "get" else "DELETE FROM"
+                return await self.execute(
+                    f"""
+                    {cmd} modlog_channel WHERE guild_id = ?
                     """,
                     (guild_id,),
-                    select=True,
+                    select=(action != "delete"),
                     one_all="all",
                 )
-            case "delete":
-                if guild_id:
-                    await self.execute(
-                        """
-                        DELETE FROM modlog_channel WHERE guild_id = ?
-                        """,
-                        (guild_id,),
-                    )
-                    return
-                raise TypeError("Argument 'guild_id' is required for deleting modlog.")
-            case "update":
-                if all([guild_id, channel_id]):
-                    await self.execute(
-                        """
-                        UPDATE modlog_channel SET channel_id = ? WHERE guild_id = ?
-                        """,
-                        (channel_id, guild_id),
-                    )
-                    return
-                raise TypeError(
-                    "Argument 'guild_id' and 'channel_id' are required for inserting modlog."
+            raise TypeError("Argument 'guild_id' is required for getting or deleting modlog.")
+        elif action == "update":
+            if all([guild_id, channel_id]):
+                return await self.execute(
+                    """
+                    UPDATE modlog_channel SET channel_id = ? WHERE guild_id = ?
+                    """,
+                    (channel_id, guild_id),
                 )
-            case _:
-                ACTIONS = ["insert", "get", "delete", "update"]
-                raise TypeError(
-                    f"Argument 'action' must only be {discord.utils._human_join(ACTIONS)}."
-                )
+            raise TypeError(
+                "Argument 'guild_id' and 'channel_id' are required for inserting modlog."
+            )
+        else:
+            ACTIONS = ["insert", "get", "delete", "update"]
+            raise TypeError(
+                f"Argument 'action' must only be {discord.utils._human_join(ACTIONS)}."
+            )
 
     # ------------------------------------------ modlogs -------------------------------------------
     async def insert_modlog(
@@ -268,7 +258,7 @@ class ModerationDataBase(DataManager):
     async def get_current_case_id(self, guild_id: int) -> int:
         l = await self.execute(
             """
-            SELECT COALESCE(MAX(case_id), 0) + 1 FROM modlogs WHERE guild_id = ?
+            SELECT MAX(case_id) FROM modlogs WHERE guild_id = ?
             """,
             (guild_id,),
             select=True,
