@@ -92,7 +92,6 @@ class ModerationDataBase(DataManager):
             one_all="all",
         )
 
-    # reserved in the future
     async def get_all_tempbans(self) -> List[tuple]:
         return await self.execute(
             """
