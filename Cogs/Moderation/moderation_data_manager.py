@@ -201,7 +201,9 @@ class ModerationDataBase(DataManager):
                     select=(action != "delete"),
                     one_all="all",
                 )
-            raise TypeError("Argument 'guild_id' is required for getting or deleting modlog.")
+            raise TypeError(
+                "Argument 'guild_id' is required for getting or deleting modlog."
+            )
         elif action == "update":
             if all([guild_id, channel_id]):
                 return await self.execute(
