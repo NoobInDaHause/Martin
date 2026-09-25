@@ -37,7 +37,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     def _mark_recent_mod_action(self, guild_id: int, user_id: int, action: str) -> None:
         self._recent_mod_actions[(guild_id, user_id, action)] = time.monotonic()
 
-    def _is_recent_mod_action(self, guild_id: int, user_id: int, action: str, ttl: float = 5.0) -> bool:
+    def _is_recent_mod_action(
+        self, guild_id: int, user_id: int, action: str, ttl: float = 5.0
+    ) -> bool:
         key = (guild_id, user_id, action)
         now = time.monotonic()
         last_seen = self._recent_mod_actions.get(key)
@@ -53,11 +55,15 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         self,
         interaction: MartinInteraction,
         offender: Union[discord.Member, discord.User],
-        action: Literal["ban", "unban", "tempban", "kick", "timeout", "untimeout", "warn", "unwarn"],
+        action: Literal[
+            "ban", "unban", "tempban", "kick", "timeout", "untimeout", "warn", "unwarn"
+        ],
         reason: str = None,
         until: Optional[datetime] = None,
     ) -> None:
-        with contextlib.suppress(discord.errors.Forbidden, discord.errors.HTTPException):
+        with contextlib.suppress(
+            discord.errors.Forbidden, discord.errors.HTTPException
+        ):
             await offender.send(
                 embed=get_dm_embed(
                     interaction.user,
@@ -179,7 +185,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             if entry.target.id == user.id:
                 moderator = entry.user
                 reason = entry.reason
-                with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+                with contextlib.suppress(
+                    discord.errors.Forbidden, discord.errors.NotFound
+                ):
                     await self.send_to_modlog(guild.id, "ban", user, moderator, reason)
                 break
 
@@ -188,18 +196,26 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         if self._is_recent_mod_action(guild.id, user.id, "unban"):
             return
 
-        async for entry in guild.audit_logs(limit=5, action=discord.AuditLogAction.unban):
+        async for entry in guild.audit_logs(
+            limit=5, action=discord.AuditLogAction.unban
+        ):
             if entry.target.id == user.id:
                 if task := self.tempban_tasks.get((guild.id, user.id)):
                     task.cancel()
 
-                with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
-                    await self.send_to_modlog(guild.id, "unban", user, entry.user, entry.reason)
+                with contextlib.suppress(
+                    discord.errors.Forbidden, discord.errors.NotFound
+                ):
+                    await self.send_to_modlog(
+                        guild.id, "unban", user, entry.user, entry.reason
+                    )
                 break
 
     @commands.Cog.listener("on_member_update")
     async def log_timeouts(self, before: discord.Member, after: discord.Member):
-        if self._is_recent_mod_action(before.guild.id, before.id, "timeout") or self._is_recent_mod_action(before.guild.id, before.id, "untimeout"):
+        if self._is_recent_mod_action(
+            before.guild.id, before.id, "timeout"
+        ) or self._is_recent_mod_action(before.guild.id, before.id, "untimeout"):
             return
 
         was_timed_out = before.is_timed_out()
@@ -217,7 +233,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             action=discord.AuditLogAction.member_update,
         ):
             if entry.target.id == after.id:
-                with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+                with contextlib.suppress(
+                    discord.errors.Forbidden, discord.errors.NotFound
+                ):
                     await self.send_to_modlog(
                         after.guild.id,
                         action,
@@ -234,9 +252,13 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         await asyncio.sleep(1)
 
-        async for entry in member.guild.audit_logs(limit=5, action=discord.AuditLogAction.kick):
+        async for entry in member.guild.audit_logs(
+            limit=5, action=discord.AuditLogAction.kick
+        ):
             if entry.target.id == member.id:
-                with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+                with contextlib.suppress(
+                    discord.errors.Forbidden, discord.errors.NotFound
+                ):
                     await self.send_to_modlog(
                         member.guild.id,
                         "kick",
@@ -249,7 +271,12 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     async def init_tempbans(self) -> None:
         await self.bot.wait_until_ready()
 
-        for guild_id, offender_id, banned_until, moderator_id in await self.db.get_all_tempbans():
+        for (
+            guild_id,
+            offender_id,
+            banned_until,
+            moderator_id,
+        ) in await self.db.get_all_tempbans():
             try:
                 guild = await self.bot.get_or_fetch_guild(guild_id)
                 offender = await self.bot.get_or_fetch_user(offender_id)
@@ -287,7 +314,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                 seconds_left = (obj.until - datetime.now(timezone.utc)).total_seconds()
                 if seconds_left <= 0:
                     try:
-                        self._mark_recent_mod_action(obj.guild.id, obj.offender.id, "unban")
+                        self._mark_recent_mod_action(
+                            obj.guild.id, obj.offender.id, "unban"
+                        )
                         await obj.guild.unban(
                             obj.offender,
                             reason=(
@@ -296,7 +325,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                             ),
                         )
 
-                        with contextlib.suppress(discord.errors.Forbidden, discord.errors.NotFound):
+                        with contextlib.suppress(
+                            discord.errors.Forbidden, discord.errors.NotFound
+                        ):
                             await self.send_to_modlog(
                                 obj.guild.id,
                                 "unban",
@@ -428,7 +459,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         if s := self.suicide("ban", offender.id, interaction.user.id):
             return await interaction.response_or_followup(content=s)
 
-        if isinstance(offender, discord.Member) and (higher := await hierarchy_check(interaction, offender, "ban")):
+        if isinstance(offender, discord.Member) and (
+            higher := await hierarchy_check(interaction, offender, "ban")
+        ):
             return await interaction.response_or_followup(content=higher)
 
         if already_banned := await self._ensure_not_banned(interaction, offender):
@@ -437,7 +470,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await self._notify_member(interaction, offender, "ban", reason)
 
         self._mark_recent_mod_action(interaction.guild.id, offender.id, "ban")
-        await interaction.guild.ban(offender, reason=get_auditlog_reason(interaction.user, reason))
+        await interaction.guild.ban(
+            offender, reason=get_auditlog_reason(interaction.user, reason)
+        )
 
         await self._log_mod_action(interaction, "ban", offender, reason)
 
@@ -537,7 +572,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         if s := self.suicide("tempban", offender.id, interaction.user.id):
             return await interaction.response_or_followup(content=s)
 
-        if isinstance(offender, discord.Member) and (higher := await hierarchy_check(interaction, offender, "ban")):
+        if isinstance(offender, discord.Member) and (
+            higher := await hierarchy_check(interaction, offender, "ban")
+        ):
             return await interaction.response_or_followup(content=higher)
 
         kind = "User" if isinstance(offender, discord.User) else "Member"
@@ -556,7 +593,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         await self._notify_member(interaction, offender, "tempban", reason, until)
 
         self._mark_recent_mod_action(interaction.guild.id, offender.id, "tempban")
-        await interaction.guild.ban(offender, reason=get_auditlog_reason(interaction.user, reason))
+        await interaction.guild.ban(
+            offender, reason=get_auditlog_reason(interaction.user, reason)
+        )
 
         timestamp = int(until.timestamp())
         await self.db.insert_tempban(
@@ -565,13 +604,15 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             timestamp,
             interaction.user.id,
         )
-        self.tempban_tasks[(interaction.guild.id, offender.id)] = self.bot.loop.create_task(
-            self.tempban_loop(
-                TempbanObject(
-                    offender=offender,
-                    moderator=interaction.user,
-                    guild=interaction.guild,
-                    timestamp=timestamp,
+        self.tempban_tasks[(interaction.guild.id, offender.id)] = (
+            self.bot.loop.create_task(
+                self.tempban_loop(
+                    TempbanObject(
+                        offender=offender,
+                        moderator=interaction.user,
+                        guild=interaction.guild,
+                        timestamp=timestamp,
+                    )
                 )
             )
         )
@@ -627,15 +668,21 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                     offender.id,
                 )
                 if not warnings:
-                    return await interaction.response_or_followup(content="This member has no warnings.")
-                await self.db.delete_warning(interaction.guild.id, max(item[1] for item in warnings))
+                    return await interaction.response_or_followup(
+                        content="This member has no warnings."
+                    )
+                await self.db.delete_warning(
+                    interaction.guild.id, max(item[1] for item in warnings)
+                )
             case "list":
                 warnings = await self.db.get_all_warnings_from_offender(
                     interaction.guild.id,
                     offender.id,
                 )
                 if not warnings:
-                    return await interaction.response_or_followup(content="This member has no warnings.")
+                    return await interaction.response_or_followup(
+                        content="This member has no warnings."
+                    )
 
                 pages = pagify(
                     "".join(
@@ -683,7 +730,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         if action == "set":
             if channel is None:
-                return await interaction.response_or_followup(content="Channel is required to set modlog.")
+                return await interaction.response_or_followup(
+                    content="Channel is required to set modlog."
+                )
             if not channel.permissions_for(interaction.guild.me).send_messages:
                 return await interaction.response_or_followup(
                     content=f"I cannot send messages to {channel.mention}. Please check my permissions."
@@ -704,10 +753,14 @@ class Moderation(commands.GroupCog, group_name="moderation"):
                     content="There is no modlog channel currently set to remove."
                 )
             await self.db.modlog_channel("delete", guild_id)
-            return await interaction.response_or_followup(content="The modlog channel has been cleared.")
+            return await interaction.response_or_followup(
+                content="The modlog channel has been cleared."
+            )
 
         if existing:
             return await interaction.response_or_followup(
                 content=f"<#{existing[0][0]}> is the set modlog channel."
             )
-        return await interaction.response_or_followup(content="No modlog channel has been set.")
+        return await interaction.response_or_followup(
+            content="No modlog channel has been set."
+        )
