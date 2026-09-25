@@ -156,7 +156,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     async def _run_member_action(
         self,
         interaction: MartinInteraction,
-        offender: discord.Member,
+        offender: Union[discord.Member, discord.User],
         action: Literal["ban", "kick", "timeout", "untimeout", "unban"],
         reason: str = None,
         *,
@@ -167,7 +167,9 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         if s := self.suicide(action, offender.id, interaction.user.id):
             return await interaction.response_or_followup(content=s)
 
-        if higher := await hierarchy_check(interaction, offender, action):
+        if isinstance(offender, discord.Member) and (
+            higher := await hierarchy_check(interaction, offender, action)
+        ):
             return await interaction.response_or_followup(content=higher)
 
         await self._notify_member(interaction, offender, action, reason, until)
