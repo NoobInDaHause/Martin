@@ -36,7 +36,7 @@ jobs:
           cp README.md release_build/
           cp LICENSE release_build/
           cp start_bot.bat release_build/
-          cp star_bot.sh release_build/
+          cp start_bot.sh release_build/
           cp config.json.example release_build/
           cp .env.example release_build/
 
