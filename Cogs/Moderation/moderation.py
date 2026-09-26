@@ -185,12 +185,12 @@ class Moderation(commands.GroupCog, group_name="moderation"):
 
         async for entry in guild.audit_logs(limit=5, action=discord.AuditLogAction.ban):
             if entry.target.id == user.id:
-                moderator = entry.user
-                reason = entry.reason
                 with contextlib.suppress(
                     discord.errors.Forbidden, discord.errors.NotFound
                 ):
-                    await self.send_to_modlog(guild.id, "ban", user, moderator, reason)
+                    await self.send_to_modlog(
+                        guild.id, "ban", user, entry.user, entry.reason
+                    )
                 break
 
     @commands.Cog.listener("on_member_unban")
@@ -231,7 +231,7 @@ class Moderation(commands.GroupCog, group_name="moderation"):
             return
 
         async for entry in after.guild.audit_logs(
-            limit=10,
+            limit=5,
             action=discord.AuditLogAction.member_update,
         ):
             if entry.target.id == after.id:
@@ -251,8 +251,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
     async def log_kicks(self, member: discord.Member):
         if self._is_recent_mod_action(member.guild.id, member.id, "kick"):
             return
-
-        await asyncio.sleep(1)
 
         async for entry in member.guild.audit_logs(
             limit=5, action=discord.AuditLogAction.kick
@@ -387,37 +385,6 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         if seconds > 604800 * 4:
             return "Duration must not be longer than 28 days."
         return None
-
-    async def _apply_timeout(
-        self,
-        interaction: MartinInteraction,
-        act: Literal["timeout", "untimeout"],
-        offender: discord.Member,
-        duration: Optional[TimeDeltaTransformer],
-        reason: str = None,
-    ) -> None:
-        until = datetime.now(timezone.utc) + duration if act == "timeout" else None
-
-        await self._run_member_action(
-            interaction,
-            offender,
-            act,
-            reason,
-            action_fn=partial(
-                offender.timeout,
-                until,
-                reason=get_auditlog_reason(interaction.user, reason),
-            ),
-            success_message=(
-                (
-                    f"Member {offender} (`{offender.id}`) has been timed out until "
-                    f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)"
-                )
-                if act == "timeout"
-                else f"Member {offender} (`{offender.id}`) has been untimed out."
-            ),
-            until=until,
-        )
 
     @app_commands.command(name="kick", description="Kick a member from this guild.")
     @bot_has_permissions(kick_members=True)
@@ -554,7 +521,28 @@ class Moderation(commands.GroupCog, group_name="moderation"):
         if message := self._timeout_validation_message(act, offender, duration):
             return await interaction.response_or_followup(content=message)
 
-        await self._apply_timeout(interaction, act, offender, duration, reason)
+        until = datetime.now(timezone.utc) + duration if act == "timeout" else None
+
+        await self._run_member_action(
+            interaction,
+            offender,
+            act,
+            reason,
+            action_fn=partial(
+                offender.timeout,
+                until,
+                reason=get_auditlog_reason(interaction.user, reason),
+            ),
+            success_message=(
+                (
+                    f"Member {offender} (`{offender.id}`) has been timed out until "
+                    f"<t:{int(until.timestamp())}:F> (<t:{int(until.timestamp())}:R>)"
+                )
+                if act == "timeout"
+                else f"Member {offender} (`{offender.id}`) has been untimed out."
+            ),
+            until=until,
+        )
 
     @app_commands.command(name="tempban", description="Temporarily bans an offender.")
     @bot_has_permissions(ban_members=True)
