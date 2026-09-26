@@ -26,6 +26,7 @@ jobs:
       - name: Create release package
         run: |
           mkdir release_build
+
           cp -r Cogs release_build/
           cp -r Martin release_build/
           cp -r Utilities release_build/
@@ -40,8 +41,8 @@ jobs:
           cp config.json.example release_build/
           cp .env.example release_build/
 
-          mv release_build Martin
-          zip -r "Martin-${{ github.event.release.tag_name }}.zip" Martin/
+          cd release_build
+          zip -r "../Martin-${{ github.event.release.tag_name }}.zip" .
 
       - name: Upload release asset
         env:
