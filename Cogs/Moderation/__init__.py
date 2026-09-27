@@ -1,4 +1,4 @@
-from Martin import Martin
+from MartinBot import Martin
 
 from .moderation import Moderation
 

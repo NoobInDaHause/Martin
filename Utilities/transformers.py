@@ -10,7 +10,7 @@ from discord.ext import commands
 from Utilities.exceptions import BadArgument
 
 if TYPE_CHECKING:
-    from Martin import MartinInteraction
+    from MartinBot import MartinInteraction
 
 TIME_PATTERN = re.compile(
     r"""

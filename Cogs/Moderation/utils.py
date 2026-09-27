@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Literal, Optional
 import discord
 
 if TYPE_CHECKING:
-    from Martin import MartinInteraction
+    from MartinBot import MartinInteraction
 
 
 def get_auditlog_reason(moderator: discord.Member, reason: str = None) -> str:

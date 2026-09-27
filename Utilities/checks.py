@@ -61,7 +61,7 @@ if TYPE_CHECKING:
     from discord.permissions import _PermissionsKwargs
     from typing_extensions import Self, Unpack
 
-    from Martin import MartinInteraction
+    from MartinBot import MartinInteraction
 
     CooldownFunction = Union[
         Callable[[MartinInteraction], Coroutine[Any, Any, T]],

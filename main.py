@@ -6,8 +6,8 @@ from pathlib import Path
 import discord
 from dotenv import find_dotenv, load_dotenv
 
-from Martin import Martin, Settings
-from Martin.interaction import MartinInteraction
+from MartinBot import Martin, Settings
+from MartinBot.interaction import MartinInteraction
 
 
 def setup_lopgging():

@@ -5,7 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from Martin import Martin, MartinInteraction
+from MartinBot import Martin, MartinInteraction
 from Utilities.checks import bot_has_permissions, cooldown
 
 

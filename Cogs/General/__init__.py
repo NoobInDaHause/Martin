@@ -1,4 +1,4 @@
-from Martin import Martin
+from MartinBot import Martin
 
 from .general import General
 

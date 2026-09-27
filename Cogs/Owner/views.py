@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, List, Union
 
 import discord
 
-from Martin import MartinInteraction
+from MartinBot import MartinInteraction
 
 if TYPE_CHECKING:
     from .owner import Owner

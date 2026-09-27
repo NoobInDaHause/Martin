@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 import discord
 
 if TYPE_CHECKING:
-    from Martin import MartinInteraction
+    from MartinBot import MartinInteraction
 
 
 class PaginatorView(discord.ui.View):
