@@ -28,7 +28,7 @@ jobs:
           mkdir release_build
 
           cp -r Cogs release_build/
-          cp -r Martin release_build/
+          cp -r MartinBot release_build/
           cp -r Utilities release_build/
           cp -r cogs_data release_build/
           cp main.py release_build/
