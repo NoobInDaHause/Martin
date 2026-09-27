@@ -12,3 +12,4 @@ style-reformat:
 
 check-syntax: install-dependencies
 	python -m compileall -q -f .
+	python -c "import main"

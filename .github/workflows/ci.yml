@@ -31,5 +31,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Check Python syntax
+      - name: Check Python syntax and imports
         run: make check-syntax
